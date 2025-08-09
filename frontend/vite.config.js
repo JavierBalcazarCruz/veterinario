@@ -1,8 +1,9 @@
-// vite.config.js
+// vite.config.js para Tailwind CSS v4
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -10,6 +11,14 @@ export default defineConfig({
   plugins: [
     react()
   ],
+  
+  css: {
+    transformer: 'postcss',
+    postcss: {
+      plugins: []
+    }
+  },
+  
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -28,6 +37,7 @@ export default defineConfig({
     host: true,
     open: true
   },
+  
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -42,7 +52,8 @@ export default defineConfig({
       }
     }
   },
+  
   optimizeDeps: {
-    include: ['react', 'react-dom', 'framer-motion']
+    include: ['react', 'react-dom', 'framer-motion', 'tailwindcss']
   }
 })
