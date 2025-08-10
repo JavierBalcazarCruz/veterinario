@@ -1,11 +1,11 @@
-// src/components/layout/AppLayout.jsx
+// src/components/layout/AppLayout.jsx - VERSIÓN CORREGIDA
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-// Lista de wallpapers (puedes agregar más)
+// Wallpapers desde public folder (URL relativas)
 const wallpapers = [
-  '/wallpapers/vet-1.jpg', // Agrega tus wallpapers aquí
+  '/wallpapers/vet-1.jpg',
   '/wallpapers/vet-2.jpg',
   '/wallpapers/vet-3.jpg',
 ];
@@ -14,15 +14,23 @@ const AppLayout = ({ children }) => {
   const [currentWallpaper, setCurrentWallpaper] = useState(0);
   const location = useLocation();
 
-  // Cambiar wallpaper basado en la ruta (opcional)
+  // Cambiar wallpaper basado en la ruta
   useEffect(() => {
     const routeWallpaperMap = {
-      '/': 0,
+      '/dashboard': 0,
       '/pacientes': 1,
       '/citas': 2,
     };
     
-    const wallpaperIndex = routeWallpaperMap[location.pathname] ?? 0;
+    // Buscar coincidencia exacta o parcial
+    let wallpaperIndex = 0;
+    for (const [route, index] of Object.entries(routeWallpaperMap)) {
+      if (location.pathname.startsWith(route)) {
+        wallpaperIndex = index;
+        break;
+      }
+    }
+    
     setCurrentWallpaper(wallpaperIndex);
   }, [location.pathname]);
 
@@ -45,19 +53,19 @@ const AppLayout = ({ children }) => {
             }}
           />
           {/* Overlay para mejorar legibilidad */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
         </motion.div>
       </AnimatePresence>
 
       {/* Gradient Overlay */}
-      <div className="fixed inset-0 z-10 bg-gradient-to-br from-primary-900/20 via-transparent to-blue-900/20" />
+      <div className="fixed inset-0 z-10 bg-gradient-to-br from-primary-900/30 via-transparent to-blue-900/30" />
 
       {/* Main Content */}
       <div className="relative z-20 min-h-screen">
         {children}
       </div>
 
-      {/* Floating Particles Effect (opcional) */}
+      {/* Floating Particles Effect */}
       <div className="fixed inset-0 z-15 pointer-events-none">
         {[...Array(6)].map((_, i) => (
           <motion.div
@@ -65,14 +73,14 @@ const AppLayout = ({ children }) => {
             animate={{
               y: [-20, -100, -20],
               x: [-10, 10, -10],
-              opacity: [0.3, 0.7, 0.3],
+              opacity: [0.2, 0.5, 0.2],
             }}
             transition={{
               duration: 6 + i,
               repeat: Infinity,
               delay: i * 0.5,
             }}
-            className="absolute w-2 h-2 bg-white/20 rounded-full"
+            className="absolute w-2 h-2 bg-white/10 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
