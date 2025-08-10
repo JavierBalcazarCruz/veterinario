@@ -63,53 +63,84 @@ export const authService = {
   },
 
   // Login
-// login
-login: async (credentials) => {
-  const response = await api.post('/veterinarios/login', credentials);
-  return response.data;
-},
+  login: async (credentials) => {
+    try {
+      const response = await api.post('/veterinarios/login', credentials);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   // Registro
-register: async (userData) => {
-  const response = await api.post('/veterinarios', userData);
-  return response.data;
-},
+  register: async (userData) => {
+    try {
+      const response = await api.post('/veterinarios', userData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-// Obtener perfil
-getProfile: async () => {
-  const response = await api.get('/veterinarios/perfil');
-  return response.data;
-},
+  // Obtener perfil
+  getProfile: async () => {
+    try {
+      const response = await api.get('/veterinarios/perfil');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-// Confirmar cuenta
-confirmAccount: async (token) => {
-  const response = await api.get(`/veterinarios/confirmar/${token}`);
-  return response.data;
-},
+  // Confirmar cuenta
+  confirmAccount: async (token) => {
+    try {
+      const response = await api.get(`/veterinarios/confirmar/${token}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-// Olvide password
-forgotPassword: async (email) => {
-  const response = await api.post('/veterinarios/olvide-password', { email });
-  return response.data;
-},
+  // Olvide password
+  forgotPassword: async (email) => {
+    try {
+      const response = await api.post('/veterinarios/olvide-password', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-// Verificar token de reset
-verifyResetToken: async (token) => {
-  const response = await api.get(`/veterinarios/olvide-password/${token}`);
-  return response.data;
-},
+  // Verificar token de reset
+  verifyResetToken: async (token) => {
+    try {
+      const response = await api.get(`/veterinarios/olvide-password/${token}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-// Nuevo password
-resetPassword: async (token, password) => {
-  const response = await api.post(`/veterinarios/olvide-password/${token}`, { password });
-  return response.data;
-},
+  // Nuevo password
+  resetPassword: async (token, password) => {
+    try {
+      const response = await api.post(`/veterinarios/olvide-password/${token}`, { password });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-// Reenviar verificación
-resendVerification: async (email) => {
-  const response = await api.post('/veterinarios/reenviar-verificacion', { email });
-  return response.data;
-},
+  // Reenviar verificación
+  resendVerification: async (email) => {
+    try {
+      const response = await api.post('/veterinarios/reenviar-verificacion', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   // Verificar si el usuario está autenticado
   isAuthenticated: () => {

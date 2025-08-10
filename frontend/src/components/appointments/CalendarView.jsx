@@ -280,7 +280,7 @@ const CalendarView = ({ appointments = [], selectedDate, onDateSelect }) => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center space-x-4 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                    className="flex items-center space-x-4 p-3 bg-white/5 rounded-lg border border-white/10"
                   >
                     {/* Hora */}
                     <div className="flex-shrink-0 text-center">
@@ -288,22 +288,6 @@ const CalendarView = ({ appointments = [], selectedDate, onDateSelect }) => {
                         {appointment.hora}
                       </div>
                       <div className={`w-2 h-2 rounded-full mx-auto mt-1 ${getStatusColor(appointment.estado)}`} />
-                    </div>
-
-                    {/* Avatar del paciente */}
-                    <div className="flex-shrink-0">
-                      {appointment.paciente.foto_url ? (
-                        <img
-                          src={appointment.paciente.foto_url}
-                          alt={appointment.paciente.nombre}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm">
-                          {appointment.paciente.especie === 'Perro' ? '🐕' : 
-                           appointment.paciente.especie === 'Gato' ? '🐱' : '🐾'}
-                        </div>
-                      )}
                     </div>
 
                     {/* Info del paciente */}
@@ -319,7 +303,7 @@ const CalendarView = ({ appointments = [], selectedDate, onDateSelect }) => {
                         </span>
                       </div>
                       <p className="text-white/60 text-xs truncate">
-                        {appointment.propietario?.nombre || 'Propietario no especificado'}
+                        {appointment.propietario.nombre}
                       </p>
                     </div>
 
@@ -341,37 +325,6 @@ const CalendarView = ({ appointments = [], selectedDate, onDateSelect }) => {
                 ))
             )}
           </div>
-
-          {/* Resumen estadístico del día */}
-          {getAppointmentsForDate(selectedDate).length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-4 pt-4 border-t border-white/10"
-            >
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-lg font-bold text-white">
-                    {getAppointmentsForDate(selectedDate).length}
-                  </div>
-                  <div className="text-xs text-white/60">Total</div>
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-green-400">
-                    {getAppointmentsForDate(selectedDate).filter(apt => apt.estado === 'confirmada').length}
-                  </div>
-                  <div className="text-xs text-white/60">Confirmadas</div>
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-red-400">
-                    {getAppointmentsForDate(selectedDate).filter(apt => apt.tipo_consulta === 'urgencia').length}
-                  </div>
-                  <div className="text-xs text-white/60">Urgencias</div>
-                </div>
-              </div>
-            </motion.div>
-          )}
         </motion.div>
       )}
     </GlassCard>

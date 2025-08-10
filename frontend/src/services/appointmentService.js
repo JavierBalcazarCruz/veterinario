@@ -4,170 +4,266 @@ import api from './authService';
 export const appointmentService = {
   // Obtener todas las citas
   getAll: async () => {
-    const response = await api.get('/citas');
-    return response.data;
+    try {
+      const response = await api.get('/citas');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener citas por fecha
   getByDate: async (date) => {
-    const dateString = date instanceof Date ? date.toISOString().split('T')[0] : date;
-    const response = await api.get(`/citas/fecha/${dateString}`);
-    return response.data;
+    try {
+      const dateString = date instanceof Date ? date.toISOString().split('T')[0] : date;
+      const response = await api.get(`/citas/fecha/${dateString}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener citas por rango de fechas
   getByDateRange: async (startDate, endDate) => {
-    const start = startDate instanceof Date ? startDate.toISOString().split('T')[0] : startDate;
-    const end = endDate instanceof Date ? endDate.toISOString().split('T')[0] : endDate;
-    const response = await api.get(`/citas/rango?inicio=${start}&fin=${end}`);
-    return response.data;
+    try {
+      const start = startDate instanceof Date ? startDate.toISOString().split('T')[0] : startDate;
+      const end = endDate instanceof Date ? endDate.toISOString().split('T')[0] : endDate;
+      const response = await api.get(`/citas/rango?inicio=${start}&fin=${end}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener una cita por ID
   getById: async (id) => {
-    const response = await api.get(`/citas/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Crear nueva cita
   create: async (appointmentData) => {
-    const response = await api.post('/citas', appointmentData);
-    return response.data;
+    try {
+      const response = await api.post('/citas', appointmentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Actualizar cita
   update: async (id, appointmentData) => {
-    const response = await api.put(`/citas/${id}`, appointmentData);
-    return response.data;
+    try {
+      const response = await api.put(`/citas/${id}`, appointmentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Eliminar cita
   delete: async (id) => {
-    const response = await api.delete(`/citas/${id}`);
-    return response.data;
+    try {
+      const response = await api.delete(`/citas/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Cambiar estado de la cita
   updateStatus: async (id, newStatus) => {
-    const response = await api.patch(`/citas/${id}/estado`, { estado: newStatus });
-    return response.data;
+    try {
+      const response = await api.patch(`/citas/${id}/estado`, { estado: newStatus });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Confirmar cita
   confirm: async (id) => {
-    const response = await api.patch(`/citas/${id}/confirmar`);
-    return response.data;
+    try {
+      const response = await api.patch(`/citas/${id}/confirmar`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Cancelar cita
   cancel: async (id, motivo = '') => {
-    const response = await api.patch(`/citas/${id}/cancelar`, { motivo });
-    return response.data;
+    try {
+      const response = await api.patch(`/citas/${id}/cancelar`, { motivo });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Marcar cita como completada
   complete: async (id, observaciones = '') => {
-    const response = await api.patch(`/citas/${id}/completar`, { observaciones });
-    return response.data;
+    try {
+      const response = await api.patch(`/citas/${id}/completar`, { observaciones });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Iniciar consulta (marcar como en curso)
   startConsultation: async (id) => {
-    const response = await api.patch(`/citas/${id}/iniciar`);
-    return response.data;
+    try {
+      const response = await api.patch(`/citas/${id}/iniciar`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener citas de hoy
   getToday: async () => {
-    const today = new Date().toISOString().split('T')[0];
-    const response = await api.get(`/citas/fecha/${today}`);
-    return response.data;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await api.get(`/citas/fecha/${today}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener próximas citas
   getUpcoming: async (limit = 10) => {
-    const response = await api.get(`/citas/proximas?limit=${limit}`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/proximas?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener citas por paciente
   getByPatient: async (patientId) => {
-    const response = await api.get(`/citas/paciente/${patientId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/paciente/${patientId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener citas por doctor
   getByDoctor: async (doctorId) => {
-    const response = await api.get(`/citas/doctor/${doctorId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/doctor/${doctorId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Buscar citas
   search: async (searchTerm) => {
-    const response = await api.get(`/citas/buscar?q=${encodeURIComponent(searchTerm)}`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/buscar?q=${encodeURIComponent(searchTerm)}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Filtrar citas
   filter: async (filters) => {
-    const queryParams = new URLSearchParams();
-    
-    Object.keys(filters).forEach(key => {
-      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
-        queryParams.append(key, filters[key]);
-      }
-    });
+    try {
+      const queryParams = new URLSearchParams();
+      
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+          queryParams.append(key, filters[key]);
+        }
+      });
 
-    const response = await api.get(`/citas/filtrar?${queryParams.toString()}`);
-    return response.data;
+      const response = await api.get(`/citas/filtrar?${queryParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Verificar disponibilidad de horario
   checkAvailability: async (fecha, hora, doctorId = null) => {
-    const params = new URLSearchParams({ fecha, hora });
-    if (doctorId) params.append('doctorId', doctorId);
-    
-    const response = await api.get(`/citas/disponibilidad?${params.toString()}`);
-    return response.data;
+    try {
+      const params = new URLSearchParams({ fecha, hora });
+      if (doctorId) params.append('doctorId', doctorId);
+      
+      const response = await api.get(`/citas/disponibilidad?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener horarios disponibles para una fecha
   getAvailableSlots: async (fecha, doctorId = null) => {
-    const params = new URLSearchParams({ fecha });
-    if (doctorId) params.append('doctorId', doctorId);
-    
-    const response = await api.get(`/citas/horarios-disponibles?${params.toString()}`);
-    return response.data;
+    try {
+      const params = new URLSearchParams({ fecha });
+      if (doctorId) params.append('doctorId', doctorId);
+      
+      const response = await api.get(`/citas/horarios-disponibles?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener estadísticas de citas
   getStats: async (periodo = 'mes') => {
-    const response = await api.get(`/citas/estadisticas?periodo=${periodo}`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/estadisticas?periodo=${periodo}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Reprogramar cita
   reschedule: async (id, nuevaFecha, nuevaHora) => {
-    const response = await api.patch(`/citas/${id}/reprogramar`, {
-      fecha: nuevaFecha,
-      hora: nuevaHora
-    });
-    return response.data;
+    try {
+      const response = await api.patch(`/citas/${id}/reprogramar`, {
+        fecha: nuevaFecha,
+        hora: nuevaHora
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Enviar recordatorio
   sendReminder: async (id, tipo = 'sms') => {
-    const response = await api.post(`/citas/${id}/recordatorio`, { tipo });
-    return response.data;
+    try {
+      const response = await api.post(`/citas/${id}/recordatorio`, { tipo });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener historial de una cita
   getHistory: async (id) => {
-    const response = await api.get(`/citas/${id}/historial`);
-    return response.data;
+    try {
+      const response = await api.get(`/citas/${id}/historial`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  // Validar datos de la cita (sin cambios)
+  // Validar datos de la cita
   validate: (appointmentData) => {
     const errors = {};
 
@@ -203,19 +299,19 @@ export const appointmentService = {
     };
   },
 
-  // Formatear datos de la cita para envío (sin cambios)
+  // Formatear datos de la cita para envío
   formatForSubmission: (appointmentData) => {
     return {
       ...appointmentData,
       id_paciente: parseInt(appointmentData.id_paciente),
-      fecha: appointmentData.fecha instanceof Date
-        ? appointmentData.fecha.toISOString().split('T')[0]
+      fecha: appointmentData.fecha instanceof Date 
+        ? appointmentData.fecha.toISOString().split('T')[0] 
         : appointmentData.fecha,
       notas: appointmentData.notas?.trim() || null,
     };
   },
 
-  // Obtener tipos de consulta disponibles (sin cambios)
+  // Obtener tipos de consulta disponibles
   getConsultationTypes: () => {
     return [
       {
@@ -245,7 +341,7 @@ export const appointmentService = {
     ];
   },
 
-  // Obtener estados de cita disponibles (sin cambios)
+  // Obtener estados de cita disponibles
   getAppointmentStates: () => {
     return [
       {
@@ -287,7 +383,7 @@ export const appointmentService = {
     ];
   },
 
-  // Calcular tiempo restante hasta la cita (sin cambios)
+  // Calcular tiempo restante hasta la cita
   getTimeUntilAppointment: (fecha, hora) => {
     const appointmentDateTime = new Date(`${fecha}T${hora}`);
     const now = new Date();
@@ -302,14 +398,14 @@ export const appointmentService = {
     const minutes = diffMins % 60;
 
     if (hours > 0) {
-      return {
-        isPast: false,
+      return { 
+        isPast: false, 
         timeString: `${hours}h ${minutes}m`,
         totalMinutes: diffMins
       };
     } else {
-      return {
-        isPast: false,
+      return { 
+        isPast: false, 
         timeString: `${minutes}m`,
         totalMinutes: diffMins
       };

@@ -4,128 +4,200 @@ import api from './authService';
 export const patientService = {
   // Obtener todos los pacientes
   getAll: async () => {
-    const response = await api.get('/pacientes');
-    return response.data;
+    try {
+      const response = await api.get('/pacientes');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener un paciente por ID
   getById: async (id) => {
-    const response = await api.get(`/pacientes/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Crear nuevo paciente
   create: async (patientData) => {
-    const response = await api.post('/pacientes', patientData);
-    return response.data;
+    try {
+      const response = await api.post('/pacientes', patientData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Actualizar paciente
   update: async (id, patientData) => {
-    const response = await api.put(`/pacientes/${id}`, patientData);
-    return response.data;
+    try {
+      const response = await api.put(`/pacientes/${id}`, patientData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Eliminar paciente
   delete: async (id) => {
-    const response = await api.delete(`/pacientes/${id}`);
-    return response.data;
+    try {
+      const response = await api.delete(`/pacientes/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Buscar pacientes
   search: async (searchTerm) => {
-    const response = await api.get(`/pacientes/search?q=${encodeURIComponent(searchTerm)}`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/search?q=${encodeURIComponent(searchTerm)}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener pacientes por propietario
   getByOwner: async (ownerId) => {
-    const response = await api.get(`/pacientes/propietario/${ownerId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/propietario/${ownerId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener historial médico de un paciente
   getMedicalHistory: async (patientId) => {
-    const response = await api.get(`/pacientes/${patientId}/historial`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/${patientId}/historial`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener vacunas de un paciente
   getVaccinations: async (patientId) => {
-    const response = await api.get(`/pacientes/${patientId}/vacunas`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/${patientId}/vacunas`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Agregar vacuna a un paciente
   addVaccination: async (patientId, vaccinationData) => {
-    const response = await api.post(`/pacientes/${patientId}/vacunas`, vaccinationData);
-    return response.data;
+    try {
+      const response = await api.post(`/pacientes/${patientId}/vacunas`, vaccinationData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener desparasitaciones de un paciente
   getDewormings: async (patientId) => {
-    const response = await api.get(`/pacientes/${patientId}/desparasitaciones`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/${patientId}/desparasitaciones`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Agregar desparasitación a un paciente
   addDeworming: async (patientId, dewormingData) => {
-    const response = await api.post(`/pacientes/${patientId}/desparasitaciones`, dewormingData);
-    return response.data;
+    try {
+      const response = await api.post(`/pacientes/${patientId}/desparasitaciones`, dewormingData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Subir foto del paciente
   uploadPhoto: async (patientId, photoFile) => {
-    const formData = new FormData();
-    formData.append('photo', photoFile);
-    
-    const response = await api.post(`/pacientes/${patientId}/foto`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    try {
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+      
+      const response = await api.post(`/pacientes/${patientId}/foto`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener estadísticas de pacientes
   getStats: async () => {
-    const response = await api.get('/pacientes/estadisticas');
-    return response.data;
+    try {
+      const response = await api.get('/pacientes/estadisticas');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener pacientes recientes
   getRecent: async (limit = 5) => {
-    const response = await api.get(`/pacientes/recientes?limit=${limit}`);
-    return response.data;
+    try {
+      const response = await api.get(`/pacientes/recientes?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Filtrar pacientes
   filter: async (filters) => {
-    const queryParams = new URLSearchParams();
-    
-    Object.keys(filters).forEach(key => {
-      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
-        queryParams.append(key, filters[key]);
-      }
-    });
+    try {
+      const queryParams = new URLSearchParams();
+      
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+          queryParams.append(key, filters[key]);
+        }
+      });
 
-    const response = await api.get(`/pacientes/filtrar?${queryParams.toString()}`);
-    return response.data;
+      const response = await api.get(`/pacientes/filtrar?${queryParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener razas disponibles
   getRaces: async () => {
-    const response = await api.get('/razas');
-    return response.data;
+    try {
+      const response = await api.get('/razas');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Obtener especies disponibles
   getSpecies: async () => {
-    const response = await api.get('/especies');
-    return response.data;
+    try {
+      const response = await api.get('/especies');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  // Validar datos del paciente (sin cambios, ya que no hace llamadas a la API)
+  // Validar datos del paciente
   validate: (patientData) => {
     const errors = {};
 
@@ -161,7 +233,7 @@ export const patientService = {
     };
   },
 
-  // Formatear datos del paciente para envío (sin cambios)
+  // Formatear datos del paciente para envío
   formatForSubmission: (patientData) => {
     return {
       ...patientData,
