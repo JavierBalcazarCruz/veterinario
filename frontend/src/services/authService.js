@@ -1,10 +1,10 @@
-// src/services/authService.js
+// src/services/authService.js - VERSIÓN CORREGIDA
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-// Configurar axios
+// ✅ Configurar axios
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -12,7 +12,7 @@ const api = axios.create({
   },
 });
 
-// Interceptor para agregar token automáticamente
+// ✅ Interceptor para agregar token automáticamente
 api.interceptors.request.use(
   (config) => {
     const token = authService.getToken();
@@ -26,14 +26,16 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar respuestas y errores
+// ✅ Interceptor para manejar respuestas y errores
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       // Token expirado o inválido
       authService.removeToken();
-      window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -43,26 +45,26 @@ export const authService = {
   // Configuración de tokens
   TOKEN_KEY: 'mollyvet_token',
   
-  // Guardar token
+  // ✅ Guardar token
   setToken: (token) => {
     Cookies.set(authService.TOKEN_KEY, token, { 
       expires: 30, // 30 días
-      secure: true,
+      secure: window.location.protocol === 'https:',
       sameSite: 'strict'
     });
   },
 
-  // Obtener token
+  // ✅ Obtener token
   getToken: () => {
     return Cookies.get(authService.TOKEN_KEY);
   },
 
-  // Eliminar token
+  // ✅ Eliminar token
   removeToken: () => {
     Cookies.remove(authService.TOKEN_KEY);
   },
 
-  // Login
+  // ✅ Login
   login: async (credentials) => {
     try {
       const response = await api.post('/veterinarios/login', credentials);
@@ -72,7 +74,7 @@ export const authService = {
     }
   },
 
-  // Registro
+  // ✅ Registro
   register: async (userData) => {
     try {
       const response = await api.post('/veterinarios', userData);
@@ -82,7 +84,7 @@ export const authService = {
     }
   },
 
-  // Obtener perfil
+  // ✅ Obtener perfil
   getProfile: async () => {
     try {
       const response = await api.get('/veterinarios/perfil');
@@ -92,7 +94,7 @@ export const authService = {
     }
   },
 
-  // Confirmar cuenta
+  // ✅ Confirmar cuenta
   confirmAccount: async (token) => {
     try {
       const response = await api.get(`/veterinarios/confirmar/${token}`);
@@ -102,7 +104,7 @@ export const authService = {
     }
   },
 
-  // Olvide password
+  // ✅ Olvide password
   forgotPassword: async (email) => {
     try {
       const response = await api.post('/veterinarios/olvide-password', { email });
@@ -112,7 +114,7 @@ export const authService = {
     }
   },
 
-  // Verificar token de reset
+  // ✅ Verificar token de reset
   verifyResetToken: async (token) => {
     try {
       const response = await api.get(`/veterinarios/olvide-password/${token}`);
@@ -122,7 +124,7 @@ export const authService = {
     }
   },
 
-  // Nuevo password
+  // ✅ Nuevo password
   resetPassword: async (token, password) => {
     try {
       const response = await api.post(`/veterinarios/olvide-password/${token}`, { password });
@@ -132,7 +134,7 @@ export const authService = {
     }
   },
 
-  // Reenviar verificación
+  // ✅ Reenviar verificación
   resendVerification: async (email) => {
     try {
       const response = await api.post('/veterinarios/reenviar-verificacion', { email });
@@ -142,10 +144,11 @@ export const authService = {
     }
   },
 
-  // Verificar si el usuario está autenticado
+  // ✅ Verificar si el usuario está autenticado
   isAuthenticated: () => {
     return !!authService.getToken();
   }
 };
 
-export default api;
+// ✅ EXPORTAR INSTANCIA DE API CORRECTAMENTE
+export { api as default };

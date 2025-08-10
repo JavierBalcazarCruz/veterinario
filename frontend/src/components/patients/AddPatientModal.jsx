@@ -1,6 +1,6 @@
-// src/components/patients/AddPatientModal.jsx
+// src/components/patients/AddPatientModal.jsx - VERSIÓN CORREGIDA
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, User, PawPrint, Phone, MapPin, Save } from 'lucide-react';
 import * as yup from 'yup';
 
@@ -8,9 +8,10 @@ import GlassCard from '../ui/GlassCard';
 import GlassButton from '../ui/GlassButton';
 import GlassInput from '../ui/GlassInput';
 import { useForm } from '../../hooks/useForm';
+import { patientService } from '../../services/patientService'; // ✅ Importar servicio real
 import toast from 'react-hot-toast';
 
-// Esquema de validación
+// ✅ Esquema de validación actualizado para coincidir con backend
 const validationSchema = yup.object({
   nombre_mascota: yup
     .string()
@@ -31,7 +32,8 @@ const validationSchema = yup.object({
   email: yup
     .string()
     .email('Email inválido')
-    .nullable(),
+    .nullable()
+    .transform((value) => value === '' ? null : value),
   peso: yup
     .number()
     .positive('El peso debe ser mayor a 0')
@@ -43,27 +45,51 @@ const validationSchema = yup.object({
 
 const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
-  const [razas] = useState([
-    { id: 1, nombre: 'Mestizo', especie: 'Perro' },
-    { id: 2, nombre: 'Golden Retriever', especie: 'Perro' },
-    { id: 3, nombre: 'Labrador', especie: 'Perro' },
-    { id: 4, nombre: 'Pastor Alemán', especie: 'Perro' },
-    { id: 5, nombre: 'Bulldog', especie: 'Perro' },
-    { id: 6, nombre: 'Persa', especie: 'Gato' },
-    { id: 7, nombre: 'Siamés', especie: 'Gato' },
-    { id: 8, nombre: 'Maine Coon', especie: 'Gato' },
-    { id: 9, nombre: 'Angora', especie: 'Gato' },
-    { id: 10, nombre: 'Común Europeo', especie: 'Gato' },
-  ]);
+  const [razas, setRazas] = useState([]);
+  const [loadingRazas, setLoadingRazas] = useState(false);
+
+  // ✅ Cargar razas desde el servicio
+  useEffect(() => {
+    if (isOpen) {
+      loadRazas();
+    }
+  }, [isOpen]);
+
+  const loadRazas = async () => {
+    try {
+      setLoadingRazas(true);
+      const razasData = await patientService.getRaces();
+      setRazas(razasData);
+    } catch (error) {
+      console.error('Error al cargar razas:', error);
+      // Fallback a razas por defecto
+      setRazas([
+        { id: 1, nombre: 'Mestizo', especie: 'Perro' },
+        { id: 2, nombre: 'Golden Retriever', especie: 'Perro' },
+        { id: 3, nombre: 'Labrador', especie: 'Perro' },
+        { id: 4, nombre: 'Pastor Alemán', especie: 'Perro' },
+        { id: 5, nombre: 'Bulldog', especie: 'Perro' },
+        { id: 6, nombre: 'Persa', especie: 'Gato' },
+        { id: 7, nombre: 'Siamés', especie: 'Gato' },
+        { id: 8, nombre: 'Maine Coon', especie: 'Gato' },
+        { id: 9, nombre: 'Angora', especie: 'Gato' },
+        { id: 10, nombre: 'Común Europeo', especie: 'Gato' },
+      ]);
+    } finally {
+      setLoadingRazas(false);
+    }
+  };
 
   const {
     values,
     handleSubmit,
     getFieldProps,
     isSubmitting,
-    reset
+    reset,
+    errors
   } = useForm(
     {
+      // ✅ Valores iniciales que coinciden con el backend
       nombre_mascota: '',
       fecha_nacimiento: '',
       peso: '',
@@ -89,32 +115,63 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     onClose();
   };
 
+  // ✅ Enviar datos usando el servicio real
   const onSubmit = async (formData) => {
     try {
-      // Simular llamada a API
-      const newPatient = {
-        id: Date.now(),
-        ...formData,
-        especie: razas.find(r => r.id === parseInt(formData.id_raza))?.especie || 'Perro',
-        nombre_raza: razas.find(r => r.id === parseInt(formData.id_raza))?.nombre || 'Mestizo',
-        estado: 'activo',
-        ultima_visita: new Date().toISOString().split('T')[0]
-      };
-
-      onSuccess(newPatient);
+      console.log('Datos del formulario antes de enviar:', formData);
+      
+      // ✅ Usar el servicio real de pacientes
+      const newPatient = await patientService.create(formData);
+      
+      console.log('Paciente creado exitosamente:', newPatient);
+      
+      // ✅ Llamar callback de éxito con los datos del nuevo paciente
+      onSuccess(newPatient.data || newPatient);
+      
       toast.success('Paciente agregado exitosamente');
       handleClose();
     } catch (error) {
-      toast.error('Error al agregar paciente');
+      console.error('Error al agregar paciente:', error);
+      
+      // ✅ Manejo de errores mejorado
+      const errorMessage = error.response?.data?.msg || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Error al agregar paciente';
+      
+      toast.error(errorMessage);
+      
+      // Si hay errores específicos de campos, mostrarlos
+      if (error.response?.data?.errors) {
+        Object.keys(error.response.data.errors).forEach(field => {
+          toast.error(`${field}: ${error.response.data.errors[field]}`);
+        });
+      }
     }
   };
 
   const nextStep = () => {
-    setStep(step + 1);
+    // ✅ Validar paso actual antes de continuar
+    const currentStepValid = validateCurrentStep();
+    if (currentStepValid) {
+      setStep(step + 1);
+    }
   };
 
   const prevStep = () => {
     setStep(step - 1);
+  };
+
+  // ✅ Validar paso actual
+  const validateCurrentStep = () => {
+    switch (step) {
+      case 1:
+        return values.nombre_mascota && values.peso && values.id_raza;
+      case 2:
+        return values.nombre_propietario && values.apellidos_propietario && values.telefono;
+      default:
+        return true;
+    }
   };
 
   if (!isOpen) return null;
@@ -172,7 +229,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                 {[1, 2, 3].map((stepNumber) => (
                   <div
                     key={stepNumber}
-                    className={`flex-1 h-2 rounded-full ${
+                    className={`flex-1 h-2 rounded-full transition-colors duration-300 ${
                       step >= stepNumber 
                         ? 'bg-primary-500' 
                         : 'bg-white/20'
@@ -206,13 +263,14 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                           placeholder="Nombre de la mascota"
                           label="Nombre de la Mascota"
                           icon={<PawPrint size={20} />}
+                          error={errors.nombre_mascota}
                         />
                       </div>
 
                       <GlassInput
                         {...getFieldProps('fecha_nacimiento')}
                         type="date"
-                        label="Fecha de Nacimiento"
+                        label="Fecha de Nacimiento (Opcional)"
                       />
 
                       <GlassInput
@@ -221,46 +279,60 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         step="0.1"
                         placeholder="Peso en kg"
                         label="Peso (kg)"
+                        error={errors.peso}
                       />
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-white mb-3">
                           Raza
                         </label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto custom-scrollbar">
-                          {razas.map((raza) => (
-                            <motion.label
-                              key={raza.id}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                                parseInt(values.id_raza) === raza.id
-                                  ? 'bg-primary-500/20 border-primary-400/50'
-                                  : 'bg-white/5 border-white/20 hover:bg-white/10'
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="id_raza"
-                                value={raza.id}
-                                checked={parseInt(values.id_raza) === raza.id}
-                                onChange={getFieldProps('id_raza').onChange}
-                                className="sr-only"
-                              />
-                              <div className="text-center">
-                                <div className="text-lg mb-1">
-                                  {raza.especie === 'Perro' ? '🐕' : '🐱'}
+                        {loadingRazas ? (
+                          <div className="flex items-center justify-center p-4 bg-white/5 rounded-xl">
+                            <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                            <span className="ml-2 text-white/70">Cargando razas...</span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto custom-scrollbar">
+                            {razas.map((raza) => (
+                              <motion.label
+                                key={raza.id}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                                  parseInt(values.id_raza) === raza.id
+                                    ? 'bg-primary-500/20 border-primary-400/50'
+                                    : 'bg-white/5 border-white/20 hover:bg-white/10'
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="id_raza"
+                                  value={raza.id}
+                                  checked={parseInt(values.id_raza) === raza.id}
+                                  onChange={getFieldProps('id_raza').onChange}
+                                  className="sr-only"
+                                />
+                                <div className="text-center">
+                                  <div className="text-lg mb-1">
+                                    {raza.especie === 'Perro' ? '🐕' : '🐱'}
+                                  </div>
+                                  <div className="text-white text-xs font-medium">
+                                    {raza.nombre}
+                                  </div>
+                                  <div className="text-white/60 text-xs">
+                                    {raza.especie}
+                                  </div>
                                 </div>
-                                <div className="text-white text-xs font-medium">
-                                  {raza.nombre}
-                                </div>
-                                <div className="text-white/60 text-xs">
-                                  {raza.especie}
-                                </div>
-                              </div>
-                            </motion.label>
-                          ))}
-                        </div>
+                              </motion.label>
+                            ))}
+                          </div>
+                        )}
+                        {errors.id_raza && (
+                          <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                            <span>⚠️</span>
+                            {errors.id_raza}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -286,6 +358,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         placeholder="Nombre"
                         label="Nombre"
                         icon={<User size={20} />}
+                        error={errors.nombre_propietario}
                       />
 
                       <GlassInput
@@ -293,14 +366,16 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         placeholder="Apellidos"
                         label="Apellidos"
                         icon={<User size={20} />}
+                        error={errors.apellidos_propietario}
                       />
 
                       <GlassInput
                         {...getFieldProps('telefono')}
                         type="tel"
-                        placeholder="Teléfono"
+                        placeholder="Teléfono (10 dígitos)"
                         label="Teléfono"
                         icon={<Phone size={20} />}
+                        error={errors.telefono}
                       />
 
                       <div>
@@ -323,6 +398,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                           type="email"
                           placeholder="correo@ejemplo.com (opcional)"
                           label="Email (Opcional)"
+                          error={errors.email}
                         />
                       </div>
                     </div>
@@ -341,6 +417,9 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                       <h3 className="text-xl font-semibold text-white">
                         Dirección (Opcional)
                       </h3>
+                      <p className="text-white/60 text-sm mt-2">
+                        Puedes completar estos datos después
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -397,6 +476,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                   <GlassButton
                     onClick={prevStep}
                     variant="ghost"
+                    disabled={isSubmitting}
                   >
                     Anterior
                   </GlassButton>
@@ -407,10 +487,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                 {step < 3 ? (
                   <GlassButton
                     onClick={nextStep}
-                    disabled={
-                      (step === 1 && (!values.nombre_mascota || !values.peso || !values.id_raza)) ||
-                      (step === 2 && (!values.nombre_propietario || !values.apellidos_propietario || !values.telefono))
-                    }
+                    disabled={!validateCurrentStep() || isSubmitting}
                   >
                     Siguiente
                   </GlassButton>
@@ -419,11 +496,26 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                     onClick={handleSubmit(onSubmit)}
                     loading={isSubmitting}
                     icon={!isSubmitting && <Save size={20} />}
+                    disabled={!validateCurrentStep()}
                   >
                     {isSubmitting ? 'Guardando...' : 'Guardar Paciente'}
                   </GlassButton>
                 )}
               </div>
+              
+              {/* Mostrar errores de validación */}
+              {Object.keys(errors).length > 0 && (
+                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                  <p className="text-red-400 text-sm font-medium mb-2">
+                    Por favor corrige los siguientes errores:
+                  </p>
+                  <ul className="text-red-400/80 text-xs space-y-1">
+                    {Object.entries(errors).map(([field, error]) => (
+                      <li key={field}>• {error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </GlassCard>
         </motion.div>

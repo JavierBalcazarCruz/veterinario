@@ -1,4 +1,4 @@
-// src/pages/PatientsPage.jsx
+// src/pages/PatientsPage.jsx - VERSIÓN CORREGIDA
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Search, Plus, Filter, PawPrint, User, Phone, Calendar } from 'lucide-react';
@@ -10,7 +10,9 @@ import GlassInput from '../components/ui/GlassInput';
 import MobileNavigation from '../components/layout/MobileNavigation';
 import PatientCard from '../components/patients/PatientCard';
 import AddPatientModal from '../components/patients/AddPatientModal';
+import { patientService } from '../services/patientService'; // ✅ Importar servicio real
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const PatientsPage = () => {
   const { user } = useAuth();
@@ -20,75 +22,57 @@ const PatientsPage = () => {
   const [selectedFilter, setSelectedFilter] = useState('todos');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Datos de ejemplo (reemplazar con API real)
-  const mockPatients = [
-    {
-      id: 1,
-      nombre_mascota: 'Max',
-      especie: 'Perro',
-      nombre_raza: 'Golden Retriever',
-      edad: '3 años',
-      peso: '28.5',
-      foto_url: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=150',
-      nombre_propietario: 'Ana García',
-      apellidos_propietario: 'López',
-      telefono_principal: '5551234567',
-      email: 'ana.garcia@email.com',
-      ultima_visita: '2024-01-15',
-      estado: 'activo'
-    },
-    {
-      id: 2,
-      nombre_mascota: 'Luna',
-      especie: 'Gato',
-      nombre_raza: 'Persa',
-      edad: '2 años',
-      peso: '4.2',
-      foto_url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=150',
-      nombre_propietario: 'Carlos',
-      apellidos_propietario: 'Mendoza',
-      telefono_principal: '5559876543',
-      email: 'carlos.mendoza@email.com',
-      ultima_visita: '2024-01-10',
-      estado: 'activo'
-    },
-    {
-      id: 3,
-      nombre_mascota: 'Rocky',
-      especie: 'Perro',
-      nombre_raza: 'Bulldog',
-      edad: '5 años',
-      peso: '22.0',
-      foto_url: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=150',
-      nombre_propietario: 'María',
-      apellidos_propietario: 'Rodríguez',
-      telefono_principal: '5555555555',
-      email: 'maria.rodriguez@email.com',
-      ultima_visita: '2024-01-08',
-      estado: 'activo'
-    }
-  ];
-
-  // Simular carga de datos
+  // ✅ Cargar pacientes reales desde la API
   useEffect(() => {
-    const loadPatients = async () => {
-      setLoading(true);
-      // Simular delay de API
-      setTimeout(() => {
-        setPatients(mockPatients);
-        setLoading(false);
-      }, 1000);
-    };
-
     loadPatients();
   }, []);
 
-  // Filtrar pacientes
+  const loadPatients = async () => {
+    try {
+      setLoading(true);
+      const patientsData = await patientService.getAll();
+      
+      console.log('Pacientes cargados:', patientsData);
+      
+      // ✅ Verificar si los datos vienen en un array o en una propiedad específica
+      const patientsArray = Array.isArray(patientsData) ? patientsData : patientsData.data || [];
+      
+      setPatients(patientsArray);
+    } catch (error) {
+      console.error('Error al cargar pacientes:', error);
+      toast.error('Error al cargar los pacientes');
+      
+      // ✅ Fallback a datos mock en caso de error
+      setPatients([
+        {
+          id: 1,
+          nombre_mascota: 'Max',
+          especie: 'Perro',
+          nombre_raza: 'Golden Retriever',
+          edad: '3 años',
+          peso: '28.5',
+          foto_url: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=150',
+          nombre_propietario: 'Ana García',
+          apellidos_propietario: 'López',
+          telefono_principal: '5551234567',
+          email: 'ana.garcia@email.com',
+          ultima_visita: '2024-01-15',
+          estado: 'activo'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Filtrar pacientes con validación de datos
   const filteredPatients = patients.filter(patient => {
+    if (!patient) return false;
+    
     const matchesSearch = 
-      patient.nombre_mascota.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.nombre_propietario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.apellidos_propietario.toLowerCase().includes(searchTerm.toLowerCase());
+      (patient.nombre_mascota?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (patient.nombre_propietario?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (patient.apellidos_propietario?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesFilter = 
       selectedFilter === 'todos' ||
@@ -104,9 +88,23 @@ const PatientsPage = () => {
     { value: 'gatos', label: 'Gatos', icon: '🐱' }
   ];
 
+  // ✅ Manejar agregado de paciente con datos reales
   const handleAddPatient = (newPatient) => {
+    console.log('Nuevo paciente agregado:', newPatient);
+    
+    // ✅ Agregar el nuevo paciente al estado
     setPatients(prev => [newPatient, ...prev]);
     setShowAddModal(false);
+    
+    // ✅ Recargar la lista para obtener datos actualizados
+    setTimeout(() => {
+      loadPatients();
+    }, 1000);
+  };
+
+  // ✅ Función para refrescar la lista
+  const handleRefresh = () => {
+    loadPatients();
   };
 
   return (
@@ -129,13 +127,32 @@ const PatientsPage = () => {
                 </p>
               </div>
               
-              <GlassButton
-                onClick={() => setShowAddModal(true)}
-                icon={<Plus size={20} />}
-                className="hidden lg:flex"
-              >
-                Nuevo Paciente
-              </GlassButton>
+              <div className="flex items-center space-x-3">
+                {/* ✅ Botón de refrescar */}
+                <motion.button
+                  onClick={handleRefresh}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={loading}
+                  className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50"
+                  title="Refrescar"
+                >
+                  <motion.div
+                    animate={loading ? { rotate: 360 } : {}}
+                    transition={loading ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+                  >
+                    🔄
+                  </motion.div>
+                </motion.button>
+
+                <GlassButton
+                  onClick={() => setShowAddModal(true)}
+                  icon={<Plus size={20} />}
+                  className="hidden lg:flex"
+                >
+                  Nuevo Paciente
+                </GlassButton>
+              </div>
             </div>
 
             {/* Barra de búsqueda */}
@@ -164,6 +181,15 @@ const PatientsPage = () => {
                 >
                   <span>{filter.icon}</span>
                   <span>{filter.label}</span>
+                  {/* ✅ Mostrar contador */}
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                    {filter.value === 'todos' 
+                      ? patients.length 
+                      : filter.value === 'perros'
+                        ? patients.filter(p => p.especie === 'Perro').length
+                        : patients.filter(p => p.especie === 'Gato').length
+                    }
+                  </span>
                 </motion.button>
               ))}
             </div>
@@ -210,12 +236,21 @@ const PatientsPage = () => {
                   }
                 </p>
                 {!searchTerm && (
-                  <GlassButton
-                    onClick={() => setShowAddModal(true)}
-                    icon={<Plus size={20} />}
-                  >
-                    Agregar Paciente
-                  </GlassButton>
+                  <div className="space-y-3">
+                    <GlassButton
+                      onClick={() => setShowAddModal(true)}
+                      icon={<Plus size={20} />}
+                    >
+                      Agregar Paciente
+                    </GlassButton>
+                    <GlassButton
+                      onClick={handleRefresh}
+                      variant="secondary"
+                      disabled={loading}
+                    >
+                      Refrescar Lista
+                    </GlassButton>
+                  </div>
                 )}
               </GlassCard>
             </motion.div>
@@ -225,16 +260,24 @@ const PatientsPage = () => {
               animate={{ opacity: 1 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {filteredPatients.map((patient, index) => (
-                <motion.div
-                  key={patient.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <PatientCard patient={patient} />
-                </motion.div>
-              ))}
+              {filteredPatients.map((patient, index) => {
+                // ✅ Validar que el paciente tenga datos válidos
+                if (!patient || !patient.id) {
+                  console.warn('Paciente con datos inválidos:', patient);
+                  return null;
+                }
+
+                return (
+                  <motion.div
+                    key={patient.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <PatientCard patient={patient} />
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
         </main>
@@ -265,6 +308,15 @@ const PatientsPage = () => {
           onClose={() => setShowAddModal(false)}
           onSuccess={handleAddPatient}
         />
+
+        {/* ✅ Debug info (solo en desarrollo) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs max-w-xs">
+            <div>Pacientes: {patients.length}</div>
+            <div>Filtrados: {filteredPatients.length}</div>
+            <div>Usuario: {user?.nombre}</div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
