@@ -1,5 +1,5 @@
 // src/services/patientService.js - VERSIÓN CORREGIDA
-import api from './authService'; // ✅ Corregido: importa la instancia de api
+import api from './apiService'; // ✅ Importar desde el nuevo archivo
 
 export const patientService = {
   // ✅ Obtener todos los pacientes
@@ -8,6 +8,7 @@ export const patientService = {
       const response = await api.get('/pacientes');
       return response.data;
     } catch (error) {
+      console.error('❌ Error al obtener pacientes:', error);
       throw error;
     }
   },
@@ -170,6 +171,7 @@ export const patientService = {
       const response = await api.get('/razas');
       return response.data;
     } catch (error) {
+      console.log('⚠️ Endpoint /razas no disponible, usando datos mock');
       // Si no existe endpoint, devolver razas mock
       return [
         { id: 1, nombre: 'Mestizo', especie: 'Perro' },
@@ -192,6 +194,7 @@ export const patientService = {
       const response = await api.get('/especies');
       return response.data;
     } catch (error) {
+      console.log('⚠️ Endpoint /especies no disponible, usando datos mock');
       // Si no existe endpoint, devolver especies mock
       return [
         { id: 1, nombre: 'Perro' },

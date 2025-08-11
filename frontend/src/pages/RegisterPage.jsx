@@ -1,8 +1,8 @@
-// src/pages/RegisterPage.jsx - VERSIÓN CORREGIDA
+// src/pages/RegisterPage.jsx - VERSIÓN CORREGIDA PARA VALIDACIÓN DE CONTRASEÑAS
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { User, Mail, Lock, UserCheck, ArrowRight, CheckCircle } from 'lucide-react';
+import { User, Mail, Lock, UserCheck, ArrowRight, CheckCircle, Send } from 'lucide-react';
 import * as yup from 'yup';
 
 import GlassCard from '../components/ui/GlassCard';
@@ -11,8 +11,9 @@ import GlassInput from '../components/ui/GlassInput';
 import AppLayout from '../components/layout/AppLayout';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from '../hooks/useForm';
+import toast from 'react-hot-toast';
 
-// Esquema de validación
+// ✅ CORREGIDO: Esquema de validación mejorado
 const validationSchema = yup.object({
   nombre: yup
     .string()
@@ -32,8 +33,11 @@ const validationSchema = yup.object({
     .required('La contraseña es obligatoria'),
   confirmPassword: yup
     .string()
-    .oneOf([yup.ref('password'), null], 'Las contraseñas no coinciden')
-    .required('Confirma tu contraseña'),
+    .required('Confirma tu contraseña')
+    // ✅ CORREGIDO: Mejor validación de contraseñas iguales
+    .test('passwords-match', 'Las contraseñas no coinciden', function(value) {
+      return this.parent.password === value;
+    }),
   rol: yup
     .string()
     .oneOf(['doctor', 'admin', 'recepcion'], 'Selecciona un rol válido')
@@ -41,18 +45,18 @@ const validationSchema = yup.object({
 });
 
 const RegisterPage = () => {
-  const { register, isAuthenticated, loading } = useAuth();
+  const { register, isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [registrationLoading, setRegistrationLoading] = useState(false);
 
   // Hook de formulario
   const {
     values,
     handleSubmit,
     getFieldProps,
-    isSubmitting
+    isSubmitting,
+    errors // ✅ Agregar errors para debug
   } = useForm(
     { 
       nombre: '', 
@@ -65,36 +69,91 @@ const RegisterPage = () => {
     validationSchema
   );
 
-  // ✅ CORREGIDO: Solo redirigir si ya está autenticado Y no está en proceso de registro
+  // ✅ AGREGADO: Función para verificar si las contraseñas coinciden
+  const passwordsMatch = () => {
+    if (!values.password || !values.confirmPassword) return false;
+    return values.password === values.confirmPassword;
+  };
+
+  // ✅ AGREGADO: Función para validar paso 2 antes de enviar
+  const isStep2Valid = () => {
+    return (
+      values.password && 
+      values.password.length >= 6 &&
+      values.confirmPassword &&
+      passwordsMatch() &&
+      values.rol
+    );
+  };
+
+  // Solo redirigir si ya está autenticado Y no hay registro exitoso
   if (isAuthenticated && !registrationSuccess) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // ✅ CORREGIDO: Manejar submit del registro
+  // ✅ CORREGIDO: Manejar submit del registro con toast de mayor duración
   const onSubmit = async (formData) => {
     try {
-      setRegistrationLoading(true);
+      // ✅ Validación adicional antes de enviar
+      if (!passwordsMatch()) {
+        toast.error('Las contraseñas no coinciden', { duration: 4000 });
+        return;
+      }
+
       console.log('📤 Enviando registro:', formData.email);
       
       // Remover confirmPassword antes de enviar
       const { confirmPassword, ...dataToSend } = formData;
       
+      // Llamar al servicio de registro
       const response = await register(dataToSend);
       
-      // ✅ ÉXITO: Mostrar pantalla de confirmación
+      // Si llegamos aquí, el registro fue exitoso
       setRegisteredEmail(formData.email);
       setRegistrationSuccess(true);
+      
+      // ✅ CORREGIDO: Toast de éxito con mayor duración y mejor estilo
+      toast.success(
+        '¡Registro exitoso! 🎉\nRevisa tu email para verificar tu cuenta',
+        { 
+          duration: 8000, // ✅ 8 segundos en lugar de 4
+          style: {
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 10px 25px rgba(16, 185, 129, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px)',
+          },
+          icon: '📧',
+          position: 'top-center'
+        }
+      );
       
       console.log('✅ Registro exitoso para:', formData.email);
     } catch (error) {
       console.error('❌ Error en registro:', error);
       // Los errores ya se manejan en el context con toast
-    } finally {
-      setRegistrationLoading(false);
     }
   };
 
   const nextStep = () => {
+    // Validar datos básicos antes de continuar
+    if (!values.nombre?.trim() || !values.apellidos?.trim() || !values.email?.trim()) {
+      toast.error('Completa todos los campos antes de continuar', { duration: 4000 });
+      return;
+    }
+    
+    // ✅ Validar email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(values.email)) {
+      toast.error('Por favor ingresa un email válido', { duration: 4000 });
+      return;
+    }
+    
     setStep(step + 1);
   };
 
@@ -108,7 +167,7 @@ const RegisterPage = () => {
     { value: 'recepcion', label: 'Recepcionista', icon: '👩‍💻', desc: 'Atención al cliente y citas' }
   ];
 
-  // ✅ PANTALLA DE ÉXITO COMPLETA COMO ANTES
+  // PANTALLA DE ÉXITO (igual que antes)
   if (registrationSuccess) {
     return (
       <AppLayout>
@@ -116,9 +175,10 @@ const RegisterPage = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
             className="w-full max-w-md"
           >
-            <GlassCard className="p-8">
+            <GlassCard className="p-8 shadow-2xl">
               {/* Logo */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -128,84 +188,146 @@ const RegisterPage = () => {
               >
                 <motion.div
                   animate={{ 
-                    scale: [1, 1.05, 1],
-                    rotate: [0, 2, -2, 0]
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0]
                   }}
                   transition={{ 
-                    duration: 3,
+                    duration: 2,
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
-                  className="text-5xl mb-4"
+                  className="text-6xl mb-4"
                 >
-                  🐾
+                  🎉
                 </motion.div>
                 <h1 className="text-3xl font-bold text-white mb-2 text-shadow-soft">
-                  MollyVet
+                  ¡Bienvenido a MollyVet!
                 </h1>
                 <p className="text-white/70">
-                  Registro exitoso
+                  Tu cuenta ha sido creada exitosamente
                 </p>
               </motion.div>
 
-              {/* Contenido de éxito */}
+              {/* Resto del contenido igual... */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-center space-y-6"
+                className="space-y-6"
               >
-                {/* Icono de éxito */}
+                {/* Icono de éxito animado */}
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                  className="mb-6"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ 
+                    delay: 0.5, 
+                    type: "spring", 
+                    stiffness: 200,
+                    damping: 10
+                  }}
+                  className="flex justify-center"
                 >
-                  <CheckCircle size={64} className="text-green-400 mx-auto" />
+                  <div className="relative">
+                    <CheckCircle size={80} className="text-green-400" />
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        opacity: [0.5, 0.8, 0.5]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute -inset-4 bg-green-400/20 rounded-full"
+                    />
+                  </div>
                 </motion.div>
                 
-                <div>
+                <div className="text-center">
                   <h2 className="text-2xl font-bold text-white mb-4">
-                    ¡Registro Exitoso!
+                    ¡Cuenta Creada!
                   </h2>
-                  <p className="text-white/70 mb-2">
-                    Te hemos enviado un correo de verificación a:
+                  <p className="text-white/80 mb-2">
+                    Hemos enviado un correo de verificación a:
                   </p>
-                  <p className="text-primary-300 font-medium break-all mb-6">
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                    className="text-primary-300 font-semibold text-lg bg-primary-500/10 border border-primary-400/30 rounded-xl p-3 break-all"
+                  >
                     {registeredEmail}
-                  </p>
+                  </motion.p>
                 </div>
 
-                {/* Información adicional */}
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-left">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                      <Mail size={16} className="text-blue-400" />
-                    </div>
-                    <p className="text-blue-400 font-medium">Pasos a seguir:</p>
+                {/* Pasos a seguir */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                  className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6"
+                >
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Send size={24} className="text-blue-400" />
+                    <h3 className="text-blue-400 font-semibold">Pasos para activar tu cuenta:</h3>
                   </div>
-                  <ol className="text-blue-400/70 text-sm space-y-1 list-decimal list-inside">
-                    <li>Revisa tu bandeja de entrada</li>
-                    <li>Busca el correo de MollyVet</li>
-                    <li>Haz clic en el enlace de verificación</li>
-                    <li>Tu cuenta se activará automáticamente</li>
+                  <ol className="space-y-3 text-sm">
+                    {[
+                      { step: '1', text: 'Revisa tu bandeja de entrada', icon: '📧' },
+                      { step: '2', text: 'Busca el correo de MollyVet', icon: '🔍' },
+                      { step: '3', text: 'Haz clic en el enlace de verificación', icon: '🔗' },
+                      { step: '4', text: '¡Tu cuenta se activará automáticamente!', icon: '✅' }
+                    ].map((item, index) => (
+                      <motion.li
+                        key={item.step}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.2 + index * 0.1 }}
+                        className="flex items-center space-x-3 text-blue-400/80"
+                      >
+                        <div className="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center text-xs font-bold text-blue-400">
+                          {item.step}
+                        </div>
+                        <span className="text-lg">{item.icon}</span>
+                        <span>{item.text}</span>
+                      </motion.li>
+                    ))}
                   </ol>
-                </div>
+                </motion.div>
 
-                {/* Aviso sobre spam */}
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-                  <p className="text-yellow-400 text-sm">
-                    ⚠️ Si no ves el correo, revisa tu carpeta de spam
-                  </p>
-                </div>
+                {/* Aviso importante */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.4 }}
+                  className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">⚠️</span>
+                    <div>
+                      <p className="text-yellow-400 font-medium text-sm">
+                        ¡Importante!
+                      </p>
+                      <p className="text-yellow-400/80 text-sm">
+                        Si no ves el correo, revisa tu carpeta de spam o correo no deseado
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
 
                 {/* Botones de acción */}
-                <div className="space-y-3">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.6 }}
+                  className="space-y-3"
+                >
                   <Link to="/login">
                     <GlassButton 
                       fullWidth 
                       icon={<ArrowRight size={20} />}
+                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500"
                     >
                       Ir al Login
                     </GlassButton>
@@ -215,16 +337,27 @@ const RegisterPage = () => {
                     <GlassButton 
                       variant="ghost" 
                       fullWidth
+                      icon={<Send size={20} />}
                     >
                       ¿No recibiste el correo?
                     </GlassButton>
                   </Link>
-                </div>
+                </motion.div>
 
-                {/* Tiempo de expiración */}
-                <p className="text-white/50 text-xs">
-                  El enlace de verificación expirará en 24 horas
-                </p>
+                {/* Información adicional */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.8 }}
+                  className="text-center pt-4 border-t border-white/10"
+                >
+                  <p className="text-white/50 text-xs">
+                    El enlace de verificación expirará en 24 horas
+                  </p>
+                  <p className="text-white/50 text-xs mt-1">
+                    Una vez verificada, podrás acceder a todas las funciones de MollyVet
+                  </p>
+                </motion.div>
               </motion.div>
             </GlassCard>
 
@@ -232,11 +365,11 @@ const RegisterPage = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
+              transition={{ delay: 2 }}
               className="text-center mt-8"
             >
               <p className="text-white/50 text-sm">
-                © 2025 MollyVet. Sistema de gestión veterinaria.
+                © 2025 MollyVet. Sistema de gestión veterinaria profesional.
               </p>
             </motion.div>
           </motion.div>
@@ -245,6 +378,7 @@ const RegisterPage = () => {
     );
   }
 
+  // FORMULARIO DE REGISTRO
   return (
     <AppLayout>
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -344,7 +478,7 @@ const RegisterPage = () => {
                     onClick={nextStep}
                     fullWidth
                     icon={<ArrowRight size={20} />}
-                    disabled={!values.nombre || !values.apellidos || !values.email}
+                    disabled={!values.nombre?.trim() || !values.apellidos?.trim() || !values.email?.trim()}
                   >
                     Continuar
                   </GlassButton>
@@ -371,7 +505,29 @@ const RegisterPage = () => {
                     placeholder="Confirma tu contraseña"
                     label="Confirmar Contraseña"
                     icon={<Lock size={20} />}
+                    // ✅ AGREGADO: Mostrar error específico para contraseñas
+                    error={values.confirmPassword && !passwordsMatch() ? 'Las contraseñas no coinciden' : errors.confirmPassword}
                   />
+
+                  {/* ✅ AGREGADO: Indicador visual de validación de contraseñas */}
+                  {values.password && values.confirmPassword && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-3 rounded-xl border text-sm ${
+                        passwordsMatch() 
+                          ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                          : 'bg-red-500/10 border-red-500/20 text-red-400'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span>{passwordsMatch() ? '✅' : '❌'}</span>
+                        <span>
+                          {passwordsMatch() ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden'}
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* Selector de rol */}
                   <div>
@@ -416,20 +572,31 @@ const RegisterPage = () => {
                       onClick={prevStep}
                       variant="ghost"
                       className="flex-1"
-                      disabled={registrationLoading}
+                      disabled={isSubmitting}
                     >
                       Atrás
                     </GlassButton>
                     
                     <GlassButton
                       type="submit"
-                      loading={registrationLoading}
+                      loading={isSubmitting}
                       className="flex-1"
-                      icon={!registrationLoading && <UserCheck size={20} />}
+                      icon={!isSubmitting && <UserCheck size={20} />}
+                      disabled={!isStep2Valid() || isSubmitting}
                     >
-                      {registrationLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                      {isSubmitting ? 'Creando cuenta...' : 'Crear Cuenta'}
                     </GlassButton>
                   </div>
+
+                  {/* ✅ AGREGADO: Debug info (solo en desarrollo) */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="text-xs text-white/50 p-2 bg-black/20 rounded">
+                      <div>Password: {values.password?.length || 0} chars</div>
+                      <div>Confirm: {values.confirmPassword?.length || 0} chars</div>
+                      <div>Match: {passwordsMatch() ? 'Yes' : 'No'}</div>
+                      <div>Valid: {isStep2Valid() ? 'Yes' : 'No'}</div>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </motion.form>

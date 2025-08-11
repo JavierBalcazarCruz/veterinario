@@ -1,4 +1,4 @@
-// src/App.jsx - VERSIÓN CORREGIDA
+// src/App.jsx - VERSIÓN CORREGIDA CON TOAST DE MAYOR DURACIÓN
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -17,7 +17,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 // Estilos globales
 import './styles/globals.css';
 
-// ✅ AGREGADO: Componente para manejar redirecciones automáticas
+// Componente para manejar redirecciones automáticas
 const AppRoutes = () => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
@@ -42,14 +42,14 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* ✅ CORREGIDO: Rutas públicas sin redirección automática */}
+      {/* Rutas públicas */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/confirmar/:token" element={<ConfirmAccountPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/olvide-password/:token" element={<ResetPasswordPage />} />
 
-      {/* ✅ CORREGIDO: Rutas protegidas */}
+      {/* Rutas protegidas */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <DashboardPage />
@@ -68,7 +68,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
 
-      {/* ✅ CORREGIDO: Redirección por defecto */}
+      {/* Redirección por defecto */}
       <Route 
         path="/" 
         element={
@@ -79,7 +79,7 @@ const AppRoutes = () => {
         } 
       />
       
-      {/* ✅ CORREGIDO: Ruta 404 */}
+      {/* Ruta 404 */}
       <Route 
         path="*" 
         element={
@@ -98,53 +98,117 @@ function App() {
     <Router>
       <AuthProvider>
         <div className="App">
-          {/* ✅ CORREGIDO: Configuración de notificaciones mejorada */}
+          {/* ✅ CORREGIDO: Configuración de toast mejorada con mayor duración */}
           <Toaster
-            position="top-right"
+            position="top-center" // ✅ Cambiar a top-center para mejor visibilidad
+            reverseOrder={false}
+            gutter={8}
+            containerClassName=""
+            containerStyle={{}}
             toastOptions={{
-              duration: 4000,
+              // ✅ CORREGIDO: Duración por defecto más larga
+              duration: 6000, // 6 segundos por defecto (antes 4)
+              
+              // ✅ Estilos base mejorados
               style: {
                 background: 'rgba(15, 23, 42, 0.95)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(249, 115, 22, 0.3)',
                 color: '#fff',
                 borderRadius: '16px',
-                padding: '16px',
+                padding: '16px 20px',
                 fontSize: '14px',
                 fontWeight: '500',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                maxWidth: '420px',
+                wordBreak: 'break-word'
               },
+              
+              // ✅ CORREGIDO: Configuración específica para toast de éxito
               success: {
+                duration: 8000, // ✅ 8 segundos para mensajes de éxito importantes
                 iconTheme: {
                   primary: '#10B981',
                   secondary: '#fff',
                 },
                 style: {
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#fff',
+                  borderRadius: '16px',
+                  padding: '18px 24px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  boxShadow: '0 25px 50px -12px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2)',
+                  maxWidth: '500px',
+                  wordBreak: 'break-word',
+                  textAlign: 'center'
                 }
               },
+              
+              // ✅ Configuración para toast de error
               error: {
+                duration: 6000, // 6 segundos para errores
                 iconTheme: {
                   primary: '#EF4444',
                   secondary: '#fff',
                 },
                 style: {
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#fff',
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.4)',
+                  maxWidth: '420px'
                 }
               },
+              
+              // ✅ Configuración para toast de loading
               loading: {
+                duration: Infinity, // No se cierra automáticamente
                 iconTheme: {
                   primary: '#F97316',
                   secondary: '#fff',
                 },
                 style: {
-                  border: '1px solid rgba(249, 115, 22, 0.3)',
+                  background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.95) 0%, rgba(234, 88, 12, 0.95) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(249, 115, 22, 0.4)',
+                  color: '#fff',
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 25px 50px -12px rgba(249, 115, 22, 0.4)',
+                  maxWidth: '380px'
+                }
+              },
+              
+              // ✅ Configuración para toast de información
+              custom: {
+                duration: 5000,
+                style: {
+                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  color: '#fff',
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 25px 50px -12px rgba(59, 130, 246, 0.4)',
+                  maxWidth: '420px'
                 }
               }
             }}
           />
 
-          {/* ✅ Rutas principales */}
+          {/* Rutas principales */}
           <AppRoutes />
         </div>
       </AuthProvider>

@@ -1,4 +1,4 @@
-// src/hooks/useForm.js
+// src/hooks/useForm.js - VERSIÓN CORREGIDA
 import { useState, useCallback } from 'react';
 
 export const useForm = (initialValues = {}, validationSchema = null) => {
@@ -14,57 +14,84 @@ export const useForm = (initialValues = {}, validationSchema = null) => {
       [name]: value
     }));
 
-    // Limpiar error del campo si existe
+    // ✅ MEJORADO: Validar inmediatamente el campo si ya fue tocado
+    if (touched[name] && validationSchema) {
+      setTimeout(() => {
+        validateField(name, value);
+      }, 100); // Pequeño delay para mejor UX
+    }
+  }, [touched, validationSchema]);
+
+  // ✅ MEJORADO: Manejar cambio en input con mejor debounce
+  const handleChange = useCallback((e) => {
+    const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
+    setValues(prev => ({
+      ...prev,
+      [name]: newValue
+    }));
+
+    // ✅ Limpiar error del campo al empezar a escribir
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
     }
-  }, [errors]);
 
-  // Manejar cambio en input
-  const handleChange = useCallback((e) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-    setValue(name, newValue);
-  }, [setValue]);
+    // ✅ Validación inmediata para campos críticos después del primer toque
+    if (touched[name] && validationSchema) {
+      // Validar después de un pequeño delay para no interrumpir la escritura
+      setTimeout(() => {
+        validateField(name, newValue);
+      }, 300);
+    }
+  }, [errors, touched, validationSchema]);
 
   // Manejar blur (cuando el usuario sale del campo)
   const handleBlur = useCallback((e) => {
-    const { name } = e.target;
+    const { name, value } = e.target;
+    
     setTouched(prev => ({
       ...prev,
       [name]: true
     }));
 
-    // Validar campo individual si hay esquema de validación
+    // ✅ MEJORADO: Validar campo al salir si hay esquema de validación
     if (validationSchema) {
-      validateField(name, values[name]);
+      validateField(name, value);
     }
-  }, [values, validationSchema]);
+  }, [validationSchema]);
 
-  // Validar un campo específico
+  // ✅ MEJORADO: Validar un campo específico con mejor manejo de errores
   const validateField = useCallback((fieldName, fieldValue) => {
     if (!validationSchema) return true;
 
     try {
-      validationSchema.validateSyncAt(fieldName, { [fieldName]: fieldValue });
+      // ✅ Usar validateSyncAt para validar un campo específico
+      validationSchema.validateSyncAt(fieldName, { 
+        ...values, 
+        [fieldName]: fieldValue 
+      });
+      
+      // Si no hay error, limpiar el error del campo
       setErrors(prev => ({
         ...prev,
         [fieldName]: ''
       }));
       return true;
     } catch (error) {
+      // Si hay error, establecerlo
       setErrors(prev => ({
         ...prev,
         [fieldName]: error.message
       }));
       return false;
     }
-  }, [validationSchema]);
+  }, [validationSchema, values]);
 
-  // Validar todo el formulario
+  // ✅ MEJORADO: Validar todo el formulario
   const validate = useCallback(() => {
     if (!validationSchema) return true;
 
@@ -74,10 +101,21 @@ export const useForm = (initialValues = {}, validationSchema = null) => {
       return true;
     } catch (error) {
       const newErrors = {};
-      error.inner.forEach(err => {
-        newErrors[err.path] = err.message;
-      });
+      
+      // ✅ MEJORADO: Mejor manejo de errores múltiples
+      if (error.inner && Array.isArray(error.inner)) {
+        error.inner.forEach(err => {
+          if (err.path) {
+            newErrors[err.path] = err.message;
+          }
+        });
+      } else if (error.path && error.message) {
+        // Error único
+        newErrors[error.path] = error.message;
+      }
+      
       setErrors(newErrors);
+      console.log('🔍 Errores de validación:', newErrors); // Para debug
       return false;
     }
   }, [values, validationSchema]);
@@ -90,10 +128,13 @@ export const useForm = (initialValues = {}, validationSchema = null) => {
     setIsSubmitting(false);
   }, [initialValues]);
 
-  // Manejar submit del formulario
+  // ✅ MEJORADO: Manejar submit del formulario
   const handleSubmit = useCallback((onSubmit) => {
     return async (e) => {
-      e.preventDefault();
+      e?.preventDefault();
+      
+      console.log('📝 Iniciando submit del formulario');
+      console.log('📋 Valores actuales:', values);
       
       // Marcar todos los campos como tocados
       const allTouched = Object.keys(values).reduce((acc, key) => {
@@ -102,42 +143,69 @@ export const useForm = (initialValues = {}, validationSchema = null) => {
       }, {});
       setTouched(allTouched);
 
-      // Validar
-      if (!validate()) {
+      // ✅ MEJORADO: Validar con logs para debug
+      const isValid = validate();
+      console.log('✅ Validación:', isValid ? 'EXITOSA' : 'FALLIDA');
+      
+      if (!isValid) {
+        console.log('❌ Errores encontrados:', errors);
         return;
       }
 
       setIsSubmitting(true);
       
       try {
+        console.log('🚀 Ejecutando onSubmit...');
         await onSubmit(values);
+        console.log('✅ Submit completado exitosamente');
       } catch (error) {
-        console.error('Error en submit:', error);
+        console.error('❌ Error en submit:', error);
         
-        // Si el error viene del servidor con errores específicos de campos
+        // ✅ MEJORADO: Manejo de errores del servidor
         if (error.response?.data?.errors) {
+          console.log('🔍 Errores del servidor:', error.response.data.errors);
           setErrors(error.response.data.errors);
         }
+        
+        // Re-lanzar el error para que el componente lo maneje
+        throw error;
       } finally {
         setIsSubmitting(false);
       }
     };
-  }, [values, validate]);
+  }, [values, validate, errors]);
 
-  // Obtener props para un input específico
-  const getFieldProps = useCallback((name) => ({
-    name,
-    value: values[name] || '',
-    onChange: handleChange,
-    onBlur: handleBlur,
-    error: touched[name] ? errors[name] : ''
-  }), [values, handleChange, handleBlur, touched, errors]);
+  // ✅ MEJORADO: Obtener props para un input específico
+  const getFieldProps = useCallback((name) => {
+    const fieldError = touched[name] ? errors[name] : '';
+    
+    return {
+      name,
+      value: values[name] || '',
+      onChange: handleChange,
+      onBlur: handleBlur,
+      error: fieldError
+    };
+  }, [values, handleChange, handleBlur, touched, errors]);
+
+  // ✅ AGREGADO: Función para verificar si un campo específico es válido
+  const isFieldValid = useCallback((name) => {
+    return !errors[name] && touched[name];
+  }, [errors, touched]);
+
+  // ✅ AGREGADO: Función para verificar si un campo tiene error
+  const hasFieldError = useCallback((name) => {
+    return !!(touched[name] && errors[name]);
+  }, [errors, touched]);
 
   // Verificar si hay errores
   const hasErrors = Object.keys(errors).some(key => errors[key]);
 
   // Verificar si el formulario está sucio (ha sido modificado)
   const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
+
+  // ✅ AGREGADO: Verificar si el formulario es válido
+  const isValid = !hasErrors && Object.keys(touched).length > 0;
 
   return {
     // Valores y estado
@@ -147,8 +215,9 @@ export const useForm = (initialValues = {}, validationSchema = null) => {
     isSubmitting,
     hasErrors,
     isDirty,
+    isValid,
 
-    // Métodos
+    // Métodos principales
     setValue,
     handleChange,
     handleBlur,
@@ -156,6 +225,10 @@ export const useForm = (initialValues = {}, validationSchema = null) => {
     validate,
     validateField,
     reset,
-    getFieldProps
+    getFieldProps,
+
+    // ✅ NUEVOS: Métodos auxiliares
+    isFieldValid,
+    hasFieldError
   };
 };

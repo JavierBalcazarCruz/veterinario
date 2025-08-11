@@ -56,6 +56,13 @@ const authReducer = (state, action) => {
         ...state,
         loading: action.payload
       };
+    case 'REGISTER_SUCCESS':
+      return {
+        ...state,
+        loading: false,
+        error: null
+        // ✅ NO cambiar isAuthenticated a true después del registro
+      };
     default:
       return state;
   }
@@ -73,7 +80,7 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // ✅ CORREGIDO: Verificar token al cargar la app
+  // ✅ Verificar token al cargar la app
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -81,7 +88,6 @@ export const AuthProvider = ({ children }) => {
         console.log('Token encontrado:', token ? 'Sí' : 'No');
         
         if (token) {
-          // Verificar si el token es válido obteniendo el perfil
           console.log('Verificando token...');
           const userData = await authService.getProfile();
           console.log('Datos de usuario obtenidos:', userData);
@@ -100,11 +106,9 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('❌ Error al verificar token:', error);
-        // Token inválido o expirado
         authService.removeToken();
         dispatch({ type: 'LOGOUT' });
       } finally {
-        // Terminar loading
         setTimeout(() => {
           dispatch({ type: 'SET_LOADING', payload: false });
         }, 500);
@@ -114,7 +118,7 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // ✅ CORREGIDO: Login mejorado
+  // ✅ Login
   const login = async (credentials) => {
     try {
       dispatch({ type: 'LOGIN_START' });
@@ -123,7 +127,6 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       console.log('Respuesta del login:', response);
       
-      // Guardar token
       authService.setToken(response.token);
       console.log('Token guardado:', response.token);
       
@@ -153,31 +156,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ CORREGIDO: Registro SIN redirección automática
+  // ✅ CORREGIDO: Registro SIN autenticación automática
   const register = async (userData) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       
-      console.log('Intentando registro con:', userData);
+      console.log('Intentando registro con:', userData.email);
       const response = await authService.register(userData);
       console.log('Respuesta del registro:', response);
       
-      // ✅ NO cambiar estado de autenticación después del registro
-      // Solo terminar el loading
-      dispatch({ type: 'SET_LOADING', payload: false });
+      // ✅ CAMBIO PRINCIPAL: Solo marcar como éxito, NO autenticar
+      dispatch({ type: 'REGISTER_SUCCESS' });
       
-      // ✅ NO mostrar toast, la página maneja el éxito
+      // ✅ NO mostrar toast aquí, dejarlo para la página
+      console.log('✅ Registro exitoso, pendiente de verificación');
       return response;
     } catch (error) {
       console.error('❌ Error en registro:', error);
       const errorMessage = error.response?.data?.msg || 'Error en el registro';
       dispatch({ type: 'LOGIN_ERROR', payload: errorMessage });
+      // ✅ Sí mostrar toast de error
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  // ✅ CORREGIDO: Logout mejorado
+  // ✅ Logout
   const logout = () => {
     console.log('Cerrando sesión...');
     authService.removeToken();
@@ -196,7 +200,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
-  // ✅ CORREGIDO: Verificar rol del usuario
+  // ✅ Verificar rol del usuario
   const hasRole = (requiredRole) => {
     if (!state.user) return false;
     

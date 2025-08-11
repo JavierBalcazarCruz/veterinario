@@ -1,4 +1,4 @@
-/* src/styles/globals.css - VERSIÓN CORREGIDA */
+/* src/styles/globals.css - VERSIÓN FINAL CORREGIDA */
 
 /* Importar fuente moderna ANTES de Tailwind */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -15,7 +15,7 @@
   --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
 }
 
-/* Reset y base styles */
+/* ✅ CORREGIDO: Reset más específico para evitar problemas de layout */
 * {
   margin: 0;
   padding: 0;
@@ -25,16 +25,27 @@
 html {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 body {
   margin: 0;
+  padding: 0;
   background-color: #0f172a;
   overflow-x: hidden;
   font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  /* ✅ REMOVIDO: display: flex que causaba problemas */
 }
 
-/* Animaciones personalizadas */
+/* ✅ CORREGIDO: #root sin restricciones de layout */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  /* ✅ REMOVIDO: max-width, margin auto, padding que centraban todo */
+}
+
+/* Animaciones personalizadas mejoradas */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -152,6 +163,26 @@ body {
   }
 }
 
+/* ✅ CORREGIDO: Mejores animaciones de entrada */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes success-celebration {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(5deg); }
+  50% { transform: scale(1.2) rotate(-5deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
 /* Utilidades personalizadas */
 @layer utilities {
   .glass-effect {
@@ -180,9 +211,23 @@ body {
     animation: glow 2s ease-in-out infinite alternate;
   }
 
-  /* Scrollbar personalizada */
+  .animate-modal-enter {
+    animation: modalEnter 0.3s ease-out;
+  }
+
+  .animate-success {
+    animation: success-celebration 0.6s ease-out;
+  }
+
+  /* ✅ MEJORADO: Scrollbar personalizada */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -193,13 +238,14 @@ body {
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
+    transition: background 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.5);
   }
 
-  /* Efectos de hover */
+  /* Efectos de hover mejorados */
   .hover-lift {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
@@ -221,37 +267,54 @@ body {
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
+
+  /* ✅ NUEVO: Utilidades para mejores transiciones */
+  .transition-all-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-transform-smooth {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
-/* ✅ CORREGIDO: Componentes personalizados */
+/* ✅ CORREGIDOS: Componentes mejorados */
 @layer components {
   .btn-glass {
     @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white font-medium transition-all duration-300;
   }
   
   .btn-glass:hover {
-    @apply bg-white/20 border-white/30;
+    @apply bg-white/20 border-white/30 transform scale-105;
   }
   
   .btn-glass:focus {
     @apply outline-none ring-2 ring-white/50;
   }
 
+  .btn-glass:active {
+    @apply transform scale-95;
+  }
+
   .card-glass {
-    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-6 shadow-glass;
+    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-6 shadow-glass transition-all duration-300;
+  }
+
+  .card-glass:hover {
+    @apply bg-white/15 border-white/30;
   }
 
   .input-glass {
-    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50;
+    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 transition-all duration-300;
   }
   
   .input-glass:focus {
-    @apply outline-none ring-2 ring-orange-500/50 border-orange-400/50;
+    @apply outline-none ring-2 ring-orange-500/50 border-orange-400/50 bg-white/15;
   }
 
-  /* ✅ CORREGIDO: Botones con variantes usando CSS personalizado */
+  /* ✅ CORREGIDOS: Botones con mejor feedback visual */
   .btn-primary {
-    @apply text-white shadow-lg border rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    @apply text-white shadow-lg border rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
     background: linear-gradient(to right, #f97316, #ea580c);
     border-color: rgba(249, 115, 22, 0.3);
     box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.25);
@@ -260,18 +323,27 @@ body {
   .btn-primary:hover {
     background: linear-gradient(to right, #fb923c, #f97316);
     box-shadow: 0 20px 25px -5px rgba(249, 115, 22, 0.4);
+    @apply scale-105;
+  }
+
+  .btn-primary:active {
+    @apply scale-95;
   }
 
   .btn-secondary {
-    @apply bg-white/10 text-white border border-white/20 rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    @apply bg-white/10 text-white border border-white/20 rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
   }
   
   .btn-secondary:hover {
-    @apply bg-white/20 border-white/30;
+    @apply bg-white/20 border-white/30 scale-105;
+  }
+
+  .btn-secondary:active {
+    @apply scale-95;
   }
 
   .btn-danger {
-    @apply text-white shadow-lg border rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    @apply text-white shadow-lg border rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
     background: linear-gradient(to right, #ef4444, #dc2626);
     border-color: rgba(239, 68, 68, 0.3);
     box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.25);
@@ -279,54 +351,45 @@ body {
   
   .btn-danger:hover {
     background: linear-gradient(to right, #f87171, #ef4444);
+    @apply scale-105;
+  }
+
+  .btn-danger:active {
+    @apply scale-95;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-white border border-transparent rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    @apply bg-transparent text-white border border-transparent rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
   }
   
   .btn-ghost:hover {
-    @apply bg-white/10 border-white/20;
+    @apply bg-white/10 border-white/20 scale-105;
   }
 
-  /* Cards con variantes */
-  .card-hover {
-    @apply card-glass transition-all duration-300 cursor-pointer;
-  }
-  
-  .card-hover:hover {
-    @apply bg-white/15 shadow-xl border-white/30;
-    transform: translateY(-4px);
-    box-shadow: 0 25px 50px -12px rgba(255, 255, 255, 0.1);
+  .btn-ghost:active {
+    @apply scale-95;
   }
 
-  .card-gradient {
-    @apply backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-glass;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  /* ✅ NUEVOS: Componentes para estados de éxito */
+  .success-card {
+    @apply card-glass;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border-color: rgba(34, 197, 94, 0.3);
   }
 
-  /* Inputs con estados */
-  .input-error {
-    @apply input-glass;
-    border-color: rgba(239, 68, 68, 0.5);
-  }
-  
-  .input-error:focus {
-    @apply ring-red-500/50;
-    border-color: rgba(239, 68, 68, 0.5);
+  .info-card {
+    @apply card-glass;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
   }
 
-  .input-success {
-    @apply input-glass;
-    border-color: rgba(34, 197, 94, 0.5);
-  }
-  
-  .input-success:focus {
-    @apply ring-green-500/50;
-    border-color: rgba(34, 197, 94, 0.5);
+  .warning-card {
+    @apply card-glass;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(234, 179, 8, 0.05) 100%);
+    border-color: rgba(234, 179, 8, 0.3);
   }
 
-  /* Estados de loading */
+  /* Loading states mejorados */
   .loading-dots::after {
     content: '';
     animation: dots 1.5s infinite;
@@ -336,20 +399,21 @@ body {
     @apply w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
   }
 
-  /* Overlay y modales */
-  .overlay {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+  .loading-pulse {
+    @apply animate-pulse bg-white/20 rounded;
   }
 
-  .modal {
-    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  /* Modales mejorados */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+    animation: fadeIn 0.3s ease-out;
   }
 
   .modal-content {
-    @apply w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-glass overflow-hidden;
+    @apply w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-glass overflow-hidden animate-modal-enter;
   }
 
-  /* Navegación móvil */
+  /* Navegación móvil mejorada */
   .nav-mobile {
     @apply fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-white/10 border-t border-white/20 px-4 py-2 z-40;
   }
@@ -361,76 +425,11 @@ body {
   .nav-item-active {
     @apply nav-item rounded-xl text-white;
     background: rgba(249, 115, 22, 0.2);
-  }
-
-  /* Badges y etiquetas */
-  .badge {
-    @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
-  }
-
-  .badge-primary {
-    @apply badge border;
-    background: rgba(249, 115, 22, 0.2);
-    color: rgb(251, 146, 60);
-    border-color: rgba(249, 115, 22, 0.3);
-  }
-
-  .badge-success {
-    @apply badge border;
-    background: rgba(34, 197, 94, 0.2);
-    color: rgb(134, 239, 172);
-    border-color: rgba(34, 197, 94, 0.3);
-  }
-
-  .badge-warning {
-    @apply badge border;
-    background: rgba(234, 179, 8, 0.2);
-    color: rgb(253, 224, 71);
-    border-color: rgba(234, 179, 8, 0.3);
-  }
-
-  .badge-danger {
-    @apply badge border;
-    background: rgba(239, 68, 68, 0.2);
-    color: rgb(248, 113, 113);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  /* Alertas */
-  .alert {
-    @apply p-4 rounded-xl border backdrop-blur-md;
-  }
-
-  .alert-info {
-    @apply alert;
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.2);
-    color: rgb(147, 197, 253);
-  }
-
-  .alert-success {
-    @apply alert;
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.2);
-    color: rgb(134, 239, 172);
-  }
-
-  .alert-warning {
-    @apply alert;
-    background: rgba(234, 179, 8, 0.1);
-    border-color: rgba(234, 179, 8, 0.2);
-    color: rgb(253, 224, 71);
-  }
-
-  .alert-error {
-    @apply alert;
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.2);
-    color: rgb(248, 113, 113);
+    border: 1px solid rgba(249, 115, 22, 0.3);
   }
 }
 
-/* Responsive adjustments */
+/* ✅ MEJORADOS: Responsive adjustments */
 @media (max-width: 768px) {
   :root {
     --glass-blur: 15px;
@@ -447,6 +446,14 @@ body {
   .mobile-text {
     @apply text-sm;
   }
+
+  /* ✅ Mejores botones en móvil */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply py-4 text-base;
+  }
 }
 
 @media (max-width: 480px) {
@@ -457,9 +464,16 @@ body {
   .mobile-xs-padding {
     @apply px-2;
   }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply py-3 text-sm;
+  }
 }
 
-/* Fixes para Safari */
+/* ✅ MEJORADOS: Fixes para Safari */
 @supports (-webkit-backdrop-filter: blur(20px)) {
   .glass-effect {
     -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -478,25 +492,6 @@ body {
   }
 }
 
-/* Estilos para modo oscuro (opcional) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --glass-opacity: 0.15;
-  }
-}
-
-/* Print styles */
-@media print {
-  .glass-effect,
-  .card-glass,
-  .btn-glass,
-  .input-glass {
-    background: white !important;
-    border: 1px solid #ccc !important;
-    backdrop-filter: none !important;
-  }
-}
-
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -508,9 +503,13 @@ body {
   }
 }
 
-/* Focus styles for accessibility */
+/* Focus styles mejorados para accessibility */
 .btn-glass:focus-visible,
-.input-glass:focus-visible {
+.input-glass:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-danger:focus-visible,
+.btn-ghost:focus-visible {
   outline: 2px solid rgba(249, 115, 22, 0.8);
   outline-offset: 2px;
 }
@@ -523,5 +522,30 @@ body {
   .input-glass {
     border-width: 2px;
     background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ✅ NUEVO: Estilos para pantallas de éxito */
+.celebration-bounce {
+  animation: success-celebration 0.6s ease-out;
+}
+
+.success-glow {
+  box-shadow: 
+    0 0 20px rgba(34, 197, 94, 0.4),
+    0 0 40px rgba(34, 197, 94, 0.2),
+    0 0 60px rgba(34, 197, 94, 0.1);
+}
+
+/* Print styles */
+@media print {
+  .glass-effect,
+  .card-glass,
+  .btn-glass,
+  .input-glass {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    backdrop-filter: none !important;
+    color: black !important;
   }
 }

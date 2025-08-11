@@ -1,5 +1,5 @@
 // src/services/appointmentService.js - VERSIÓN CORREGIDA
-import api from './authService'; // ✅ Corregido: importa la instancia de api
+import api from './apiService'; // ✅ Importar desde el nuevo archivo
 
 export const appointmentService = {
   // ✅ Obtener todas las citas
@@ -8,6 +8,7 @@ export const appointmentService = {
       const response = await api.get('/citas');
       return response.data;
     } catch (error) {
+      console.error('❌ Error al obtener citas:', error);
       throw error;
     }
   },
@@ -215,6 +216,7 @@ export const appointmentService = {
       const response = await api.get(`/citas/horarios-disponibles?${params.toString()}`);
       return response.data;
     } catch (error) {
+      console.log('⚠️ Endpoint horarios-disponibles no existe, usando horarios por defecto');
       // Si no existe el endpoint, devolver horarios por defecto
       return {
         success: true,
@@ -410,4 +412,3 @@ export const appointmentService = {
   filterAvailableHours: (allHours, occupiedHours) => {
     return allHours.filter(hour => !occupiedHours.includes(hour));
   }
-};
