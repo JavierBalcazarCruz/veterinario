@@ -8,7 +8,7 @@ const Header = ({ title, subtitle, children }) => {
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-4 lg:p-6"
+      className="p-4 lg:p-6 relative z-30"
     >
       <GlassCard className="p-6">
         <div className="flex items-center justify-between">
