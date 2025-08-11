@@ -1,4 +1,4 @@
-// src/components/patients/AddPatientModal.jsx - VERSIÓN CORREGIDA
+// src/components/patients/AddPatientModal.jsx - VERSIÓN FINAL CORREGIDA
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { X, User, PawPrint, Phone, MapPin, Save } from 'lucide-react';
@@ -8,10 +8,10 @@ import GlassCard from '../ui/GlassCard';
 import GlassButton from '../ui/GlassButton';
 import GlassInput from '../ui/GlassInput';
 import { useForm } from '../../hooks/useForm';
-import { patientService } from '../../services/patientService'; // ✅ Importar servicio real
+import { patientService } from '../../services/patientService';
 import toast from 'react-hot-toast';
 
-// ✅ Esquema de validación actualizado para coincidir con backend
+// ✅ CORREGIDO: Esquema de validación que coincide EXACTAMENTE con el backend
 const validationSchema = yup.object({
   nombre_mascota: yup
     .string()
@@ -48,7 +48,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
   const [razas, setRazas] = useState([]);
   const [loadingRazas, setLoadingRazas] = useState(false);
 
-  // ✅ Cargar razas desde el servicio
+  // ✅ Cargar razas al abrir el modal
   useEffect(() => {
     if (isOpen) {
       loadRazas();
@@ -59,9 +59,10 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       setLoadingRazas(true);
       const razasData = await patientService.getRaces();
+      console.log('✅ Razas cargadas:', razasData);
       setRazas(razasData);
     } catch (error) {
-      console.error('Error al cargar razas:', error);
+      console.error('❌ Error al cargar razas:', error);
       // Fallback a razas por defecto
       setRazas([
         { id: 1, nombre: 'Mestizo', especie: 'Perro' },
@@ -80,30 +81,38 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
+  // ✅ CORREGIDO: Valores iniciales que coinciden EXACTAMENTE con el backend
   const {
     values,
     handleSubmit,
     getFieldProps,
     isSubmitting,
     reset,
+    setValue,
     errors
   } = useForm(
     {
-      // ✅ Valores iniciales que coinciden con el backend
+      // Datos del paciente
       nombre_mascota: '',
       fecha_nacimiento: '',
       peso: '',
       id_raza: '',
+      foto_url: '',
+      
+      // Datos del propietario
       nombre_propietario: '',
       apellidos_propietario: '',
       email: '',
       telefono: '',
       tipo_telefono: 'celular',
+      
+      // Datos de dirección (opcionales)
       calle: '',
       numero_ext: '',
       numero_int: '',
       codigo_postal: '',
       colonia: '',
+      id_municipio: 1,
       referencias: ''
     },
     validationSchema
@@ -115,37 +124,83 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     onClose();
   };
 
-  // ✅ Enviar datos usando el servicio real
+  // ✅ CORREGIDO: Enviar datos con el formato EXACTO que espera el backend
   const onSubmit = async (formData) => {
     try {
-      console.log('Datos del formulario antes de enviar:', formData);
+      console.log('📤 Datos del formulario antes de enviar:', formData);
       
-      // ✅ Usar el servicio real de pacientes
-      const newPatient = await patientService.create(formData);
+      // ✅ Formatear datos EXACTAMENTE como espera el backend
+      const dataToSend = {
+        // Datos del propietario (OBLIGATORIOS)
+        nombre_propietario: formData.nombre_propietario.trim(),
+        apellidos_propietario: formData.apellidos_propietario.trim(),
+        telefono: formData.telefono.replace(/\D/g, ''), // Solo números
+        email: formData.email ? formData.email.trim().toLowerCase() : null,
+        tipo_telefono: formData.tipo_telefono || 'celular',
+        
+        // Datos del paciente (OBLIGATORIOS)
+        nombre_mascota: formData.nombre_mascota.trim(),
+        peso: parseFloat(formData.peso),
+        id_raza: parseInt(formData.id_raza),
+        
+        // Datos opcionales
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        foto_url: formData.foto_url || null,
+        
+        // Datos de dirección (opcionales)
+        calle: formData.calle ? formData.calle.trim() : null,
+        numero_ext: formData.numero_ext ? formData.numero_ext.trim() : null,
+        numero_int: formData.numero_int ? formData.numero_int.trim() : null,
+        codigo_postal: formData.codigo_postal ? formData.codigo_postal.trim() : null,
+        colonia: formData.colonia ? formData.colonia.trim() : null,
+        id_municipio: parseInt(formData.id_municipio) || 1,
+        referencias: formData.referencias ? formData.referencias.trim() : null
+      };
+
+      console.log('📋 Datos formateados para enviar:', dataToSend);
       
-      console.log('Paciente creado exitosamente:', newPatient);
+      // ✅ Validar datos antes de enviar
+      const validation = patientService.validate(dataToSend);
+      if (!validation.isValid) {
+        console.error('❌ Errores de validación:', validation.errors);
+        Object.keys(validation.errors).forEach(field => {
+          toast.error(`${field}: ${validation.errors[field]}`);
+        });
+        return;
+      }
       
-      // ✅ Llamar callback de éxito con los datos del nuevo paciente
-      onSuccess(newPatient.data || newPatient);
+      // ✅ Enviar al backend
+      const newPatient = await patientService.create(dataToSend);
+      console.log('✅ Paciente creado exitosamente:', newPatient);
+      
+      // ✅ Callback de éxito
+      if (onSuccess) {
+        onSuccess(newPatient.data || newPatient);
+      }
       
       toast.success('Paciente agregado exitosamente');
       handleClose();
     } catch (error) {
-      console.error('Error al agregar paciente:', error);
+      console.error('❌ Error al agregar paciente:', error);
       
-      // ✅ Manejo de errores mejorado
-      const errorMessage = error.response?.data?.msg || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Error al agregar paciente';
-      
-      toast.error(errorMessage);
-      
-      // Si hay errores específicos de campos, mostrarlos
-      if (error.response?.data?.errors) {
-        Object.keys(error.response.data.errors).forEach(field => {
-          toast.error(`${field}: ${error.response.data.errors[field]}`);
-        });
+      // ✅ Manejo detallado de errores
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        if (errorData.errors) {
+          // Errores de validación específicos
+          Object.keys(errorData.errors).forEach(field => {
+            toast.error(`${field}: ${errorData.errors[field]}`);
+          });
+        } else if (errorData.msg) {
+          toast.error(errorData.msg);
+        } else {
+          toast.error('Error al agregar paciente');
+        }
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error('Error de conexión al servidor');
       }
     }
   };
@@ -162,13 +217,34 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     setStep(step - 1);
   };
 
-  // ✅ Validar paso actual
+  // ✅ CORREGIDO: Validar paso actual
   const validateCurrentStep = () => {
     switch (step) {
       case 1:
-        return values.nombre_mascota && values.peso && values.id_raza;
+        const hasRequiredPetData = values.nombre_mascota?.trim() && 
+                                  values.peso && 
+                                  parseFloat(values.peso) > 0 && 
+                                  values.id_raza;
+        if (!hasRequiredPetData) {
+          if (!values.nombre_mascota?.trim()) toast.error('El nombre de la mascota es obligatorio');
+          if (!values.peso || parseFloat(values.peso) <= 0) toast.error('El peso debe ser mayor a 0');
+          if (!values.id_raza) toast.error('Selecciona una raza');
+        }
+        return hasRequiredPetData;
+        
       case 2:
-        return values.nombre_propietario && values.apellidos_propietario && values.telefono;
+        const hasRequiredOwnerData = values.nombre_propietario?.trim() && 
+                                    values.apellidos_propietario?.trim() && 
+                                    values.telefono?.trim() &&
+                                    values.telefono.replace(/\D/g, '').length >= 10;
+        if (!hasRequiredOwnerData) {
+          if (!values.nombre_propietario?.trim()) toast.error('El nombre del propietario es obligatorio');
+          if (!values.apellidos_propietario?.trim()) toast.error('Los apellidos son obligatorios');
+          if (!values.telefono?.trim()) toast.error('El teléfono es obligatorio');
+          if (values.telefono && values.telefono.replace(/\D/g, '').length < 10) toast.error('El teléfono debe tener al menos 10 dígitos');
+        }
+        return hasRequiredOwnerData;
+        
       default:
         return true;
     }
@@ -261,7 +337,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         <GlassInput
                           {...getFieldProps('nombre_mascota')}
                           placeholder="Nombre de la mascota"
-                          label="Nombre de la Mascota"
+                          label="Nombre de la Mascota *"
                           icon={<PawPrint size={20} />}
                           error={errors.nombre_mascota}
                         />
@@ -278,13 +354,13 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         type="number"
                         step="0.1"
                         placeholder="Peso en kg"
-                        label="Peso (kg)"
+                        label="Peso (kg) *"
                         error={errors.peso}
                       />
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-white mb-3">
-                          Raza
+                          Raza *
                         </label>
                         {loadingRazas ? (
                           <div className="flex items-center justify-center p-4 bg-white/5 rounded-xl">
@@ -356,7 +432,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                       <GlassInput
                         {...getFieldProps('nombre_propietario')}
                         placeholder="Nombre"
-                        label="Nombre"
+                        label="Nombre *"
                         icon={<User size={20} />}
                         error={errors.nombre_propietario}
                       />
@@ -364,7 +440,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                       <GlassInput
                         {...getFieldProps('apellidos_propietario')}
                         placeholder="Apellidos"
-                        label="Apellidos"
+                        label="Apellidos *"
                         icon={<User size={20} />}
                         error={errors.apellidos_propietario}
                       />
@@ -373,7 +449,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         {...getFieldProps('telefono')}
                         type="tel"
                         placeholder="Teléfono (10 dígitos)"
-                        label="Teléfono"
+                        label="Teléfono *"
                         icon={<Phone size={20} />}
                         error={errors.telefono}
                       />
@@ -487,7 +563,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                 {step < 3 ? (
                   <GlassButton
                     onClick={nextStep}
-                    disabled={!validateCurrentStep() || isSubmitting}
+                    disabled={isSubmitting}
                   >
                     Siguiente
                   </GlassButton>
@@ -496,7 +572,6 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                     onClick={handleSubmit(onSubmit)}
                     loading={isSubmitting}
                     icon={!isSubmitting && <Save size={20} />}
-                    disabled={!validateCurrentStep()}
                   >
                     {isSubmitting ? 'Guardando...' : 'Guardar Paciente'}
                   </GlassButton>

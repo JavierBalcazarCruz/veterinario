@@ -166,85 +166,131 @@ const perfil = async (req, res) => {
 };
 
 /* Confirmar Cuenta  del doctor*/
+/* Confirmar Cuenta del doctor - VERSIÓN CORREGIDA */
+/* Confirmar Cuenta del doctor - VERSIÓN SUGERIDA */
+/* Confirmar Cuenta del doctor - VERSIÓN CORREGIDA */
 const confirmar = async (req, res) => {
     let connection;
     try {
         const token = req.params.token?.trim();
- 
+        console.log('🔍 Token recibido para confirmación:', token);
+
         // Validaciones del token
         if (!token) {
+            console.log('❌ Token no proporcionado');
             return res.status(400).json({ msg: 'Token no proporcionado' });
         }
- 
-        // Validar que token solo contenga caracteres permitidos
+        
         const tokenRegex = /^[a-zA-Z0-9\-_]+$/;
         if (!tokenRegex.test(token)) {
+            console.log('❌ Token con formato inválido');
             return res.status(400).json({ msg: 'Token inválido' });
         }
- 
+
         connection = await conectarDB();
- 
-        // Verificar token usando parámetros preparados
-        const [tokens] = await connection.execute(
-            `SELECT ut.id, ut.id_usuario, ut.expires_at, u.account_status 
+        console.log('✅ Conexión a BD establecida');
+
+        // Paso 1: Buscar el token en la BD y verificar el estado del usuario asociado
+        console.log('🔍 Buscando token y estado de cuenta asociado...');
+        const [tokenInfoArray] = await connection.execute(
+            `SELECT ut.id, ut.id_usuario, ut.expires_at, ut.used_at, u.account_status, u.nombre, u.email
              FROM user_tokens ut
              INNER JOIN usuarios u ON u.id = ut.id_usuario
-             WHERE ut.token_hash = ? 
-             AND ut.token_type = 'verification'
-             AND ut.expires_at > NOW()
-             AND ut.used_at IS NULL
-             AND u.account_status = 'pending'
+             WHERE ut.token_hash = ? AND ut.token_type = 'verification'
              LIMIT 1`,
             [token]
         );
-        if (tokens.length === 0) {
-            return res.status(400).json({ 
-                msg: 'Token no valido'
+
+        if (tokenInfoArray.length === 0) {
+            console.log('❌ Token no encontrado en la base de datos.');
+            return res.status(400).json({ msg: 'Token no válido. Solicita un nuevo enlace de verificación.' });
+        }
+
+        const tokenInfo = tokenInfoArray[0];
+
+        // Paso 2: Evaluar si el token ha expirado o ya se usó
+        if (new Date(tokenInfo.expires_at) < new Date()) {
+            console.log('⏰ Token expirado');
+            return res.status(400).json({
+                msg: 'El enlace ha expirado. Solicita un nuevo enlace de verificación.'
             });
         }
- 
-        // Iniciar transacción
+        
+        if (tokenInfo.used_at) {
+            console.log('ℹ️ Token ya fue utilizado');
+            return res.status(200).json({
+                msg: 'Tu cuenta ya está verificada. ¡Puedes iniciar sesión!'
+            });
+        }
+        
+        // Paso 3: Evaluar el estado actual de la cuenta
+        if (tokenInfo.account_status === 'active') {
+            console.log('ℹ️ Cuenta ya está activa:', tokenInfo.email);
+            return res.status(200).json({
+                msg: 'Tu cuenta ya está verificada. ¡Puedes iniciar sesión!'
+            });
+        }
+
+        // Si llegamos aquí, el token es válido, no ha expirado, no se ha usado y la cuenta está pendiente.
+        console.log('✅ Token válido encontrado para usuario:', tokenInfo.email);
+
+        // Paso 4: Activar la cuenta y marcar el token como usado en una transacción
         await connection.beginTransaction();
- 
+        console.log('🔄 Transacción iniciada');
+
         try {
-            // Activar cuenta
+            // Actualizar cuenta
             await connection.execute(
-                `UPDATE usuarios 
-                 SET account_status = 'active',
-                     email_verified_at = NOW() 
+                `UPDATE usuarios SET account_status = 'active', email_verified_at = NOW()
                  WHERE id = ? AND account_status = 'pending'`,
-                [tokens[0].id_usuario]
+                [tokenInfo.id_usuario]
             );
- 
+
             // Marcar token como usado
             await connection.execute(
-                `UPDATE user_tokens 
-                 SET used_at = NOW() 
-                 WHERE id = ? AND used_at IS NULL`,
-                [tokens[0].id]
+                `UPDATE user_tokens SET used_at = NOW() WHERE id = ?`,
+                [tokenInfo.id]
             );
- 
+            
             await connection.commit();
-            res.json({ msg: 'Cuenta verificada correctamente' });
- 
+            console.log('✅ Transacción completada exitosamente');
+
+            // Respuesta de éxito
+            return res.status(200).json({
+                msg: '¡Cuenta verificada exitosamente! Ya puedes iniciar sesión en MollyVet.',
+                success: true,
+                user: {
+                    email: tokenInfo.email,
+                    nombre: tokenInfo.nombre
+                }
+            });
+
         } catch (error) {
             await connection.rollback();
+            console.error('❌ Error en transacción:', error);
+            // Re-lanzar el error para que el bloque catch principal lo maneje
             throw error;
         }
- 
+
     } catch (error) {
-        console.log('Error en confirmación:', error.message);
-        res.status(500).json({ msg: 'Error en el servidor' });
+        console.error('❌ Error general en confirmación:', error.message);
+        res.status(500).json({
+            msg: 'Error en el servidor al confirmar la cuenta. Inténtalo más tarde.'
+        });
     } finally {
         if (connection) {
             try {
                 await connection.end();
+                console.log('🔌 Conexión a BD cerrada');
             } catch (error) {
-                console.log('Error al cerrar conexión:', error.message);
+                console.error('❌ Error al cerrar conexión:', error.message);
             }
         }
     }
 };
+
+
+
 
 
  /* Autentificar veterinario */

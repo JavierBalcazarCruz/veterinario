@@ -1,4 +1,4 @@
-// src/context/AuthContext.jsx
+// src/context/AuthContext.jsx - VERSIÓN CORREGIDA
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import { authService } from '../services/authService';
 import toast from 'react-hot-toast';
@@ -51,6 +51,11 @@ const authReducer = (state, action) => {
         ...state,
         error: null
       };
+    case 'SET_LOADING':
+      return {
+        ...state,
+        loading: action.payload
+      };
     default:
       return state;
   }
@@ -68,14 +73,19 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Verificar token al cargar la app
+  // ✅ CORREGIDO: Verificar token al cargar la app
   useEffect(() => {
     const initAuth = async () => {
       try {
         const token = authService.getToken();
+        console.log('Token encontrado:', token ? 'Sí' : 'No');
+        
         if (token) {
-          // Verificar si el token es válido
+          // Verificar si el token es válido obteniendo el perfil
+          console.log('Verificando token...');
           const userData = await authService.getProfile();
+          console.log('Datos de usuario obtenidos:', userData);
+          
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
@@ -83,31 +93,39 @@ export const AuthProvider = ({ children }) => {
               token: token
             }
           });
+          console.log('✅ Sesión restaurada exitosamente');
+        } else {
+          console.log('❌ No hay token, usuario no autenticado');
+          dispatch({ type: 'SET_LOADING', payload: false });
         }
       } catch (error) {
+        console.error('❌ Error al verificar token:', error);
         // Token inválido o expirado
         authService.removeToken();
         dispatch({ type: 'LOGOUT' });
       } finally {
-        // Terminar loading inicial
-        if (state.loading) {
-          dispatch({ type: 'LOGIN_ERROR', payload: null });
-        }
+        // Terminar loading
+        setTimeout(() => {
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }, 500);
       }
     };
 
     initAuth();
   }, []);
 
-  // Login
+  // ✅ CORREGIDO: Login mejorado
   const login = async (credentials) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       
+      console.log('Intentando login con:', credentials.email);
       const response = await authService.login(credentials);
+      console.log('Respuesta del login:', response);
       
       // Guardar token
       authService.setToken(response.token);
+      console.log('Token guardado:', response.token);
       
       dispatch({
         type: 'LOGIN_SUCCESS',
@@ -124,8 +142,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       toast.success(`¡Bienvenido ${response.nombre}!`);
+      console.log('✅ Login exitoso');
       return response;
     } catch (error) {
+      console.error('❌ Error en login:', error);
       const errorMessage = error.response?.data?.msg || 'Error al iniciar sesión';
       dispatch({ type: 'LOGIN_ERROR', payload: errorMessage });
       toast.error(errorMessage);
@@ -133,18 +153,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Registro
+  // ✅ CORREGIDO: Registro SIN redirección automática
   const register = async (userData) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       
+      console.log('Intentando registro con:', userData);
       const response = await authService.register(userData);
+      console.log('Respuesta del registro:', response);
       
-      toast.success('Registro exitoso. Revisa tu email para confirmar tu cuenta.');
-      dispatch({ type: 'LOGOUT' }); // Limpiar estado después del registro
+      // ✅ NO cambiar estado de autenticación después del registro
+      // Solo terminar el loading
+      dispatch({ type: 'SET_LOADING', payload: false });
       
+      // ✅ NO mostrar toast, la página maneja el éxito
       return response;
     } catch (error) {
+      console.error('❌ Error en registro:', error);
       const errorMessage = error.response?.data?.msg || 'Error en el registro';
       dispatch({ type: 'LOGIN_ERROR', payload: errorMessage });
       toast.error(errorMessage);
@@ -152,11 +177,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout
+  // ✅ CORREGIDO: Logout mejorado
   const logout = () => {
+    console.log('Cerrando sesión...');
     authService.removeToken();
     dispatch({ type: 'LOGOUT' });
     toast.success('Sesión cerrada correctamente');
+    console.log('✅ Sesión cerrada');
   };
 
   // Actualizar perfil de usuario
@@ -169,7 +196,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
-  // Verificar rol del usuario
+  // ✅ CORREGIDO: Verificar rol del usuario
   const hasRole = (requiredRole) => {
     if (!state.user) return false;
     

@@ -1,8 +1,8 @@
-// src/pages/ConfirmAccountPage.jsx
+// src/pages/ConfirmAccountPage.jsx - VERSIÓN CORREGIDA
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircle, XCircle, RefreshCw, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, ArrowRight, AlertCircle } from 'lucide-react';
 
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
@@ -11,8 +11,9 @@ import { authService } from '../services/authService';
 
 const ConfirmAccountPage = () => {
   const { token } = useParams();
-  const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
+  const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error', 'already_verified'
   const [message, setMessage] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
   const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
@@ -22,15 +23,50 @@ const ConfirmAccountPage = () => {
   const confirmAccount = async () => {
     try {
       setStatus('loading');
-      await authService.confirmAccount(token);
-      setStatus('success');
-      setMessage('¡Tu cuenta ha sido verificada exitosamente!');
+      console.log('🔍 Confirmando cuenta con token:', token);
+      
+      const response = await authService.confirmAccount(token);
+      console.log('✅ Respuesta de confirmación:', response);
+      
+      // ✅ CORREGIDO: Verificar diferentes tipos de respuesta exitosa
+      if (response.success || response.msg.includes('verificada') || response.msg.includes('verificado')) {
+        if (response.msg.includes('ya está verificada') || response.msg.includes('ya está verificado')) {
+          setStatus('already_verified');
+          setMessage('Tu cuenta ya estaba verificada anteriormente');
+        } else {
+          setStatus('success');
+          setMessage(response.msg);
+        }
+        setUserInfo(response.user);
+      } else {
+        setStatus('success');
+        setMessage(response.msg);
+      }
     } catch (error) {
-      setStatus('error');
-      setMessage(
-        error.response?.data?.msg || 
-        'Error al verificar la cuenta. El enlace puede haber expirado.'
-      );
+      console.error('❌ Error al confirmar cuenta:', error);
+      
+      // ✅ MEJORADO: Manejo inteligente de errores
+      const errorResponse = error.response?.data;
+      
+      if (error.response?.status === 200) {
+        // Si es status 200 pero llegó al catch, es probablemente éxito
+        setStatus('success');
+        setMessage(errorResponse?.msg || '¡Cuenta verificada exitosamente!');
+      } else if (errorResponse?.msg) {
+        // Verificar si el mensaje indica éxito aunque sea un "error"
+        if (errorResponse.msg.includes('verificada') || 
+            errorResponse.msg.includes('iniciar sesión') ||
+            errorResponse.msg.includes('ya está')) {
+          setStatus('already_verified');
+          setMessage(errorResponse.msg);
+        } else {
+          setStatus('error');
+          setMessage(errorResponse.msg);
+        }
+      } else {
+        setStatus('error');
+        setMessage('Error al verificar la cuenta. El enlace puede haber expirado.');
+      }
     }
   };
 
@@ -111,7 +147,7 @@ const ConfirmAccountPage = () => {
                     <CheckCircle size={16} className="text-green-400" />
                   </div>
                   <div className="text-left">
-                    <p className="text-green-400 font-medium">Tu cuenta está activa</p>
+                    <p className="text-green-400 font-medium">¡Tu cuenta está activa!</p>
                     <p className="text-green-400/70 text-sm">
                       Ya puedes iniciar sesión y comenzar a usar MollyVet
                     </p>
@@ -126,6 +162,73 @@ const ConfirmAccountPage = () => {
                   className="group"
                 >
                   Iniciar Sesión
+                </GlassButton>
+              </Link>
+            </motion.div>
+          </motion.div>
+        );
+
+      case 'already_verified':
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="mb-6"
+            >
+              <AlertCircle size={64} className="text-blue-400 mx-auto" />
+            </motion.div>
+            
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-2xl font-bold text-white mb-4"
+            >
+              Cuenta Ya Verificada
+            </motion.h2>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-white/70 mb-8"
+            >
+              {message}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-4"
+            >
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                    <CheckCircle size={16} className="text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-blue-400 font-medium">Tu cuenta está lista</p>
+                    <p className="text-blue-400/70 text-sm">
+                      Puedes iniciar sesión normalmente
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Link to="/login">
+                <GlassButton 
+                  fullWidth 
+                  icon={<ArrowRight size={20} />}
+                  className="group"
+                >
+                  Ir al Login
                 </GlassButton>
               </Link>
             </motion.div>
