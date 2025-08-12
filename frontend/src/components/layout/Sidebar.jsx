@@ -27,6 +27,7 @@ const Sidebar = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [showAllItems, setShowAllItems] = useState(false);
 
   // Módulos principales - organizados por categorías
   const navigationModules = [
@@ -171,12 +172,12 @@ const Sidebar = () => {
   return (
     <motion.div
       initial={{ x: -320 }}
-      animate={{ x: 0, width: isCollapsed ? 80 : 320 }}
+      animate={{ x: 0, width: isCollapsed ? 72 : 320 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed left-0 top-0 h-full z-40 hidden lg:block"
     >
       <GlassCard className="h-full rounded-none rounded-r-3xl border-l-0 overflow-hidden">
-        <div className="flex flex-col h-full p-6">
+        <div className={`flex flex-col h-full ${isCollapsed ? 'p-3' : 'p-6'}`}>
           {/* Header del Sidebar */}
           <div className="flex items-center justify-between mb-8">
             <AnimatePresence mode="wait">
@@ -240,106 +241,247 @@ const Sidebar = () => {
           </motion.div>
 
           {/* Navigation Sections */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
-            {navigationModules.map((section, sectionIndex) => (
-              <div key={section.section} className="mb-8">
-                <AnimatePresence mode="wait">
-                  {!isCollapsed && (
-                    <motion.h3
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3 px-2"
+          <div className={`flex-1 ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto scrollbar-thin scrollbar-thumb-white/10'}`}>
+            {/* Siempre mostrar la sección Principal */}
+            <div className="mb-8">
+              <AnimatePresence mode="wait">
+                {!isCollapsed && (
+                  <motion.h3
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3 px-2"
+                  >
+                    {navigationModules[0].section}
+                  </motion.h3>
+                )}
+              </AnimatePresence>
+              
+              <div className="space-y-1">
+                {navigationModules[0].items.map((item, itemIndex) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  const isHovered = hoveredItem === item.id;
+                  
+                  return (
+                    <motion.button
+                      key={item.id}
+                      onClick={() => handleNavigation(item)}
+                      onHoverStart={() => setHoveredItem(item.id)}
+                      onHoverEnd={() => setHoveredItem(null)}
+                      disabled={item.comingSoon}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: itemIndex * 0.05 }}
+                      className={`relative w-full flex items-center ${isCollapsed ? 'justify-center py-4 px-3' : 'space-x-3 p-3'} rounded-xl transition-all duration-300 group ${
+                        isActive 
+                          ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg' 
+                          : item.comingSoon
+                            ? 'text-white/30 cursor-not-allowed'
+                            : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      {section.section}
-                    </motion.h3>
-                  )}
-                </AnimatePresence>
-                
-                <div className="space-y-1">
-                  {section.items.map((item, itemIndex) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    const isHovered = hoveredItem === item.id;
-                    
-                    return (
-                      <motion.button
-                        key={item.id}
-                        onClick={() => handleNavigation(item)}
-                        onHoverStart={() => setHoveredItem(item.id)}
-                        onHoverEnd={() => setHoveredItem(null)}
-                        disabled={item.comingSoon}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: sectionIndex * 0.1 + itemIndex * 0.05 }}
-                        className={`relative w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 group ${
-                          isActive 
-                            ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg' 
-                            : item.comingSoon
-                              ? 'text-white/30 cursor-not-allowed'
-                              : 'text-white/70 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {/* Background gradient on hover */}
-                        {!isActive && !item.comingSoon && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: isHovered ? 0.1 : 0 }}
-                            className={`absolute inset-0 bg-gradient-to-r ${item.color} rounded-xl`}
-                          />
-                        )}
-                        
-                        {/* Icon */}
+                      {/* Background gradient on hover */}
+                      {!isActive && !item.comingSoon && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: isHovered ? 0.1 : 0 }}
+                          className={`absolute inset-0 bg-gradient-to-r ${item.color} rounded-xl`}
+                        />
+                      )}
+                      
+                      {/* Icon */}
+                      {isCollapsed ? (
+                        <Icon size={20} className="relative z-10" />
+                      ) : (
                         <div className={`relative z-10 p-2 rounded-lg ${
                           isActive ? 'bg-white/20' : 'bg-white/5 group-hover:bg-white/10'
-                        }`}>
+                        } flex items-center justify-center`}>
                           <Icon size={18} />
                         </div>
-                        
-                        {/* Label and Description */}
-                        <AnimatePresence mode="wait">
-                          {!isCollapsed && (
-                            <motion.div
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -10 }}
-                              className="flex-1 text-left relative z-10"
-                            >
-                              <div className="flex items-center justify-between">
-                                <p className="font-medium text-sm">{item.label}</p>
-                                {item.badge && (
-                                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                                    {item.badge}
-                                  </span>
-                                )}
-                                {item.comingSoon && (
-                                  <span className="bg-white/20 text-white/60 text-xs px-2 py-0.5 rounded-full">
-                                    Pronto
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs opacity-70 mt-0.5">{item.description}</p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        {/* Active indicator */}
-                        {isActive && (
+                      )}
+                      
+                      {/* Label and Description */}
+                      <AnimatePresence mode="wait">
+                        {!isCollapsed && (
                           <motion.div
-                            layoutId="activeIndicator"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"
-                          />
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            className="flex-1 text-left relative z-10"
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-sm">{item.label}</p>
+                              {item.badge && (
+                                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                  {item.badge}
+                                </span>
+                              )}
+                              {item.comingSoon && (
+                                <span className="bg-white/20 text-white/60 text-xs px-2 py-0.5 rounded-full">
+                                  Pronto
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs opacity-70 mt-0.5">{item.description}</p>
+                          </motion.div>
                         )}
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                      </AnimatePresence>
+
+                      {/* Active indicator */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeIndicator"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"
+                        />
+                      )}
+                    </motion.button>
+                  );
+                })}
               </div>
-            ))}
+            </div>
+
+            {/* Resto de secciones - Solo cuando expandido O cuando showAllItems está activo */}
+            <AnimatePresence>
+              {(!isCollapsed || showAllItems) && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={isCollapsed && showAllItems ? 'overflow-y-auto max-h-96 scrollbar-thin scrollbar-thumb-white/10' : ''}
+                >
+                  {navigationModules.slice(1).map((section, sectionIndex) => (
+                    <div key={section.section} className="mb-8">
+                      <AnimatePresence mode="wait">
+                        {!isCollapsed && (
+                          <motion.h3
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3 px-2"
+                          >
+                            {section.section}
+                          </motion.h3>
+                        )}
+                      </AnimatePresence>
+                      
+                      <div className="space-y-1">
+                        {section.items.map((item, itemIndex) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
+                          const isHovered = hoveredItem === item.id;
+                          
+                          return (
+                            <motion.button
+                              key={item.id}
+                              onClick={() => handleNavigation(item)}
+                              onHoverStart={() => setHoveredItem(item.id)}
+                              onHoverEnd={() => setHoveredItem(null)}
+                              disabled={item.comingSoon}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: (sectionIndex + 1) * 0.1 + itemIndex * 0.05 }}
+                              className={`relative w-full flex items-center ${isCollapsed ? 'justify-center py-4 px-3' : 'space-x-3 p-3'} rounded-xl transition-all duration-300 group ${
+                                isActive 
+                                  ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg' 
+                                  : item.comingSoon
+                                    ? 'text-white/30 cursor-not-allowed'
+                                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                              }`}
+                            >
+                              {/* Background gradient on hover */}
+                              {!isActive && !item.comingSoon && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: isHovered ? 0.1 : 0 }}
+                                  className={`absolute inset-0 bg-gradient-to-r ${item.color} rounded-xl`}
+                                />
+                              )}
+                              
+                              {/* Icon */}
+                              {isCollapsed ? (
+                                <Icon size={20} className="relative z-10" />
+                              ) : (
+                                <div className={`relative z-10 p-2 rounded-lg ${
+                                  isActive ? 'bg-white/20' : 'bg-white/5 group-hover:bg-white/10'
+                                } flex items-center justify-center`}>
+                                  <Icon size={18} />
+                                </div>
+                              )}
+                              
+                              {/* Label and Description */}
+                              <AnimatePresence mode="wait">
+                                {!isCollapsed && (
+                                  <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="flex-1 text-left relative z-10"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <p className="font-medium text-sm">{item.label}</p>
+                                      {item.badge && (
+                                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                          {item.badge}
+                                        </span>
+                                      )}
+                                      {item.comingSoon && (
+                                        <span className="bg-white/20 text-white/60 text-xs px-2 py-0.5 rounded-full">
+                                          Pronto
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs opacity-70 mt-0.5">{item.description}</p>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+
+                              {/* Active indicator */}
+                              {isActive && (
+                                <motion.div
+                                  layoutId="activeIndicator"
+                                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"
+                                />
+                              )}
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Botón "Ver más" cuando está colapsado */}
+            {isCollapsed && !showAllItems && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={() => setShowAllItems(true)}
+                className="w-full p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 text-xs font-medium"
+              >
+                ⋯ Ver más
+              </motion.button>
+            )}
+
+            {/* Botón "Ver menos" cuando está expandido en modo colapsado */}
+            {isCollapsed && showAllItems && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={() => setShowAllItems(false)}
+                className="w-full p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 text-xs font-medium"
+              >
+                ⋯ Ver menos
+              </motion.button>
+            )}
           </div>
 
-          {/* Utility Actions */}
+          {/* Utility Actions - Siempre visibles */}
           <div className="border-t border-white/10 pt-4 space-y-1">
+            {/* Perfil y Configuración - Siempre visibles */}
             {utilityItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -348,11 +490,15 @@ const Sidebar = () => {
                   onClick={item.action}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full flex items-center space-x-3 p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center py-4 px-3' : 'space-x-3 p-3'} text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200`}
                 >
-                  <div className="p-2 bg-white/5 rounded-lg">
-                    <Icon size={16} />
-                  </div>
+                  {isCollapsed ? (
+                    <Icon size={18} />
+                  ) : (
+                    <div className="p-2 bg-white/5 rounded-lg flex items-center justify-center">
+                      <Icon size={16} />
+                    </div>
+                  )}
                   <AnimatePresence mode="wait">
                     {!isCollapsed && (
                       <motion.div
@@ -376,16 +522,20 @@ const Sidebar = () => {
               );
             })}
 
-            {/* Logout Button */}
+            {/* Logout Button - Siempre visible */}
             <motion.button
               onClick={handleLogout}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center space-x-3 p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 border border-red-500/20"
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center p-3' : 'space-x-3 p-3'} text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 ${isCollapsed ? '' : 'border border-red-500/20'}`}
             >
-              <div className="p-2 bg-red-500/10 rounded-lg">
-                <LogOut size={16} />
-              </div>
+              {isCollapsed ? (
+                <LogOut size={18} />
+              ) : (
+                <div className="p-2 bg-red-500/10 rounded-lg flex items-center justify-center">
+                  <LogOut size={16} />
+                </div>
+              )}
               <AnimatePresence mode="wait">
                 {!isCollapsed && (
                   <motion.span
