@@ -14,19 +14,27 @@ const TopMenu = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
-  // Cerrar menú al hacer clic fuera
+  // Cerrar menú al hacer clic fuera - SOLO para el avatar, NO para el overlay
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsMenuOpen(false);
+      if (isMenuOpen && menuRef.current && !menuRef.current.contains(event.target)) {
+        // Solo cerrar si el clic NO está dentro del overlay
+        const overlay = document.querySelector('[data-profile-overlay]');
+        if (overlay && !overlay.contains(event.target)) {
+          console.log('🚫 Cerrando menú por clic fuera');
+          setIsMenuOpen(false);
+        }
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isMenuOpen]);
 
   // Cerrar menú al cambiar de ruta
   useEffect(() => {
@@ -46,6 +54,12 @@ const TopMenu = () => {
   const handleNotificationsClick = () => {
     navigate("/notificaciones");
     setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    console.log('🚪 handleLogout ejecutado');
+    setIsMenuOpen(false);
+    logout();
   };
 
 
@@ -82,13 +96,7 @@ const TopMenu = () => {
     {
       icon: LogOut,
       label: 'Cerrar Sesión',
-      action: () => {
-        setIsMenuOpen(false);
-        setTimeout(() => {
-          logout();
-          window.location.href = '/login';
-        }, 200);
-      },
+      action: handleLogout,
       color: 'text-red-400',
       showOn: 'both',
       separator: true
@@ -121,7 +129,11 @@ const TopMenu = () => {
         {/* Avatar con menú desplegable */}
         <div className="relative z-50" ref={menuRef}>
           <motion.button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => {
+              console.log('🖱️ CLICK EN AVATAR - Estado actual:', isMenuOpen);
+              setIsMenuOpen(!isMenuOpen);
+              console.log('🖱️ CLICK EN AVATAR - Nuevo estado:', !isMenuOpen);
+            }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center space-x-3 p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300"
@@ -164,6 +176,7 @@ const TopMenu = () => {
               user={user}
               menuItems={menuItems}
               getInitials={getInitials}
+              logout={logout}
             />,
             document.body
           )}
@@ -174,11 +187,14 @@ const TopMenu = () => {
 };
 
 // Componente separado para el overlay del menú que se renderiza en el body
-const ProfileMenuOverlay = ({ isOpen, onClose, user, menuItems, getInitials }) => {
+const ProfileMenuOverlay = ({ isOpen, onClose, user, menuItems, getInitials, logout }) => {
+  console.log('📋 ProfileMenuOverlay renderizado - isOpen:', isOpen, 'menuItems:', menuItems?.length);
+  
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          data-profile-overlay
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -288,15 +304,27 @@ const ProfileMenuOverlay = ({ isOpen, onClose, user, menuItems, getInitials }) =
                   if (!shouldShow) return null;
 
                   return (
-                    <motion.button
+                    
+                    <button
                       key={index}
-                      onClick={item.action}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 + index * 0.1 }}
-                      className="relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 group overflow-hidden"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log(`🔥 CLICK DETECTADO en: ${item.label}`);
+                        if (item.label === 'Cerrar Sesión') {
+                          console.log('🚪 EJECUTANDO LOGOUT DIRECTO');
+                          logout();
+                        } else {
+                          item.action();
+                        }
+                      }}
+                      className="relative bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 group overflow-hidden cursor-pointer"
+                      style={{ 
+                        opacity: 1,
+                        transform: 'translateY(0)',
+                        pointerEvents: 'auto',
+                        zIndex: 10
+                      }}
                     >
                       {/* Background gradient on hover */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -328,7 +356,7 @@ const ProfileMenuOverlay = ({ isOpen, onClose, user, menuItems, getInitials }) =
                           </motion.div>
                         )}
                       </div>
-                    </motion.button>
+                    </button>
                   );
                 })}
               </motion.div>
