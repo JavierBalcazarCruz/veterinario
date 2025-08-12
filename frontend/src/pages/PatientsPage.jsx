@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Filter, PawPrint, User, Phone, Calendar } from 'lucide-react';
 
 import AppLayout from '../components/layout/AppLayout';
+import Header from '../components/layout/Header';
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
 import GlassInput from '../components/ui/GlassInput';
@@ -110,63 +111,27 @@ const PatientsPage = () => {
   return (
     <AppLayout>
       <div className="min-h-screen pb-20 lg:pb-8">
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 lg:p-6"
-        >
+        {/* Header Profesional */}
+        <Header 
+          title="Pacientes" 
+          subtitle={`${filteredPatients.length} pacientes registrados`}
+          searchPlaceholder="Buscar paciente o propietario..."
+          onSearch={(e) => setSearchTerm(e.target.value)}
+          actions={[
+            {
+              icon: Plus,
+              label: 'Nuevo Paciente',
+              action: () => setShowAddModal(true),
+              color: 'from-green-500 to-green-600'
+            }
+          ]}
+        />
+
+        {/* Contenido principal */}
+        <div className="p-4 lg:p-6 pt-0">
           <GlassCard className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
-                  Pacientes
-                </h1>
-                <p className="text-white/70">
-                  {filteredPatients.length} pacientes registrados
-                </p>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                {/* ✅ Botón de refrescar */}
-                <motion.button
-                  onClick={handleRefresh}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  disabled={loading}
-                  className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50"
-                  title="Refrescar"
-                >
-                  <motion.div
-                    animate={loading ? { rotate: 360 } : {}}
-                    transition={loading ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
-                  >
-                    🔄
-                  </motion.div>
-                </motion.button>
-
-                <GlassButton
-                  onClick={() => setShowAddModal(true)}
-                  icon={<Plus size={20} />}
-                  className="hidden lg:flex"
-                >
-                  Nuevo Paciente
-                </GlassButton>
-              </div>
-            </div>
-
-            {/* Barra de búsqueda */}
-            <div className="relative mb-6">
-              <GlassInput
-                placeholder="Buscar paciente o propietario..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                icon={<Search size={20} />}
-              />
-            </div>
-
             {/* Filtros */}
-            <div className="flex space-x-2 overflow-x-auto pb-2">
+            <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
               {filters.map((filter) => (
                 <motion.button
                   key={filter.value}
@@ -193,11 +158,8 @@ const PatientsPage = () => {
                 </motion.button>
               ))}
             </div>
-          </GlassCard>
-        </motion.header>
 
-        {/* Lista de pacientes */}
-        <main className="px-4 lg:px-6">
+            {/* Lista de pacientes */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, index) => (
@@ -280,7 +242,8 @@ const PatientsPage = () => {
               })}
             </motion.div>
           )}
-        </main>
+          </GlassCard>
+        </div>
 
         {/* Floating Action Button - Mobile */}
         <motion.div

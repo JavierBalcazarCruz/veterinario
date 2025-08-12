@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, User, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import AppLayout from '../components/layout/AppLayout';
+import Header from '../components/layout/Header';
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
 import GlassInput from '../components/ui/GlassInput';
@@ -159,55 +160,47 @@ const AppointmentsPage = () => {
   return (
     <AppLayout>
       <div className="min-h-screen pb-20 lg:pb-8">
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 lg:p-6"
-        >
-          <GlassCard className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
-                  Citas Médicas
-                </h1>
-                <p className="text-white/70">
-                  {todayAppointments.length} citas para hoy
-                </p>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                {/* Toggle de vista */}
-                <div className="hidden lg:flex bg-white/10 rounded-xl p-1">
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
-                      viewMode === 'list'
-                        ? 'bg-primary-500 text-white'
-                        : 'text-white/70 hover:text-white'
-                    }`}
-                  >
-                    Lista
-                  </button>
-                  <button
-                    onClick={() => setViewMode('calendar')}
-                    className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
-                      viewMode === 'calendar'
-                        ? 'bg-primary-500 text-white'
-                        : 'text-white/70 hover:text-white'
-                    }`}
-                  >
-                    Calendario
-                  </button>
-                </div>
+        {/* Header Profesional */}
+        <Header 
+          title="Citas Médicas" 
+          subtitle={`${todayAppointments.length} citas para hoy`}
+          actions={[
+            {
+              icon: Plus,
+              label: 'Nueva Cita',
+              action: () => setShowAddModal(true),
+              color: 'from-purple-500 to-purple-600'
+            }
+          ]}
+        />
 
-                <GlassButton
-                  onClick={() => setShowAddModal(true)}
-                  icon={<Plus size={20} />}
-                  className="hidden lg:flex"
+        {/* Contenido principal */}
+        <div className="p-4 lg:p-6 pt-0">
+          <GlassCard className="p-6">
+            {/* Controls de Vista */}
+            <div className="flex items-center justify-between mb-6">
+              {/* Toggle de vista */}
+              <div className="flex bg-white/10 rounded-xl p-1">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                    viewMode === 'list'
+                      ? 'bg-primary-500 text-white'
+                      : 'text-white/70 hover:text-white'
+                  }`}
                 >
-                  Nueva Cita
-                </GlassButton>
+                  Lista
+                </button>
+                <button
+                  onClick={() => setViewMode('calendar')}
+                  className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                    viewMode === 'calendar'
+                      ? 'bg-primary-500 text-white'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  Calendario
+                </button>
               </div>
             </div>
 
@@ -286,11 +279,8 @@ const AppointmentsPage = () => {
                 ))}
               </div>
             </div>
-          </GlassCard>
-        </motion.header>
 
-        {/* Contenido principal */}
-        <main className="px-4 lg:px-6">
+            {/* Contenido principal */}
           {viewMode === 'calendar' ? (
             <CalendarView 
               appointments={appointments}
@@ -359,7 +349,8 @@ const AppointmentsPage = () => {
               )}
             </div>
           )}
-        </main>
+          </GlassCard>
+        </div>
 
         {/* Floating Action Button - Mobile */}
         <motion.div
