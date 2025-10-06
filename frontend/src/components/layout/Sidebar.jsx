@@ -213,8 +213,8 @@ const Sidebar = () => {
           </div>
 
           {/* Profile Quick Access */}
-          <motion.div 
-            className="mb-6 p-4 bg-white/5 rounded-2xl border border-white/10"
+          <motion.div
+            className={`mb-6 bg-white/5 rounded-2xl ${isCollapsed ? 'p-2' : 'p-4'}`}
             whileHover={{ scale: 1.02 }}
           >
             <div className="flex items-center space-x-3">
