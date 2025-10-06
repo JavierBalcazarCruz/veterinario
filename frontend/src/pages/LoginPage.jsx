@@ -51,7 +51,7 @@ const LoginPage = () => {
 
   if (loading) {
     return (
-      <AppLayout>
+      <AppLayout showSidebar={false}>
         <div className="min-h-screen flex items-center justify-center">
           <GlassCard className="p-8">
             <div className="flex flex-col items-center space-y-4">
@@ -69,7 +69,7 @@ const LoginPage = () => {
   }
 
   return (
-    <AppLayout>
+    <AppLayout showSidebar={false}>
       <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 50 }}

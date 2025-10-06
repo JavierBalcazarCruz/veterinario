@@ -60,7 +60,7 @@ const ForgotPasswordPage = () => {
 
   if (emailSent) {
     return (
-      <AppLayout>
+      <AppLayout showSidebar={false}>
         <div className="min-h-screen flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -181,7 +181,7 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <AppLayout>
+    <AppLayout showSidebar={false}>
       <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 50 }}

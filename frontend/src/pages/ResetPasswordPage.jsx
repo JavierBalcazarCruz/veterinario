@@ -72,7 +72,7 @@ const ResetPasswordPage = () => {
   // Verificación de token en progreso
   if (tokenStatus === 'verifying') {
     return (
-      <AppLayout>
+      <AppLayout showSidebar={false}>
         <div className="min-h-screen flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -103,7 +103,7 @@ const ResetPasswordPage = () => {
   // Token inválido
   if (tokenStatus === 'invalid') {
     return (
-      <AppLayout>
+      <AppLayout showSidebar={false}>
         <div className="min-h-screen flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -152,7 +152,7 @@ const ResetPasswordPage = () => {
   // Contraseña restablecida exitosamente
   if (resetSuccess) {
     return (
-      <AppLayout>
+      <AppLayout showSidebar={false}>
         <div className="min-h-screen flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -204,7 +204,7 @@ const ResetPasswordPage = () => {
 
   // Formulario para nueva contraseña
   return (
-    <AppLayout>
+    <AppLayout showSidebar={false}>
       <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
