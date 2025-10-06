@@ -205,11 +205,11 @@ const PatientCard = ({ patient }) => {
           </motion.button>
         </motion.div>
 
-        {/* Efecto de brillo en hover */}
-        <motion.div
+        {/* Efecto de brillo en hover - DESACTIVADO */}
+        {/* <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
           initial={false}
-        />
+        /> */}
 
         {/* Decoración */}
         <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary-500/10 to-transparent rounded-full -translate-y-10 translate-x-10"></div>

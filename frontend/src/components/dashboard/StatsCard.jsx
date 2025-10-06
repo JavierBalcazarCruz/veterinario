@@ -54,8 +54,8 @@ const StatsCard = ({
       className={className}
     >
       <GlassCard className={`p-4 bg-gradient-to-br ${colorClasses[color]} relative overflow-hidden`}>
-        {/* Efecto de brillo animado */}
-        <motion.div
+        {/* Efecto de brillo animado - DESACTIVADO */}
+        {/* <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"
           animate={{ translateX: ['100%', '100%', '-100%', '-100%'] }}
           transition={{
@@ -64,7 +64,7 @@ const StatsCard = ({
             repeatDelay: 2,
             ease: "easeInOut"
           }}
-        />
+        /> */}
 
         <div className="relative z-10">
           {/* Header */}

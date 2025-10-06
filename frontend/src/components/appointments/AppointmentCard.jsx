@@ -304,11 +304,11 @@ const AppointmentCard = ({ appointment }) => {
           )}
         </div>
 
-        {/* Efecto de brillo en hover */}
-        <motion.div
+        {/* Efecto de brillo en hover - DESACTIVADO */}
+        {/* <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
           initial={false}
-        />
+        /> */}
 
         {/* Indicador de urgencia */}
         {appointment.tipo_consulta === 'urgencia' && (

@@ -55,8 +55,8 @@ const GlassCard = forwardRef(({
       className={`${baseClasses} ${hoverClasses} ${className}`}
       {...props}
     >
-      {/* Efecto de shimmer sutil */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-glass-shimmer" />
+      {/* Efecto de shimmer sutil - DESACTIVADO */}
+      {/* <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-glass-shimmer" /> */}
       
       {/* Borde interno para efecto glass */}
       {border && (

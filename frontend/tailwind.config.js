@@ -38,7 +38,7 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
-        'glass-shimmer': 'glassShimmer 2s infinite',
+        /*'glass-shimmer': 'glassShimmer 2s infinite', Animacion de izquierda a derecha desactivada*/
       }
     },
   },
