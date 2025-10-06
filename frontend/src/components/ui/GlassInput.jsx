@@ -57,9 +57,9 @@ const GlassInput = forwardRef(({
             ${icon ? 'pl-12' : 'pl-4'}
             ${type === 'password' ? 'pr-12' : 'pr-4'}
             py-3
-            bg-white/10
+            bg-white/5
             backdrop-blur-md
-            border border-white/20
+            border border-white/15
             rounded-xl
             text-white
             placeholder-white/50
@@ -67,7 +67,7 @@ const GlassInput = forwardRef(({
             focus:ring-2
             focus:ring-primary-500/50
             focus:border-primary-400/50
-            focus:bg-white/15
+            focus:bg-white/10
             transition-all duration-300
             ${error ? 'border-red-400/50 focus:border-red-400/50 focus:ring-red-500/50' : ''}
             ${className}

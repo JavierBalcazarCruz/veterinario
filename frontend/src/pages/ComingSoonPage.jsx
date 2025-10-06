@@ -171,7 +171,7 @@ const ComingSoonPage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 }}
-                className="inline-flex items-center space-x-2 bg-white/10 rounded-full px-6 py-3 border border-white/20"
+                className="inline-flex items-center space-x-2 bg-white/5 rounded-full px-6 py-3 border border-white/15"
               >
                 <Clock size={20} className="text-yellow-400" />
                 <span className="text-white font-medium">Disponible {currentModule.eta}</span>

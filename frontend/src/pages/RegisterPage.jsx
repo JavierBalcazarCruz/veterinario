@@ -425,9 +425,9 @@ const RegisterPage = () => {
                   <motion.div
                     key={stepNumber}
                     className={`w-3 h-3 rounded-full ${
-                      step >= stepNumber 
-                        ? 'bg-primary-500' 
-                        : 'bg-white/20'
+                      step >= stepNumber
+                        ? 'bg-primary-500'
+                        : 'bg-white/15'
                     }`}
                     animate={{
                       scale: step === stepNumber ? 1.2 : 1

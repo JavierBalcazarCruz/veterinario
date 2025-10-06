@@ -59,7 +59,7 @@ const PatientCard = ({ patient }) => {
             onClick={() => setShowMenu(!showMenu)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 bg-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            className="p-2 bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           >
             <MoreVertical size={16} className="text-white" />
           </motion.button>
@@ -69,18 +69,18 @@ const PatientCard = ({ patient }) => {
               initial={{ opacity: 0, scale: 0.9, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              className="absolute top-full right-0 mt-2 w-48 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-glass overflow-hidden"
+              className="absolute top-full right-0 mt-2 w-48 bg-white/5 backdrop-blur-xl border border-white/15 rounded-xl shadow-glass overflow-hidden"
             >
               <button
                 onClick={handleViewDetails}
-                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors duration-200 flex items-center space-x-3"
+                className="w-full px-4 py-3 text-left text-white hover:bg-white/8 transition-colors duration-200 flex items-center space-x-3"
               >
                 <Eye size={16} />
                 <span>Ver detalles</span>
               </button>
               <button
                 onClick={handleEdit}
-                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors duration-200 flex items-center space-x-3"
+                className="w-full px-4 py-3 text-left text-white hover:bg-white/8 transition-colors duration-200 flex items-center space-x-3"
               >
                 <Edit size={16} />
                 <span>Editar</span>
@@ -146,7 +146,7 @@ const PatientCard = ({ patient }) => {
           className="bg-white/5 rounded-xl p-4 mb-4"
         >
           <div className="flex items-center space-x-2 mb-2">
-            <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-white/8 rounded-full flex items-center justify-center">
               <span className="text-xs text-white font-medium">
                 {patient.nombre_propietario.charAt(0)}
               </span>

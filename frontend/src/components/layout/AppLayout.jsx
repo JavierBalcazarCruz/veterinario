@@ -61,7 +61,12 @@ const AppLayout = ({ children, showSidebar = true }) => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-900">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="min-h-screen relative overflow-hidden bg-slate-900"
+    >
       {/* Background Wallpaper Dinámico */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -109,9 +114,9 @@ const AppLayout = ({ children, showSidebar = true }) => {
         <MobileNavigation />
       </div>
 
-      {/* Floating Particles Mejorado */}
-      <div className="fixed inset-0 z-15 pointer-events-none overflow-hidden">
-        {[...Array(8)].map((_, i) => (
+      {/* Floating Particles - DESACTIVADO para mejor rendimiento */}
+      {/* <div className="fixed inset-0 z-15 pointer-events-none overflow-hidden">
+        {[...Array(3)].map((_, i) => (
           <motion.div
             key={`particle-${i}`}
             animate={{
@@ -133,10 +138,10 @@ const AppLayout = ({ children, showSidebar = true }) => {
             }}
           />
         ))}
-      </div>
+      </div> */}
 
-      {/* Ambient Light Effect */}
-      <motion.div
+      {/* Ambient Light Effect - DESACTIVADO */}
+      {/* <motion.div
         animate={{
           scale: [1, 1.1, 1],
           opacity: [0.1, 0.2, 0.1]
@@ -151,7 +156,7 @@ const AppLayout = ({ children, showSidebar = true }) => {
 
       <motion.div
         animate={{
-          scale: [1.1, 1, 1.1], 
+          scale: [1.1, 1, 1.1],
           opacity: [0.05, 0.15, 0.05]
         }}
         transition={{
@@ -161,7 +166,7 @@ const AppLayout = ({ children, showSidebar = true }) => {
           delay: 2
         }}
         className={`fixed bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-gradient-radial ${currentTheme.particles} blur-3xl pointer-events-none z-5`}
-      />
+      /> */}
 
       {/* Status Indicator - Desktop Only */}
       <div className="hidden lg:block fixed bottom-6 right-6 z-30">
@@ -191,7 +196,7 @@ const AppLayout = ({ children, showSidebar = true }) => {
           © 2025 MollyVet. Sistema de gestión veterinaria.
         </p>
       </motion.footer>
-    </div>
+    </motion.div>
   );
 };
 

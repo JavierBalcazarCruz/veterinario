@@ -35,7 +35,11 @@ body {
   overflow-x: hidden;
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
-  /* ✅ REMOVIDO: display: flex que causaba problemas */
+  /* ✅ Optimización: Forzar aceleración por hardware desde el inicio */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* ✅ CORREGIDO: #root sin restricciones de layout */
@@ -107,6 +111,30 @@ body {
   }
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* Animación estilo macOS - Fade In suave y elegante */
+@keyframes macOsFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animación macOS - Expansión desde el centro (smooth) */
+@keyframes macOsExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -187,8 +215,20 @@ body {
 @layer utilities {
   .glass-effect {
     backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
     background: var(--glass-gradient);
     border: 1px solid rgba(255, 255, 255, 0.18);
+    will-change: backdrop-filter;
+  }
+
+  /* Optimización para backdrop-blur - aplicar desde el inicio */
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    -webkit-backdrop-filter: var(--tw-backdrop-blur);
+    will-change: backdrop-filter, transform, opacity;
+    transform: translateZ(0);
   }
 
   .text-shadow-soft {
@@ -281,11 +321,13 @@ body {
 /* ✅ CORREGIDOS: Componentes mejorados */
 @layer components {
   .btn-glass {
-    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white font-medium transition-all duration-300;
+    @apply backdrop-blur-md bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white font-medium transition-all duration-300;
+    will-change: transform, background-color;
+    transform: translateZ(0);
   }
-  
+
   .btn-glass:hover {
-    @apply bg-white/20 border-white/30 transform scale-105;
+    @apply bg-white/12 border-white/25 transform scale-105;
   }
   
   .btn-glass:focus {
@@ -297,19 +339,23 @@ body {
   }
 
   .card-glass {
-    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-6 shadow-glass transition-all duration-300;
+    @apply backdrop-blur-md bg-white/5 border border-white/15 rounded-2xl p-6 shadow-glass transition-all duration-300;
+    will-change: transform, background-color;
+    transform: translateZ(0);
   }
 
   .card-glass:hover {
-    @apply bg-white/15 border-white/30;
+    @apply bg-white/10 border-white/25;
   }
 
   .input-glass {
-    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 transition-all duration-300;
+    @apply backdrop-blur-md bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/50 transition-all duration-300;
+    will-change: background-color, border-color;
+    transform: translateZ(0);
   }
-  
+
   .input-glass:focus {
-    @apply outline-none ring-2 ring-orange-500/50 border-orange-400/50 bg-white/15;
+    @apply outline-none ring-2 ring-orange-500/50 border-orange-400/50 bg-white/10;
   }
 
   /* ✅ CORREGIDOS: Botones con mejor feedback visual */
@@ -331,11 +377,11 @@ body {
   }
 
   .btn-secondary {
-    @apply bg-white/10 text-white border border-white/20 rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
+    @apply bg-white/5 text-white border border-white/15 rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
   }
-  
+
   .btn-secondary:hover {
-    @apply bg-white/20 border-white/30 scale-105;
+    @apply bg-white/12 border-white/25 scale-105;
   }
 
   .btn-secondary:active {
@@ -361,9 +407,9 @@ body {
   .btn-ghost {
     @apply bg-transparent text-white border border-transparent rounded-xl px-4 py-3 font-medium transition-all duration-300 transform;
   }
-  
+
   .btn-ghost:hover {
-    @apply bg-white/10 border-white/20 scale-105;
+    @apply bg-white/8 border-white/15 scale-105;
   }
 
   .btn-ghost:active {
@@ -400,7 +446,7 @@ body {
   }
 
   .loading-pulse {
-    @apply animate-pulse bg-white/20 rounded;
+    @apply animate-pulse bg-white/10 rounded;
   }
 
   /* Modales mejorados */
@@ -410,12 +456,12 @@ body {
   }
 
   .modal-content {
-    @apply w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-glass overflow-hidden animate-modal-enter;
+    @apply w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl shadow-glass overflow-hidden animate-modal-enter;
   }
 
   /* Navegación móvil mejorada */
   .nav-mobile {
-    @apply fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-white/10 border-t border-white/20 px-4 py-2 z-40;
+    @apply fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-white/5 border-t border-white/15 px-4 py-2 z-40;
   }
 
   .nav-item {

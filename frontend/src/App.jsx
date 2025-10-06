@@ -28,14 +28,11 @@ const AppRoutes = () => {
     currentPath: location.pathname
   });
 
-  // Mostrar loading inicial
+  // Mostrar loading inicial - Simplificado para carga rápida
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-white">Cargando MollyVet...</p>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }

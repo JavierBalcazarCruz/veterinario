@@ -1,18 +1,17 @@
 // src/components/ui/GlassCard.jsx
-import { motion } from 'framer-motion';
 import { forwardRef } from 'react';
 
-const GlassCard = forwardRef(({ 
-  children, 
-  className = '', 
-  hover = true, 
+const GlassCard = forwardRef(({
+  children,
+  className = '',
+  hover = true,
   blur = 'md',
   opacity = 'low',
   border = true,
   shadow = true,
-  ...props 
+  ...props
 }, ref) => {
-  
+
   const blurClasses = {
     sm: 'backdrop-blur-sm',
     md: 'backdrop-blur-md',
@@ -21,50 +20,47 @@ const GlassCard = forwardRef(({
   };
 
   const opacityClasses = {
-    low: 'bg-white/10',
-    medium: 'bg-white/20',
-    high: 'bg-white/30'
+    low: 'bg-white/5',      // Más realista: 10% → 5%
+    medium: 'bg-white/8',   // Más realista: 20% → 8%
+    high: 'bg-white/12'     // Más realista: 30% → 12%
   };
 
   const baseClasses = `
     ${blurClasses[blur]}
     ${opacityClasses[opacity]}
-    ${border ? 'border border-white/20' : ''}
+    ${border ? 'border border-white/15' : ''}
     ${shadow ? 'shadow-glass' : ''}
     rounded-2xl
     overflow-hidden
     relative
-    transition-all duration-300 ease-in-out
   `;
 
-  const hoverClasses = hover ? `
-    hover:bg-white/25
-    hover:shadow-xl
-    hover:shadow-white/10
-    hover:border-white/30
-    hover:-translate-y-1
-  ` : '';
+  // Estilos inline para forzar aceleración por hardware
+  const optimizationStyles = {
+    transform: 'translateZ(0)',
+    backfaceVisibility: 'hidden',
+    willChange: 'transform, opacity',
+  };
+
+  const hoverClasses = '';
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      whileTap={{ scale: 0.98 }}
       className={`${baseClasses} ${hoverClasses} ${className}`}
+      style={optimizationStyles}
       {...props}
     >
       {/* Efecto de shimmer sutil - DESACTIVADO */}
       {/* <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-glass-shimmer" /> */}
       
-      {/* Borde interno para efecto glass */}
+      {/* Borde interno para efecto glass - Gradiente más sutil */}
       {border && (
-        <div className="absolute inset-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-[1px] rounded-2xl bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
       )}
-      
+
       {children}
-    </motion.div>
+    </div>
   );
 });
 
