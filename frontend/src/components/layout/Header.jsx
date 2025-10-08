@@ -11,6 +11,12 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
 
   // Quick actions dinámicas según la página
   const getQuickActions = () => {
+    // ✅ Siempre usar las acciones pasadas como props si existen
+    if (actions && actions.length > 0) {
+      return actions;
+    }
+
+    // ✅ Fallback: acciones por defecto (sin funcionalidad)
     const path = location.pathname;
 
     if (path === '/dashboard') {
@@ -29,7 +35,7 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
       ];
     }
 
-    return actions;
+    return [];
   };
 
   const getCurrentTime = () => {
@@ -109,14 +115,18 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
               {getQuickActions().map((action, index) => {
                 const Icon = action.icon;
                 return (
-                  <GlassButton
+                  <button
                     key={index}
                     onClick={action.action}
-                    className={`hidden lg:flex bg-gradient-to-r ${action.color}`}
+                    className={`hidden lg:flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
+                      backdrop-blur-md border-2 border-white/20
+                      transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95
+                      bg-gradient-to-r ${action.color} ${action.className || ''}
+                      shadow-lg hover:border-white/40`}
                   >
-                    <Icon size={18} className="mr-2" />
+                    <Icon size={20} strokeWidth={2.5} />
                     {action.label}
-                  </GlassButton>
+                  </button>
                 );
               })}
             </div>

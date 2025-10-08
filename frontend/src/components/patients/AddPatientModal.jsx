@@ -258,7 +258,8 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 overflow-y-auto"
+        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '2rem', paddingBottom: '2rem' }}
       >
         {/* Backdrop */}
         <motion.div
@@ -266,48 +267,48 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"
         />
 
-        {/* Modal */}
+        {/* Modal - Aparece arriba tanto en mobile como desktop, más grande */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 50 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          exit={{ opacity: 0, scale: 0.95, y: 50 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          className="relative w-full sm:max-w-3xl lg:max-w-5xl mx-2 sm:mx-4 shadow-2xl"
         >
           <GlassCard className="p-0">
-            {/* Header */}
-            <div className="p-6 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
+            {/* Header - Mobile Optimized */}
+            <div className="p-4 sm:p-6 border-b border-white/10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">
                     Nuevo Paciente
                   </h2>
-                  <p className="text-white/70">
+                  <p className="text-sm sm:text-base text-white/70 mt-1">
                     Paso {step} de 3
                   </p>
                 </div>
-                
+
                 <motion.button
                   onClick={handleClose}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                  className="p-3 sm:p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors active:bg-white/30 touch-manipulation"
                 >
-                  <X size={20} className="text-white" />
+                  <X size={24} className="text-white sm:w-5 sm:h-5" />
                 </motion.button>
               </div>
 
-              {/* Progress bar */}
-              <div className="mt-4 flex space-x-2">
+              {/* Progress bar - Más grueso para mobile */}
+              <div className="flex space-x-2">
                 {[1, 2, 3].map((stepNumber) => (
                   <div
                     key={stepNumber}
-                    className={`flex-1 h-2 rounded-full transition-colors duration-300 ${
-                      step >= stepNumber 
-                        ? 'bg-primary-500' 
+                    className={`flex-1 h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+                      step >= stepNumber
+                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30'
                         : 'bg-white/20'
                     }`}
                   />
@@ -315,25 +316,25 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            {/* Content - Optimized for both mobile and desktop */}
+            <div className="p-5 sm:p-6 lg:p-8 overflow-y-auto custom-scrollbar" style={{maxHeight: 'calc(90vh - 200px)'}}>
               <form onSubmit={handleSubmit(onSubmit)}>
                 {/* Paso 1: Datos de la mascota */}
                 {step === 1 && (
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
-                    <div className="text-center mb-6">
-                      <div className="text-4xl mb-2">🐾</div>
-                      <h3 className="text-xl font-semibold text-white">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className="text-5xl sm:text-4xl mb-3">🐾</div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-white">
                         Información de la Mascota
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                      <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
                           {...getFieldProps('nombre_mascota')}
                           placeholder="Nombre de la mascota"
@@ -358,26 +359,27 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         error={errors.peso}
                       />
 
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-white mb-3">
+                      <div className="hidden lg:block"></div>
+
+                      <div className="md:col-span-2 lg:col-span-3">
+                        <label className="block text-sm sm:text-base font-medium text-white mb-3">
                           Raza *
                         </label>
                         {loadingRazas ? (
-                          <div className="flex items-center justify-center p-4 bg-white/5 rounded-xl">
+                          <div className="flex items-center justify-center p-6 bg-white/5 rounded-xl">
                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-                            <span className="ml-2 text-white/70">Cargando razas...</span>
+                            <span className="ml-3 text-white/70">Cargando razas...</span>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto custom-scrollbar">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 max-h-48 sm:max-h-40 lg:max-h-48 overflow-y-auto custom-scrollbar">
                             {razas.map((raza) => (
                               <motion.label
                                 key={raza.id}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                                whileTap={{ scale: 0.95 }}
+                                className={`p-4 sm:p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 touch-manipulation ${
                                   parseInt(values.id_raza) === raza.id
-                                    ? 'bg-primary-500/20 border-primary-400/50'
-                                    : 'bg-white/5 border-white/20 hover:bg-white/10'
+                                    ? 'bg-primary-500/30 border-primary-400/70 shadow-lg shadow-primary-500/20'
+                                    : 'bg-white/5 border-white/20 hover:bg-white/10 active:bg-white/15'
                                 }`}
                               >
                                 <input
@@ -389,13 +391,13 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                                   className="sr-only"
                                 />
                                 <div className="text-center">
-                                  <div className="text-lg mb-1">
+                                  <div className="text-2xl sm:text-xl mb-2 sm:mb-1">
                                     {raza.especie === 'Perro' ? '🐕' : '🐱'}
                                   </div>
-                                  <div className="text-white text-xs font-medium">
+                                  <div className="text-white text-sm sm:text-xs font-semibold">
                                     {raza.nombre}
                                   </div>
-                                  <div className="text-white/60 text-xs">
+                                  <div className="text-white/60 text-xs mt-1">
                                     {raza.especie}
                                   </div>
                                 </div>
@@ -419,23 +421,25 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
-                    <div className="text-center mb-6">
-                      <div className="text-4xl mb-2">👤</div>
-                      <h3 className="text-xl font-semibold text-white">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className="text-5xl sm:text-4xl mb-3">👤</div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-white">
                         Información del Propietario
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <GlassInput
-                        {...getFieldProps('nombre_propietario')}
-                        placeholder="Nombre"
-                        label="Nombre *"
-                        icon={<User size={20} />}
-                        error={errors.nombre_propietario}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                      <div className="lg:col-span-2">
+                        <GlassInput
+                          {...getFieldProps('nombre_propietario')}
+                          placeholder="Nombre"
+                          label="Nombre *"
+                          icon={<User size={20} />}
+                          error={errors.nombre_propietario}
+                        />
+                      </div>
 
                       <GlassInput
                         {...getFieldProps('apellidos_propietario')}
@@ -455,20 +459,24 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                       />
 
                       <div>
-                        <label className="block text-sm font-medium text-white mb-2">
+                        <label className="block text-sm sm:text-base font-medium text-white mb-2">
                           Tipo de Teléfono
                         </label>
                         <select
                           {...getFieldProps('tipo_telefono')}
-                          className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                          className="w-full px-4 py-3.5 sm:py-3 bg-white/10 backdrop-blur-md border-2 border-white/20
+                            rounded-xl text-white text-base sm:text-sm font-medium
+                            focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
+                            touch-manipulation appearance-none cursor-pointer"
+                          style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem'}}
                         >
-                          <option value="celular">Celular</option>
-                          <option value="casa">Casa</option>
-                          <option value="trabajo">Trabajo</option>
+                          <option value="celular" className="bg-gray-800">📱 Celular</option>
+                          <option value="casa" className="bg-gray-800">🏠 Casa</option>
+                          <option value="trabajo" className="bg-gray-800">💼 Trabajo</option>
                         </select>
                       </div>
 
-                      <div className="md:col-span-2">
+                      <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
                           {...getFieldProps('email')}
                           type="email"
@@ -486,20 +494,20 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
-                    <div className="text-center mb-6">
-                      <div className="text-4xl mb-2">🏠</div>
-                      <h3 className="text-xl font-semibold text-white">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className="text-5xl sm:text-4xl mb-3">🏠</div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-white">
                         Dirección (Opcional)
                       </h3>
-                      <p className="text-white/60 text-sm mt-2">
+                      <p className="text-white/60 text-sm sm:text-base mt-2">
                         Puedes completar estos datos después
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                      <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
                           {...getFieldProps('calle')}
                           placeholder="Calle"
@@ -526,13 +534,15 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         label="Código Postal"
                       />
 
-                      <GlassInput
-                        {...getFieldProps('colonia')}
-                        placeholder="Colonia"
-                        label="Colonia"
-                      />
-
                       <div className="md:col-span-2">
+                        <GlassInput
+                          {...getFieldProps('colonia')}
+                          placeholder="Colonia"
+                          label="Colonia"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
                           {...getFieldProps('referencias')}
                           placeholder="Referencias de ubicación"
@@ -545,36 +555,61 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
               </form>
             </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-white/10">
-              <div className="flex justify-between">
+            {/* Footer - Mobile Optimized Buttons */}
+            <div className="p-4 sm:p-6 border-t border-white/10">
+              <div className="flex gap-3 justify-between">
                 {step > 1 ? (
-                  <GlassButton
+                  <button
                     onClick={prevStep}
-                    variant="ghost"
                     disabled={isSubmitting}
+                    className="flex-1 sm:flex-none px-6 py-3.5 sm:py-3 bg-white/10 hover:bg-white/15 active:bg-white/20
+                      border-2 border-white/20 rounded-xl text-white font-semibold
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
                   >
-                    Anterior
-                  </GlassButton>
+                    ← Anterior
+                  </button>
                 ) : (
                   <div></div>
                 )}
 
                 {step < 3 ? (
-                  <GlassButton
+                  <button
                     onClick={nextStep}
                     disabled={isSubmitting}
+                    className="flex-1 sm:flex-none px-6 py-3.5 sm:py-3 bg-gradient-to-r from-primary-500 to-primary-600
+                      hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800
+                      border-2 border-primary-400/50 rounded-xl text-white font-semibold
+                      shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
                   >
-                    Siguiente
-                  </GlassButton>
+                    Siguiente →
+                  </button>
                 ) : (
-                  <GlassButton
+                  <button
                     onClick={handleSubmit(onSubmit)}
-                    loading={isSubmitting}
-                    icon={!isSubmitting && <Save size={20} />}
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none px-6 py-3.5 sm:py-3 bg-gradient-to-r from-green-500 to-green-600
+                      hover:from-green-600 hover:to-green-700 active:from-green-700 active:to-green-800
+                      border-2 border-green-400/50 rounded-xl text-white font-bold
+                      shadow-lg shadow-green-500/30 hover:shadow-green-500/50
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      transition-all duration-200 hover:scale-105 active:scale-95
+                      flex items-center justify-center gap-2 touch-manipulation"
                   >
-                    {isSubmitting ? 'Guardando...' : 'Guardar Paciente'}
-                  </GlassButton>
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={20} />
+                        Guardar Paciente
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
               

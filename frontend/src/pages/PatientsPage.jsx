@@ -82,38 +82,52 @@ const PatientsPage = () => {
   // ✅ Filtrar pacientes con validación de datos
   const filteredPatients = patients.filter(patient => {
     if (!patient) return false;
-    
-    const matchesSearch = 
+
+    const matchesSearch =
       (patient.nombre_mascota?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (patient.nombre_propietario?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (patient.apellidos_propietario?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = 
+
+    const matchesFilter =
       selectedFilter === 'todos' ||
       (selectedFilter === 'perros' && patient.especie === 'Perro') ||
-      (selectedFilter === 'gatos' && patient.especie === 'Gato');
+      (selectedFilter === 'gatos' && patient.especie === 'Gato') ||
+      (selectedFilter === 'nuevos' && isNewPatient(patient.created_at));
 
     return matchesSearch && matchesFilter;
   });
 
+  // ✅ Función para verificar si un paciente es nuevo (últimos 7 días)
+  const isNewPatient = (createdAt) => {
+    if (!createdAt) return false;
+    const now = new Date();
+    const patientDate = new Date(createdAt);
+    const diffDays = Math.ceil((now - patientDate) / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  };
+
   const filters = [
     { value: 'todos', label: 'Todos', icon: '🐾' },
     { value: 'perros', label: 'Perros', icon: '🐕' },
-    { value: 'gatos', label: 'Gatos', icon: '🐱' }
+    { value: 'gatos', label: 'Gatos', icon: '🐱' },
+    { value: 'nuevos', label: 'Nuevos', icon: '✨', badge: 'NEW' }
   ];
 
-  // ✅ Manejar agregado de paciente con datos reales
+  // ✅ Manejar agregado de paciente con actualización optimista del DOM
   const handleAddPatient = (newPatient) => {
     console.log('✅ Nuevo paciente agregado:', newPatient);
 
-    // ✅ Recargar la lista inmediatamente para obtener datos actualizados del servidor
-    loadPatients();
+    // ✅ Actualización optimista: agregar paciente inmediatamente al estado
+    setPatients(prevPatients => [newPatient, ...prevPatients]);
     setShowAddModal(false);
 
     toast.success(`¡${newPatient.nombre_mascota} ha sido agregado exitosamente!`, {
       duration: 4000,
       icon: '🎉'
     });
+
+    // ✅ Recargar en segundo plano para sincronizar con el servidor
+    setTimeout(() => loadPatients(), 2000);
   };
 
   // ✅ Función para refrescar la lista
@@ -135,7 +149,8 @@ const PatientsPage = () => {
               icon: Plus,
               label: 'Nuevo Paciente',
               action: () => setShowAddModal(true),
-              color: 'from-green-500 to-green-600'
+              color: 'from-emerald-500 to-green-600',
+              className: 'shadow-lg shadow-green-500/30 hover:shadow-green-500/50 font-semibold'
             }
           ]}
         />
@@ -144,32 +159,51 @@ const PatientsPage = () => {
         <div className="p-4 lg:p-6 pt-0">
           <GlassCard className="p-6">
             {/* Filtros */}
-            <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
-              {filters.map((filter) => (
-                <motion.button
-                  key={filter.value}
-                  onClick={() => setSelectedFilter(filter.value)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                    selectedFilter === filter.value
-                      ? 'bg-primary-500/20 text-white border border-primary-400/50'
-                      : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20'
-                  }`}
-                >
-                  <span>{filter.icon}</span>
-                  <span>{filter.label}</span>
-                  {/* ✅ Mostrar contador */}
-                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
-                    {filter.value === 'todos' 
-                      ? patients.length 
-                      : filter.value === 'perros'
-                        ? patients.filter(p => p.especie === 'Perro').length
-                        : patients.filter(p => p.especie === 'Gato').length
-                    }
-                  </span>
-                </motion.button>
-              ))}
+            <div className="flex space-x-3 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+              {filters.map((filter) => {
+                const getCount = () => {
+                  if (filter.value === 'todos') return patients.length;
+                  if (filter.value === 'perros') return patients.filter(p => p.especie === 'Perro').length;
+                  if (filter.value === 'gatos') return patients.filter(p => p.especie === 'Gato').length;
+                  if (filter.value === 'nuevos') return patients.filter(p => isNewPatient(p.created_at)).length;
+                  return 0;
+                };
+
+                const count = getCount();
+
+                return (
+                  <motion.button
+                    key={filter.value}
+                    onClick={() => setSelectedFilter(filter.value)}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`relative flex items-center space-x-2 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                      selectedFilter === filter.value
+                        ? 'bg-gradient-to-r from-primary-500/30 to-primary-600/30 text-white border-2 border-primary-400/60 shadow-lg shadow-primary-500/20'
+                        : 'bg-white/8 text-white/70 border-2 border-white/15 hover:bg-white/15 hover:border-white/25'
+                    }`}
+                  >
+                    <span className="text-lg">{filter.icon}</span>
+                    <span className="font-semibold">{filter.label}</span>
+
+                    {/* Contador */}
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      selectedFilter === filter.value
+                        ? 'bg-white/25 text-white'
+                        : 'bg-white/15 text-white/60'
+                    }`}>
+                      {count}
+                    </span>
+
+                    {/* Badge NEW para nuevos pacientes */}
+                    {filter.badge && count > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+                        {filter.badge}
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
             </div>
 
             {/* Lista de pacientes */}
@@ -269,9 +303,9 @@ const PatientsPage = () => {
             onClick={() => setShowAddModal(true)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-xl flex items-center justify-center text-white"
+            className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-2xl shadow-green-500/50 flex items-center justify-center text-white border-2 border-white/20"
           >
-            <Plus size={24} />
+            <Plus size={28} strokeWidth={2.5} />
           </motion.button>
         </motion.div>
 
