@@ -18,15 +18,23 @@ const PatientCard = ({ patient }) => {
   };
 
   const getTimeAgo = (date) => {
-    const now = new Date();
-    const visitDate = new Date(date);
-    const diffTime = Math.abs(now - visitDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-    if (diffDays < 30) return `Hace ${Math.ceil(diffDays / 7)} semanas`;
-    return `Hace ${Math.ceil(diffDays / 30)} meses`;
+    if (!date) return 'Sin visitas';
+
+    try {
+      const now = new Date();
+      const visitDate = new Date(date);
+      const diffTime = Math.abs(now - visitDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'Hoy';
+      if (diffDays === 1) return 'Ayer';
+      if (diffDays < 7) return `Hace ${diffDays} días`;
+      if (diffDays < 30) return `Hace ${Math.ceil(diffDays / 7)} semanas`;
+      return `Hace ${Math.ceil(diffDays / 30)} meses`;
+    } catch (error) {
+      console.error('Error al calcular fecha:', error);
+      return 'Sin fecha';
+    }
   };
 
   const handleViewDetails = () => {
@@ -117,22 +125,22 @@ const PatientCard = ({ patient }) => {
               animate={{ opacity: 1 }}
               className="text-lg font-semibold text-white truncate"
             >
-              {patient.nombre_mascota}
+              {patient.nombre_mascota || 'Sin nombre'}
             </motion.h3>
-            
+
             <p className="text-white/70 text-sm">
-              {patient.nombre_raza} • {patient.edad}
+              {patient.nombre_raza || 'Sin raza'} • {patient.edad || 'Edad no especificada'}
             </p>
-            
+
             <div className="flex items-center space-x-4 mt-2">
               <div className="flex items-center space-x-1 text-xs text-white/60">
                 <Weight size={12} />
-                <span>{patient.peso} kg</span>
+                <span>{patient.peso ? `${patient.peso} kg` : 'Sin peso'}</span>
               </div>
-              
+
               <div className="flex items-center space-x-1 text-xs text-white/60">
                 <Calendar size={12} />
-                <span>{getTimeAgo(patient.ultima_visita)}</span>
+                <span>{getTimeAgo(patient.ultima_visita || patient.updated_at || patient.created_at)}</span>
               </div>
             </div>
           </div>
@@ -148,12 +156,12 @@ const PatientCard = ({ patient }) => {
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-8 h-8 bg-white/8 rounded-full flex items-center justify-center">
               <span className="text-xs text-white font-medium">
-                {patient.nombre_propietario.charAt(0)}
+                {patient.nombre_propietario?.charAt(0) || '?'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium text-sm truncate">
-                {patient.nombre_propietario} {patient.apellidos_propietario}
+                {patient.nombre_propietario || 'Sin nombre'} {patient.apellidos_propietario || ''}
               </p>
               <p className="text-white/60 text-xs truncate">
                 Propietario

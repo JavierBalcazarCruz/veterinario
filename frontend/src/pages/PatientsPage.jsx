@@ -31,36 +31,49 @@ const PatientsPage = () => {
   const loadPatients = async () => {
     try {
       setLoading(true);
-      const patientsData = await patientService.getAll();
-      
-      console.log('Pacientes cargados:', patientsData);
-      
-      // ✅ Verificar si los datos vienen en un array o en una propiedad específica
-      const patientsArray = Array.isArray(patientsData) ? patientsData : patientsData.data || [];
-      
+      const response = await patientService.getAll();
+
+      console.log('📦 Respuesta del servidor:', response);
+
+      // ✅ Extraer datos correctamente según la estructura del backend
+      let patientsArray = [];
+
+      if (response.success && response.data) {
+        // Si viene con estructura { success: true, data: [...] }
+        patientsArray = Array.isArray(response.data) ? response.data : [response.data];
+      } else if (Array.isArray(response)) {
+        // Si viene directamente como array
+        patientsArray = response;
+      } else if (response.data && Array.isArray(response.data)) {
+        // Si viene en response.data
+        patientsArray = response.data;
+      }
+
+      console.log(`✅ ${patientsArray.length} pacientes cargados para el doctor ${user?.nombre}`);
       setPatients(patientsArray);
+
+      if (patientsArray.length === 0) {
+        toast.info('No tienes pacientes registrados aún', {
+          duration: 3000,
+          icon: '🐾'
+        });
+      }
     } catch (error) {
-      console.error('Error al cargar pacientes:', error);
-      toast.error('Error al cargar los pacientes');
-      
-      // ✅ Fallback a datos mock en caso de error
-      setPatients([
-        {
-          id: 1,
-          nombre_mascota: 'Max',
-          especie: 'Perro',
-          nombre_raza: 'Golden Retriever',
-          edad: '3 años',
-          peso: '28.5',
-          foto_url: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=150',
-          nombre_propietario: 'Ana García',
-          apellidos_propietario: 'López',
-          telefono_principal: '5551234567',
-          email: 'ana.garcia@email.com',
-          ultima_visita: '2024-01-15',
-          estado: 'activo'
-        }
-      ]);
+      console.error('❌ Error al cargar pacientes:', error);
+
+      // ✅ Manejo de errores más específico
+      if (error.response?.status === 401) {
+        toast.error('Sesión expirada. Por favor inicia sesión nuevamente');
+      } else if (error.response?.status === 403) {
+        toast.error('No tienes permisos para ver los pacientes');
+      } else if (error.response?.status === 404) {
+        toast.info('No se encontraron pacientes', { icon: '🐾' });
+        setPatients([]);
+      } else {
+        toast.error('Error al cargar los pacientes. Intenta nuevamente');
+      }
+
+      setPatients([]);
     } finally {
       setLoading(false);
     }
@@ -91,16 +104,16 @@ const PatientsPage = () => {
 
   // ✅ Manejar agregado de paciente con datos reales
   const handleAddPatient = (newPatient) => {
-    console.log('Nuevo paciente agregado:', newPatient);
-    
-    // ✅ Agregar el nuevo paciente al estado
-    setPatients(prev => [newPatient, ...prev]);
+    console.log('✅ Nuevo paciente agregado:', newPatient);
+
+    // ✅ Recargar la lista inmediatamente para obtener datos actualizados del servidor
+    loadPatients();
     setShowAddModal(false);
-    
-    // ✅ Recargar la lista para obtener datos actualizados
-    setTimeout(() => {
-      loadPatients();
-    }, 1000);
+
+    toast.success(`¡${newPatient.nombre_mascota} ha sido agregado exitosamente!`, {
+      duration: 4000,
+      icon: '🎉'
+    });
   };
 
   // ✅ Función para refrescar la lista
