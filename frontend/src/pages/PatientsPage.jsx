@@ -29,12 +29,35 @@ const PatientsPage = () => {
     loadPatients();
   }, []);
 
+  // ✅ Función para verificar si un paciente es nuevo (últimos 7 días)
+  const isNewPatient = (createdAt) => {
+    if (!createdAt) return false;
+    try {
+      const now = new Date();
+      const patientDate = new Date(createdAt);
+
+      // Verificar que la fecha es válida
+      if (isNaN(patientDate.getTime())) return false;
+
+      // Calcular diferencia en milisegundos
+      const diffTime = now - patientDate;
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+      // Paciente es nuevo si fue creado en los últimos 7 días
+      return diffDays >= 0 && diffDays <= 7;
+    } catch (error) {
+      console.error('Error al verificar fecha de paciente:', error);
+      return false;
+    }
+  };
+
   const loadPatients = async () => {
     try {
       setLoading(true);
       const response = await patientService.getAll();
 
       console.log('📦 Respuesta del servidor:', response);
+      console.log('🔍 Primer paciente (para debug):', response?.data?.[0] || response?.[0]);
 
       // ✅ Extraer datos correctamente según la estructura del backend
       let patientsArray = [];
@@ -95,17 +118,13 @@ const PatientsPage = () => {
       (selectedFilter === 'gatos' && patient.especie === 'Gato') ||
       (selectedFilter === 'nuevos' && isNewPatient(patient.created_at));
 
+    // Debug para filtro de nuevos
+    if (selectedFilter === 'nuevos' && matchesFilter) {
+      console.log(`🔍 Filtrado paciente nuevo: ${patient.nombre_mascota}, created_at: ${patient.created_at}, matchesSearch: ${matchesSearch}`);
+    }
+
     return matchesSearch && matchesFilter;
   });
-
-  // ✅ Función para verificar si un paciente es nuevo (últimos 7 días)
-  const isNewPatient = (createdAt) => {
-    if (!createdAt) return false;
-    const now = new Date();
-    const patientDate = new Date(createdAt);
-    const diffDays = Math.ceil((now - patientDate) / (1000 * 60 * 60 * 24));
-    return diffDays <= 7;
-  };
 
   const filters = [
     { value: 'todos', label: 'Todos', icon: '🐾' },
@@ -138,29 +157,31 @@ const PatientsPage = () => {
 
   return (
     <AppLayout collapseSidebar={collapseSidebar}>
-      <div className="min-h-screen pb-20 lg:pb-8">
-        {/* Header Profesional */}
-        <Header 
-          title="Pacientes" 
-          subtitle={`${filteredPatients.length} pacientes registrados`}
-          searchPlaceholder="Buscar paciente o propietario..."
-          onSearch={(e) => setSearchTerm(e.target.value)}
-          actions={[
-            {
-              icon: Plus,
-              label: 'Nuevo Paciente',
-              action: () => {
-                setCollapseSidebar(true);
-                setShowAddModal(true);
-              },
-              color: 'from-emerald-500 to-green-600',
-              className: 'shadow-lg shadow-green-500/30 hover:shadow-green-500/50 font-semibold'
-            }
-          ]}
-        />
+      <div className="h-screen flex flex-col overflow-hidden">
+        {/* Header Profesional - Fijo */}
+        <div className="flex-shrink-0">
+          <Header
+            title="Pacientes"
+            subtitle={`${filteredPatients.length} pacientes registrados`}
+            searchPlaceholder="Buscar paciente o propietario..."
+            onSearch={(e) => setSearchTerm(e.target.value)}
+            actions={[
+              {
+                icon: Plus,
+                label: 'Nuevo Paciente',
+                action: () => {
+                  setCollapseSidebar(true);
+                  setShowAddModal(true);
+                },
+                color: 'from-emerald-500 to-green-600',
+                className: 'shadow-lg shadow-green-500/30 hover:shadow-green-500/50 font-semibold'
+              }
+            ]}
+          />
+        </div>
 
-        {/* Contenido principal */}
-        <div className="p-4 lg:p-6 pt-0">
+        {/* Contenido principal - Scrolleable */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 pt-0 pb-24 lg:pb-8">
           <GlassCard className="p-6">
             {/* Filtros */}
             <div className="flex space-x-3 overflow-x-auto pb-2 mb-6 scrollbar-hide">
@@ -169,7 +190,16 @@ const PatientsPage = () => {
                   if (filter.value === 'todos') return patients.length;
                   if (filter.value === 'perros') return patients.filter(p => p.especie === 'Perro').length;
                   if (filter.value === 'gatos') return patients.filter(p => p.especie === 'Gato').length;
-                  if (filter.value === 'nuevos') return patients.filter(p => isNewPatient(p.created_at)).length;
+                  if (filter.value === 'nuevos') {
+                    const newPatients = patients.filter(p => {
+                      const isNew = isNewPatient(p.created_at);
+                      if (isNew) {
+                        console.log(`✅ Paciente nuevo detectado: ${p.nombre_mascota}, created_at: ${p.created_at}`);
+                      }
+                      return isNew;
+                    });
+                    return newPatients.length;
+                  }
                   return 0;
                 };
 
@@ -298,49 +328,49 @@ const PatientsPage = () => {
           )}
           </GlassCard>
         </div>
-
-        {/* Floating Action Button - Mobile */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="fixed bottom-24 right-4 lg:hidden z-50"
-        >
-          <motion.button
-            onClick={() => {
-              setCollapseSidebar(true);
-              setShowAddModal(true);
-            }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-2xl shadow-green-500/50 flex items-center justify-center text-white border-2 border-white/20"
-          >
-            <Plus size={28} strokeWidth={2.5} />
-          </motion.button>
-        </motion.div>
-
-        {/* Mobile Navigation */}
-        <MobileNavigation />
-
-        {/* Add Patient Modal */}
-        <AddPatientModal
-          isOpen={showAddModal}
-          onClose={() => {
-            setShowAddModal(false);
-            setCollapseSidebar(false);
-          }}
-          onSuccess={handleAddPatient}
-        />
-
-        {/* ✅ Debug info (solo en desarrollo) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs max-w-xs">
-            <div>Pacientes: {patients.length}</div>
-            <div>Filtrados: {filteredPatients.length}</div>
-            <div>Usuario: {user?.nombre}</div>
-          </div>
-        )}
       </div>
+
+      {/* Floating Action Button - Mobile */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 }}
+        className="fixed bottom-24 right-4 lg:hidden z-50"
+      >
+        <motion.button
+          onClick={() => {
+            setCollapseSidebar(true);
+            setShowAddModal(true);
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-2xl shadow-green-500/50 flex items-center justify-center text-white border-2 border-white/20"
+        >
+          <Plus size={28} strokeWidth={2.5} />
+        </motion.button>
+      </motion.div>
+
+      {/* Mobile Navigation */}
+      <MobileNavigation />
+
+      {/* Add Patient Modal */}
+      <AddPatientModal
+        isOpen={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          setCollapseSidebar(false);
+        }}
+        onSuccess={handleAddPatient}
+      />
+
+      {/* ✅ Debug info (solo en desarrollo) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs max-w-xs">
+          <div>Pacientes: {patients.length}</div>
+          <div>Filtrados: {filteredPatients.length}</div>
+          <div>Usuario: {user?.nombre}</div>
+        </div>
+      )}
     </AppLayout>
   );
 };

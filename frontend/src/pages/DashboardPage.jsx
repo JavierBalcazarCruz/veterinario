@@ -62,11 +62,14 @@ const DashboardPage = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen pb-20 lg:pb-8">
-        <Header title={greetingTitle} subtitle={formattedDate} />
+      <div className="h-screen flex flex-col overflow-hidden">
+        {/* Header - Fijo */}
+        <div className="flex-shrink-0">
+          <Header title={greetingTitle} subtitle={formattedDate} />
+        </div>
 
-        {/* Main Content - SIN ANIMACIONES */}
-        <main className="px-4 lg:px-6 space-y-6">
+        {/* Main Content - Scrolleable */}
+        <main className="flex-1 overflow-y-auto px-4 lg:px-6 space-y-6 pb-24 lg:pb-8">
           {/* Quick Stats */}
           <section>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -124,18 +127,18 @@ const DashboardPage = () => {
               <UpcomingAppointments />
             </section>
           </div>
-
-          {/* Floating Action Button - Mobile */}
-          <div className="fixed bottom-24 right-4 lg:hidden z-50">
-            <button className="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-xl flex items-center justify-center text-white">
-              <Plus size={24} />
-            </button>
-          </div>
         </main>
-
-        {/* Mobile Navigation */}
-        <MobileNavigation />
       </div>
+
+      {/* Floating Action Button - Mobile */}
+      <div className="fixed bottom-24 right-4 lg:hidden z-50">
+        <button className="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-xl flex items-center justify-center text-white">
+          <Plus size={24} />
+        </button>
+      </div>
+
+      {/* Mobile Navigation */}
+      <MobileNavigation />
     </AppLayout>
   );
 };

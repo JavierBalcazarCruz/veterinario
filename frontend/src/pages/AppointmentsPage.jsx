@@ -159,23 +159,25 @@ const AppointmentsPage = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen pb-20 lg:pb-8">
-        {/* Header Profesional */}
-        <Header 
-          title="Citas Médicas" 
-          subtitle={`${todayAppointments.length} citas para hoy`}
-          actions={[
-            {
-              icon: Plus,
-              label: 'Nueva Cita',
-              action: () => setShowAddModal(true),
-              color: 'from-purple-500 to-purple-600'
-            }
-          ]}
-        />
+      <div className="h-screen flex flex-col overflow-hidden">
+        {/* Header Profesional - Fijo */}
+        <div className="flex-shrink-0">
+          <Header
+            title="Citas Médicas"
+            subtitle={`${todayAppointments.length} citas para hoy`}
+            actions={[
+              {
+                icon: Plus,
+                label: 'Nueva Cita',
+                action: () => setShowAddModal(true),
+                color: 'from-purple-500 to-purple-600'
+              }
+            ]}
+          />
+        </div>
 
-        {/* Contenido principal */}
-        <div className="p-4 lg:p-6 pt-0">
+        {/* Contenido principal - Scrolleable */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 pt-0 pb-24 lg:pb-8">
           <GlassCard className="p-6">
             {/* Controls de Vista */}
             <div className="flex items-center justify-between mb-6">
@@ -351,35 +353,35 @@ const AppointmentsPage = () => {
           )}
           </GlassCard>
         </div>
-
-        {/* Floating Action Button - Mobile */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="fixed bottom-24 right-4 lg:hidden z-50"
-        >
-          <motion.button
-            onClick={() => setShowAddModal(true)}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-xl flex items-center justify-center text-white"
-          >
-            <Plus size={24} />
-          </motion.button>
-        </motion.div>
-
-        {/* Mobile Navigation */}
-        <MobileNavigation />
-
-        {/* Add Appointment Modal */}
-        <AddAppointmentModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={handleAddAppointment}
-          selectedDate={selectedDate}
-        />
       </div>
+
+      {/* Floating Action Button - Mobile */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 }}
+        className="fixed bottom-24 right-4 lg:hidden z-50"
+      >
+        <motion.button
+          onClick={() => setShowAddModal(true)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-xl flex items-center justify-center text-white"
+        >
+          <Plus size={24} />
+        </motion.button>
+      </motion.div>
+
+      {/* Mobile Navigation */}
+      <MobileNavigation />
+
+      {/* Add Appointment Modal */}
+      <AddAppointmentModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleAddAppointment}
+        selectedDate={selectedDate}
+      />
     </AppLayout>
   );
 };

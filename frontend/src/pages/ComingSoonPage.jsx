@@ -120,15 +120,17 @@ const ComingSoonPage = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen pb-20 lg:pb-8">
-        {/* Header */}
-        <Header 
-          title={currentModule.title}
-          subtitle="Próximamente disponible"
-        />
+      <div className="h-screen flex flex-col overflow-hidden">
+        {/* Header - Fijo */}
+        <div className="flex-shrink-0">
+          <Header
+            title={currentModule.title}
+            subtitle="Próximamente disponible"
+          />
+        </div>
 
-        {/* Contenido principal */}
-        <div className="p-4 lg:p-6 pt-0 max-w-4xl mx-auto">
+        {/* Contenido principal - Scrolleable */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 pt-0 pb-24 lg:pb-8 max-w-4xl mx-auto w-full">
           {/* Hero Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
