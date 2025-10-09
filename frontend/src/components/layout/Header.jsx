@@ -56,16 +56,30 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
           {/* Sección Principal - Título e Información */}
           <div className="flex-1">
             <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-6">
-              {/* Título y Subtítulo */}
+              {/* Título, Subtítulo y Notificaciones (Mobile) */}
               <div className="mb-4 lg:mb-0">
-                <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1 bg-gradient-to-r from-white to-white/80 bg-clip-text">
-                  {title}
-                </h1>
-                {subtitle && (
-                  <p className="text-white/60 text-sm lg:text-base">
-                    {subtitle}
-                  </p>
-                )}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1 bg-gradient-to-r from-white to-white/80 bg-clip-text">
+                      {title}
+                    </h1>
+                    {subtitle && (
+                      <p className="text-white/60 text-sm lg:text-base">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Botón de Notificaciones - Solo Mobile */}
+                  {showQuickActions && (
+                    <button className="lg:hidden relative p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white ml-3 flex-shrink-0">
+                      <Bell size={18} />
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                        3
+                      </div>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Info Contextual */}
@@ -100,10 +114,10 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
             )}
           </div>
 
-          {/* Sección de Acciones */}
+          {/* Sección de Acciones - Solo Desktop */}
           {showQuickActions && (
-            <div className="flex items-center space-x-3">
-              {/* Notificaciones */}
+            <div className="hidden lg:flex items-center space-x-3">
+              {/* Notificaciones - Solo Desktop */}
               <button className="relative p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white">
                 <Bell size={18} />
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
@@ -118,7 +132,7 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
                   <button
                     key={index}
                     onClick={action.action}
-                    className={`hidden lg:flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
                       backdrop-blur-md border-2 border-white/20
                       transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95
                       bg-gradient-to-r ${action.color} ${action.className || ''}

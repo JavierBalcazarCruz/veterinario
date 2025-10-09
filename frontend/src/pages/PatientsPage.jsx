@@ -183,8 +183,59 @@ const PatientsPage = () => {
         {/* Contenido principal - Scrolleable */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 pt-0 pb-24 lg:pb-8">
           <GlassCard className="p-6">
-            {/* Filtros */}
-            <div className="flex space-x-3 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+            {/* Filtros - Desktop: Botones horizontales, Mobile: Select estilizado */}
+
+            {/* Versión Mobile - Select Glass */}
+            <div className="lg:hidden mb-6">
+              <div className="relative">
+                <select
+                  value={selectedFilter}
+                  onChange={(e) => setSelectedFilter(e.target.value)}
+                  className="w-full px-4 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-xl text-white text-base font-semibold appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 1rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em',
+                    paddingRight: '3rem'
+                  }}
+                >
+                  {filters.map((filter) => {
+                    const getCount = () => {
+                      if (filter.value === 'todos') return patients.length;
+                      if (filter.value === 'perros') return patients.filter(p => p.especie === 'Perro').length;
+                      if (filter.value === 'gatos') return patients.filter(p => p.especie === 'Gato').length;
+                      if (filter.value === 'nuevos') {
+                        return patients.filter(p => isNewPatient(p.created_at)).length;
+                      }
+                      return 0;
+                    };
+
+                    const count = getCount();
+
+                    return (
+                      <option
+                        key={filter.value}
+                        value={filter.value}
+                        className="bg-gray-900 text-white py-3"
+                      >
+                        {filter.icon} {filter.label} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+
+                {/* Badge NEW para nuevos pacientes */}
+                {selectedFilter === 'nuevos' && patients.filter(p => isNewPatient(p.created_at)).length > 0 && (
+                  <span className="absolute top-2 right-14 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+                    NEW
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Versión Desktop - Botones horizontales */}
+            <div className="hidden lg:flex space-x-3 overflow-x-auto pb-2 mb-6 scrollbar-hide">
               {filters.map((filter) => {
                 const getCount = () => {
                   if (filter.value === 'todos') return patients.length;
