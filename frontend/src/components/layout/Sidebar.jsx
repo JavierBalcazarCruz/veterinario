@@ -21,13 +21,20 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import GlassCard from '../ui/GlassCard';
 
-const Sidebar = () => {
+const Sidebar = ({ forceCollapse = false }) => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [showAllItems, setShowAllItems] = useState(false);
+
+  // Efecto para colapsar cuando forceCollapse cambia
+  useEffect(() => {
+    if (forceCollapse) {
+      setIsCollapsed(true);
+    }
+  }, [forceCollapse]);
 
   // Módulos principales - organizados por categorías
   const navigationModules = [

@@ -41,7 +41,7 @@ const sectionThemes = {
   }
 };
 
-const AppLayout = ({ children, showSidebar = true }) => {
+const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) => {
   const [currentTheme, setCurrentTheme] = useState(sectionThemes['/dashboard']);
   const location = useLocation();
 
@@ -102,7 +102,7 @@ const AppLayout = ({ children, showSidebar = true }) => {
       />
 
       {/* Sidebar - Solo Desktop */}
-      {showSidebar && <Sidebar />}
+      {showSidebar && <Sidebar forceCollapse={collapseSidebar} />}
 
       {/* Main Content Area */}
       <div className={`relative z-20 min-h-screen ${showSidebar ? 'lg:ml-80' : ''} transition-all duration-300`}>

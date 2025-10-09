@@ -55,6 +55,23 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     }
   }, [isOpen]);
 
+  // ✅ Cerrar modal con tecla ESC
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen]);
+
   const loadRazas = async () => {
     try {
       setLoadingRazas(true);

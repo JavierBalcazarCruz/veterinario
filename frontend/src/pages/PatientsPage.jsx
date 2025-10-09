@@ -22,6 +22,7 @@ const PatientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('todos');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [collapseSidebar, setCollapseSidebar] = useState(false);
 
   // ✅ Cargar pacientes reales desde la API
   useEffect(() => {
@@ -136,7 +137,7 @@ const PatientsPage = () => {
   };
 
   return (
-    <AppLayout>
+    <AppLayout collapseSidebar={collapseSidebar}>
       <div className="min-h-screen pb-20 lg:pb-8">
         {/* Header Profesional */}
         <Header 
@@ -148,7 +149,10 @@ const PatientsPage = () => {
             {
               icon: Plus,
               label: 'Nuevo Paciente',
-              action: () => setShowAddModal(true),
+              action: () => {
+                setCollapseSidebar(true);
+                setShowAddModal(true);
+              },
               color: 'from-emerald-500 to-green-600',
               className: 'shadow-lg shadow-green-500/30 hover:shadow-green-500/50 font-semibold'
             }
@@ -247,7 +251,10 @@ const PatientsPage = () => {
                 {!searchTerm && (
                   <div className="space-y-3">
                     <GlassButton
-                      onClick={() => setShowAddModal(true)}
+                      onClick={() => {
+                        setCollapseSidebar(true);
+                        setShowAddModal(true);
+                      }}
                       icon={<Plus size={20} />}
                     >
                       Agregar Paciente
@@ -300,7 +307,10 @@ const PatientsPage = () => {
           className="fixed bottom-24 right-4 lg:hidden z-50"
         >
           <motion.button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              setCollapseSidebar(true);
+              setShowAddModal(true);
+            }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-2xl shadow-green-500/50 flex items-center justify-center text-white border-2 border-white/20"
@@ -315,7 +325,10 @@ const PatientsPage = () => {
         {/* Add Patient Modal */}
         <AddPatientModal
           isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
+          onClose={() => {
+            setShowAddModal(false);
+            setCollapseSidebar(false);
+          }}
           onSuccess={handleAddPatient}
         />
 
