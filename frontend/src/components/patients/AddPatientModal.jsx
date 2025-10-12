@@ -46,7 +46,10 @@ const validationSchema = yup.object({
 const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
   const [razas, setRazas] = useState([]);
+  const [razasFiltradas, setRazasFiltradas] = useState([]);
   const [loadingRazas, setLoadingRazas] = useState(false);
+  const [especieSeleccionada, setEspecieSeleccionada] = useState('Perro');
+  const [busquedaRaza, setBusquedaRaza] = useState('');
 
   // ✅ Cargar razas al abrir el modal
   useEffect(() => {
@@ -78,10 +81,11 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
       const razasData = await patientService.getRaces();
       console.log('✅ Razas cargadas:', razasData);
       setRazas(razasData);
+      setRazasFiltradas(razasData.filter(r => r.especie === especieSeleccionada));
     } catch (error) {
       console.error('❌ Error al cargar razas:', error);
       // Fallback a razas por defecto
-      setRazas([
+      const fallbackRazas = [
         { id: 1, nombre: 'Mestizo', especie: 'Perro' },
         { id: 2, nombre: 'Golden Retriever', especie: 'Perro' },
         { id: 3, nombre: 'Labrador', especie: 'Perro' },
@@ -92,11 +96,26 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
         { id: 8, nombre: 'Maine Coon', especie: 'Gato' },
         { id: 9, nombre: 'Angora', especie: 'Gato' },
         { id: 10, nombre: 'Común Europeo', especie: 'Gato' },
-      ]);
+      ];
+      setRazas(fallbackRazas);
+      setRazasFiltradas(fallbackRazas.filter(r => r.especie === especieSeleccionada));
     } finally {
       setLoadingRazas(false);
     }
   };
+
+  // ✅ Filtrar razas por especie y búsqueda
+  useEffect(() => {
+    let filtered = razas.filter(r => r.especie === especieSeleccionada);
+
+    if (busquedaRaza.trim()) {
+      filtered = filtered.filter(r =>
+        r.nombre.toLowerCase().includes(busquedaRaza.toLowerCase())
+      );
+    }
+
+    setRazasFiltradas(filtered);
+  }, [especieSeleccionada, busquedaRaza, razas]);
 
   // ✅ CORREGIDO: Valores iniciales que coinciden EXACTAMENTE con el backend
   const {
@@ -382,45 +401,127 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         <label className="block text-sm sm:text-base font-medium text-white mb-3">
                           Raza *
                         </label>
+
                         {loadingRazas ? (
                           <div className="flex items-center justify-center p-6 bg-white/5 rounded-xl">
                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
                             <span className="ml-3 text-white/70">Cargando razas...</span>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 max-h-48 sm:max-h-40 lg:max-h-48 overflow-y-auto custom-scrollbar">
-                            {razas.map((raza) => (
-                              <motion.label
-                                key={raza.id}
-                                whileTap={{ scale: 0.95 }}
-                                className={`p-4 sm:p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 touch-manipulation ${
-                                  parseInt(values.id_raza) === raza.id
-                                    ? 'bg-primary-500/30 border-primary-400/70 shadow-lg shadow-primary-500/20'
-                                    : 'bg-white/5 border-white/20 hover:bg-white/10 active:bg-white/15'
+                          <>
+                            {/* Selector de especie - Tabs */}
+                            <div className="flex gap-2 mb-4">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEspecieSeleccionada('Perro');
+                                  setBusquedaRaza('');
+                                }}
+                                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 touch-manipulation ${
+                                  especieSeleccionada === 'Perro'
+                                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                                    : 'bg-white/10 text-white/70 hover:bg-white/15'
                                 }`}
                               >
-                                <input
-                                  type="radio"
-                                  name="id_raza"
-                                  value={raza.id}
-                                  checked={parseInt(values.id_raza) === raza.id}
-                                  onChange={getFieldProps('id_raza').onChange}
-                                  className="sr-only"
-                                />
-                                <div className="text-center">
-                                  <div className="text-2xl sm:text-xl mb-2 sm:mb-1">
-                                    {raza.especie === 'Perro' ? '🐕' : '🐱'}
-                                  </div>
-                                  <div className="text-white text-sm sm:text-xs font-semibold">
-                                    {raza.nombre}
-                                  </div>
-                                  <div className="text-white/60 text-xs mt-1">
-                                    {raza.especie}
-                                  </div>
+                                🐕 Perro
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEspecieSeleccionada('Gato');
+                                  setBusquedaRaza('');
+                                }}
+                                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 touch-manipulation ${
+                                  especieSeleccionada === 'Gato'
+                                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                                }`}
+                              >
+                                🐱 Gato
+                              </button>
+                            </div>
+
+                            {/* Buscador de razas - Desktop */}
+                            <div className="hidden lg:block mb-4">
+                              <input
+                                type="text"
+                                value={busquedaRaza}
+                                onChange={(e) => setBusquedaRaza(e.target.value)}
+                                placeholder={`Buscar raza de ${especieSeleccionada.toLowerCase()}...`}
+                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border-2 border-white/20
+                                  rounded-xl text-white placeholder-white/50
+                                  focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
+                                  transition-all duration-200"
+                              />
+                            </div>
+
+                            {/* Select nativo - Mobile */}
+                            <div className="lg:hidden mb-4">
+                              <select
+                                value={values.id_raza}
+                                onChange={(e) => setValue('id_raza', e.target.value)}
+                                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md border-2 border-white/20
+                                  rounded-xl text-white font-medium
+                                  focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
+                                  touch-manipulation appearance-none cursor-pointer"
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                  backgroundPosition: 'right 0.5rem center',
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundSize: '1.5em 1.5em',
+                                  paddingRight: '2.5rem'
+                                }}
+                              >
+                                <option value="" className="bg-gray-800">
+                                  {razasFiltradas.length > 0 ? 'Selecciona una raza' : 'No hay razas disponibles'}
+                                </option>
+                                {razasFiltradas.map((raza) => (
+                                  <option key={raza.id} value={raza.id} className="bg-gray-800">
+                                    {raza.especie === 'Perro' ? '🐕' : '🐱'} {raza.nombre}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Grid de tarjetas - Desktop */}
+                            <div className="hidden lg:grid grid-cols-3 xl:grid-cols-5 gap-3 max-h-64 overflow-y-auto custom-scrollbar">
+                              {razasFiltradas.length > 0 ? (
+                                razasFiltradas.map((raza) => (
+                                  <motion.label
+                                    key={raza.id}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                                      parseInt(values.id_raza) === raza.id
+                                        ? 'bg-primary-500/30 border-primary-400/70 shadow-lg shadow-primary-500/20'
+                                        : 'bg-white/5 border-white/20 hover:bg-white/10'
+                                    }`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="id_raza"
+                                      value={raza.id}
+                                      checked={parseInt(values.id_raza) === raza.id}
+                                      onChange={getFieldProps('id_raza').onChange}
+                                      className="sr-only"
+                                    />
+                                    <div className="text-center">
+                                      <div className="text-3xl mb-1">
+                                        {raza.especie === 'Perro' ? '🐕' : '🐱'}
+                                      </div>
+                                      <div className="text-white text-xs font-semibold">
+                                        {raza.nombre}
+                                      </div>
+                                    </div>
+                                  </motion.label>
+                                ))
+                              ) : (
+                                <div className="col-span-full text-center py-6 text-white/60">
+                                  No se encontraron razas
                                 </div>
-                              </motion.label>
-                            ))}
-                          </div>
+                              )}
+                            </div>
+                          </>
                         )}
                         {errors.id_raza && (
                           <p className="mt-2 text-sm text-red-400 flex items-center gap-1">

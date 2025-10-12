@@ -165,15 +165,16 @@ export const patientService = {
     }
   },
 
-  // ✅ Obtener razas disponibles
-  getRaces: async () => {
+  // ✅ Obtener razas disponibles (con filtro opcional por especie)
+  getRaces: async (especie = null) => {
     try {
-      const response = await api.get('/razas');
-      return response.data;
+      const url = especie ? `/pacientes/razas?especie=${encodeURIComponent(especie)}` : '/pacientes/razas';
+      const response = await api.get(url);
+      return response.data.data || response.data;
     } catch (error) {
-      console.log('⚠️ Endpoint /razas no disponible, usando datos mock');
+      console.log('⚠️ Endpoint /pacientes/razas no disponible, usando datos mock');
       // Si no existe endpoint, devolver razas mock
-      return [
+      const mockRazas = [
         { id: 1, nombre: 'Mestizo', especie: 'Perro' },
         { id: 2, nombre: 'Golden Retriever', especie: 'Perro' },
         { id: 3, nombre: 'Labrador', especie: 'Perro' },
@@ -185,6 +186,9 @@ export const patientService = {
         { id: 9, nombre: 'Angora', especie: 'Gato' },
         { id: 10, nombre: 'Común Europeo', especie: 'Gato' },
       ];
+
+      // Filtrar por especie si se proporciona
+      return especie ? mockRazas.filter(r => r.especie.toLowerCase() === especie.toLowerCase()) : mockRazas;
     }
   },
 
