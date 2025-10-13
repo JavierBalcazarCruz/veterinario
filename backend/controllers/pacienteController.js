@@ -478,12 +478,66 @@ const eliminarPaciente = async (req, res) => {
     }
 };
 
+/**
+ * ✅ Obtener razas filtradas por especie
+ */
+const obtenerRazas = async (req, res) => {
+    let connection;
+    try {
+        const { especie } = req.query; // Parámetro opcional para filtrar por especie
+
+        connection = await conectarDB();
+
+        let query = `
+            SELECT r.id, r.nombre, e.id AS id_especie, e.nombre AS especie
+            FROM razas r
+            INNER JOIN especies e ON r.id_especie = e.id
+            WHERE r.activo = TRUE
+        `;
+
+        const params = [];
+
+        // Filtrar por especie si se proporciona
+        if (especie) {
+            query += ` AND LOWER(e.nombre) = LOWER(?)`;
+            params.push(especie);
+        }
+
+        query += ` ORDER BY e.nombre ASC, r.nombre ASC`;
+
+        const [razas] = await connection.execute(query, params);
+
+        res.json({
+            success: true,
+            data: razas,
+            total: razas.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error en obtenerRazas:', error);
+        res.status(500).json({
+            success: false,
+            msg: 'Error al obtener las razas',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    } finally {
+        if (connection) {
+            try {
+                await connection.end();
+            } catch (error) {
+                console.error('❌ Error al cerrar conexión:', error);
+            }
+        }
+    }
+};
+
 export {
     agregarPaciente,
     obtenerPacientes,
     obtenerPaciente,
     actualizarPaciente,
-    eliminarPaciente
+    eliminarPaciente,
+    obtenerRazas
 };// backend/controllers/pacienteController.js - VERSIÓN CORREGIDA
 import conectarDB from '../config/db.js';
 
@@ -899,10 +953,11 @@ const obtenerPacientes = async (req, res) => {
                        GROUP_CONCAT(
                            CASE WHEN t.principal = 1 THEN t.numero ELSE NULL END
                        ) AS telefono_principal,
-                       d.calle, d.numero_ext, d.numero_int, d.referencias,
-                       cp.codigo AS codigo_postal, cp.colonia,
-                       m.nombre AS municipio, est.nombre AS estado, pa.nombre AS pais,
-                       YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) - 
+                       MAX(d.calle) AS calle, MAX(d.numero_ext) AS numero_ext,
+                       MAX(d.numero_int) AS numero_int, MAX(d.referencias) AS referencias,
+                       MAX(cp.codigo) AS codigo_postal, MAX(cp.colonia) AS colonia,
+                       MAX(m.nombre) AS municipio, MAX(est.nombre) AS estado, MAX(pa.nombre) AS pais,
+                       YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) -
                        (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(p.fecha_nacimiento, '%m%d')) AS edad,
                        p.updated_at AS ultima_visita
                 FROM pacientes p
@@ -930,10 +985,11 @@ const obtenerPacientes = async (req, res) => {
                        GROUP_CONCAT(
                            CASE WHEN t.principal = 1 THEN t.numero ELSE NULL END
                        ) AS telefono_principal,
-                       d.calle, d.numero_ext, d.numero_int, d.referencias,
-                       cp.codigo AS codigo_postal, cp.colonia,
-                       m.nombre AS municipio, est.nombre AS estado, pa.nombre AS pais,
-                       YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) - 
+                       MAX(d.calle) AS calle, MAX(d.numero_ext) AS numero_ext,
+                       MAX(d.numero_int) AS numero_int, MAX(d.referencias) AS referencias,
+                       MAX(cp.codigo) AS codigo_postal, MAX(cp.colonia) AS colonia,
+                       MAX(m.nombre) AS municipio, MAX(est.nombre) AS estado, MAX(pa.nombre) AS pais,
+                       YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) -
                        (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(p.fecha_nacimiento, '%m%d')) AS edad,
                        p.updated_at AS ultima_visita
                 FROM pacientes p

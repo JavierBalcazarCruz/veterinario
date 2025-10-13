@@ -5,8 +5,12 @@ import {agregarPaciente
     , obtenerPaciente
     , actualizarPaciente
     , eliminarPaciente
+    , obtenerRazas
 } from '../controllers/pacienteController.js';
 import checkAuth from '../middleware/authMiddleware.js';
+
+// Ruta para obtener razas (debe ir antes de '/:id' para evitar conflictos)
+router.get('/razas', checkAuth, obtenerRazas);
 
 router.route('/')
     .post(checkAuth, agregarPaciente)

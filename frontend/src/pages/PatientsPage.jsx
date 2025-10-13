@@ -155,6 +155,15 @@ const PatientsPage = () => {
     loadPatients();
   };
 
+  // ✅ Función para manejar la eliminación de un paciente
+  const handleDeletePatient = (patientId) => {
+    // Actualización optimista: remover paciente del estado inmediatamente
+    setPatients(prevPatients => prevPatients.filter(p => p.id !== patientId));
+
+    // Recargar en segundo plano para sincronizar con el servidor
+    setTimeout(() => loadPatients(), 1000);
+  };
+
   return (
     <AppLayout collapseSidebar={collapseSidebar}>
       <div className="h-screen flex flex-col overflow-hidden">
@@ -371,7 +380,10 @@ const PatientsPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <PatientCard patient={patient} />
+                    <PatientCard
+                      patient={patient}
+                      onDelete={handleDeletePatient}
+                    />
                   </motion.div>
                 );
               })}
