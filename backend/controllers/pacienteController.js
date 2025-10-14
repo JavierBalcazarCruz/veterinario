@@ -145,9 +145,11 @@ const actualizarPaciente = async (req, res) => {
 
         connection = await conectarDB();
 
-        // Verificar que el paciente existe
+        // Verificar que el paciente existe (incluir id_usuario para preservarlo)
         const [pacientes] = await connection.execute(
-            `SELECT p.*, d.id AS doctor_id, pr.id AS propietario_id
+            `SELECT p.id, p.nombre_mascota, p.id_propietario, p.id_doctor, p.id_usuario,
+                    p.fecha_nacimiento, p.peso, p.id_raza, p.foto_url, p.estado,
+                    d.id AS doctor_id, pr.id AS propietario_id
              FROM pacientes p
              INNER JOIN doctores d ON p.id_doctor = d.id
              INNER JOIN propietarios pr ON p.id_propietario = pr.id
@@ -166,7 +168,8 @@ const actualizarPaciente = async (req, res) => {
         console.log('📋 Paciente actual en BD:', {
             id: pacienteActual.id,
             nombre: pacienteActual.nombre_mascota,
-            propietario_id: pacienteActual.propietario_id
+            propietario_id: pacienteActual.propietario_id,
+            id_usuario: pacienteActual.id_usuario
         });
 
         // Validar permisos
@@ -239,16 +242,16 @@ const actualizarPaciente = async (req, res) => {
             // Validar colonia
             if (updates.colonia) {
                 validarLongitud(updates.colonia, 3, 150, 'La colonia');
-                if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(updates.colonia.trim())) {
-                    throw new Error('La colonia solo puede contener letras, números, espacios, puntos, comas y guiones');
+                if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-'()\/º°#]+$/.test(updates.colonia.trim())) {
+                    throw new Error('La colonia contiene caracteres no permitidos');
                 }
             }
 
             // Validar referencias
             if (updates.referencias) {
-                validarLongitud(updates.referencias, 0, 80, 'Las referencias');
-                if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(updates.referencias.trim())) {
-                    throw new Error('Las referencias solo pueden contener letras, números, espacios, puntos, comas y guiones');
+                validarLongitud(updates.referencias, 0, 200, 'Las referencias');
+                if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-'()\/:"#]+$/.test(updates.referencias.trim())) {
+                    throw new Error('Las referencias contienen caracteres no permitidos');
                 }
             }
 
@@ -302,7 +305,10 @@ const actualizarPaciente = async (req, res) => {
                 }
 
                 if (fieldsToUpdate.length > 0) {
-                    fieldsToUpdate.push('updated_at = NOW()');
+                    // ✅ NO actualizar updated_at ni id_usuario manualmente
+                    // updated_at se actualiza automáticamente con ON UPDATE CURRENT_TIMESTAMP
+                    // id_usuario no debe cambiar una vez creado el paciente
+
                     values.push(pacienteId);
 
                     const updateQuery = `UPDATE pacientes SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
@@ -395,13 +401,13 @@ const actualizarPaciente = async (req, res) => {
 
             // ✅ Validar numero_ext antes de actualizar dirección
             if (updates.numero_ext) {
-                const numeroExtLimpio = updates.numero_ext.toString().trim();
-                if (numeroExtLimpio.length > 6) {
-                    throw new Error('El número exterior debe tener máximo 6 caracteres');
+                const numeroExtLimpio = updates.numero_ext.toString().trim().toUpperCase();
+                if (numeroExtLimpio.length > 10) {
+                    throw new Error('El número exterior debe tener máximo 10 caracteres');
                 }
-                // Solo permitir letras y números (alfanumérico)
-                if (!/^[a-zA-Z0-9]+$/.test(numeroExtLimpio)) {
-                    throw new Error('El número exterior solo debe contener letras y números, sin caracteres especiales');
+                // Permitir: letras, números, S/N, diagonales, guiones
+                if (!/^[a-zA-Z0-9\/\-]+$/.test(numeroExtLimpio)) {
+                    throw new Error('El número exterior solo puede contener letras, números, diagonales y guiones');
                 }
             }
 
@@ -798,11 +804,11 @@ import conectarDB from '../config/db.js';
  * Protección contra SQL Injection, XSS y caracteres especiales peligrosos
  */
 
-// ✅ Sanitizar texto: solo letras, espacios, acentos y ñ
+// ✅ Sanitizar texto: letras, espacios, acentos, ñ, apóstrofes y guiones
 const sanitizarTexto = (texto) => {
     if (!texto) return null;
-    // Eliminar cualquier carácter que no sea letra, espacio, acento o ñ
-    return texto.toString().trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    // Permitir letras, espacios, acentos, ñ, apóstrofes y guiones (nombres como O'Connor, María-José)
+    return texto.toString().trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s'\-]/g, '');
 };
 
 // ✅ Sanitizar número alfanumérico: solo letras y números
@@ -836,11 +842,11 @@ const validarLongitud = (valor, min, max, nombreCampo) => {
     return true;
 };
 
-// ✅ Validar que solo contenga letras, espacios y acentos
+// ✅ Validar que solo contenga letras, espacios, acentos, apóstrofes y guiones
 const validarSoloLetras = (valor, nombreCampo) => {
     if (!valor) return true;
-    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(valor.toString().trim())) {
-        throw new Error(`${nombreCampo} solo debe contener letras, sin números ni caracteres especiales`);
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'\-]+$/.test(valor.toString().trim())) {
+        throw new Error(`${nombreCampo} solo debe contener letras, espacios, apóstrofes y guiones`);
     }
     return true;
 };
@@ -935,21 +941,21 @@ const agregarPaciente = async (req, res) => {
             });
         }
 
-        // ✅ 4. Validar numero_ext - máximo 6 caracteres alfanuméricos, sin caracteres especiales
+        // ✅ 4. Validar numero_ext - permitir alfanuméricos, S/N, diagonales, guiones
         if (numero_ext) {
-            const numeroExtLimpio = numero_ext.toString().trim();
-            if (numeroExtLimpio.length > 6) {
+            const numeroExtLimpio = numero_ext.toString().trim().toUpperCase();
+            if (numeroExtLimpio.length > 10) {
                 return res.status(400).json({
                     success: false,
-                    msg: 'El número exterior debe tener máximo 6 caracteres',
+                    msg: 'El número exterior debe tener máximo 10 caracteres',
                     campo: 'numero_ext'
                 });
             }
-            // Solo permitir letras y números (alfanumérico)
-            if (!/^[a-zA-Z0-9]+$/.test(numeroExtLimpio)) {
+            // Permitir: letras, números, S/N, diagonales, guiones (común en México)
+            if (!/^[a-zA-Z0-9\/\-]+$/.test(numeroExtLimpio)) {
                 return res.status(400).json({
                     success: false,
-                    msg: 'El número exterior solo debe contener letras y números, sin caracteres especiales',
+                    msg: 'El número exterior solo puede contener letras, números, diagonales y guiones',
                     campo: 'numero_ext'
                 });
             }
@@ -1022,27 +1028,27 @@ const agregarPaciente = async (req, res) => {
             validarLongitud(calle, 3, 200, 'La calle');
         }
 
-        // ✅ 12. Validar colonia - sin caracteres especiales peligrosos
+        // ✅ 12. Validar colonia - permitir más caracteres comunes en direcciones
         if (colonia) {
             validarLongitud(colonia, 3, 150, 'La colonia');
-            // Solo permitir letras, números, espacios, puntos, comas y guiones
-            if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(colonia.trim())) {
+            // Permitir letras, números, espacios, puntos, comas, guiones, apóstrofes, paréntesis, diagonales
+            if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-'()\/º°#]+$/.test(colonia.trim())) {
                 return res.status(400).json({
                     success: false,
-                    msg: 'La colonia solo puede contener letras, números, espacios, puntos, comas y guiones',
+                    msg: 'La colonia contiene caracteres no permitidos',
                     campo: 'colonia'
                 });
             }
         }
 
-        // ✅ 13. Validar referencias - máximo 80 caracteres, sin caracteres especiales peligrosos
+        // ✅ 13. Validar referencias - permitir más caracteres para descripciones detalladas
         if (referencias) {
-            validarLongitud(referencias, 0, 80, 'Las referencias');
-            // Solo permitir letras, números, espacios, puntos, comas y guiones
-            if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(referencias.trim())) {
+            validarLongitud(referencias, 0, 200, 'Las referencias');
+            // Permitir caracteres útiles para referencias: paréntesis, diagonales, comillas, etc.
+            if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-'()\/:"#]+$/.test(referencias.trim())) {
                 return res.status(400).json({
                     success: false,
-                    msg: 'Las referencias solo pueden contener letras, números, espacios, puntos, comas y guiones',
+                    msg: 'Las referencias contienen caracteres no permitidos',
                     campo: 'referencias'
                 });
             }
