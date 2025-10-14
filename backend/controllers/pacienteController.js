@@ -189,7 +189,69 @@ const actualizarPaciente = async (req, res) => {
         try {
             const updates = req.body;
             console.log('✍️ Procesando actualizaciones...');
-            
+
+            // ✅ Validaciones robustas de datos ANTES de actualizar
+            // Validar nombre_mascota
+            if (updates.nombre_mascota) {
+                validarSoloLetras(updates.nombre_mascota, 'El nombre de la mascota');
+                validarLongitud(updates.nombre_mascota, 2, 100, 'El nombre de la mascota');
+            }
+
+            // Validar nombre_propietario
+            if (updates.nombre_propietario) {
+                validarSoloLetras(updates.nombre_propietario, 'El nombre del propietario');
+                validarLongitud(updates.nombre_propietario, 2, 100, 'El nombre del propietario');
+            }
+
+            // Validar apellidos_propietario
+            if (updates.apellidos_propietario) {
+                validarSoloLetras(updates.apellidos_propietario, 'Los apellidos del propietario');
+                validarLongitud(updates.apellidos_propietario, 2, 150, 'Los apellidos del propietario');
+            }
+
+            // Validar numero_int
+            if (updates.numero_int) {
+                const numeroIntLimpio = sanitizarNumeros(updates.numero_int);
+                if (numeroIntLimpio.length > 3) {
+                    throw new Error('El número interior debe tener máximo 3 dígitos');
+                }
+                if (!/^\d+$/.test(numeroIntLimpio)) {
+                    throw new Error('El número interior solo debe contener números');
+                }
+            }
+
+            // Validar codigo_postal
+            if (updates.codigo_postal) {
+                const codigoPostalLimpio = sanitizarNumeros(updates.codigo_postal);
+                if (codigoPostalLimpio.length !== 5) {
+                    throw new Error('El código postal debe tener exactamente 5 dígitos');
+                }
+                if (!/^\d{5}$/.test(codigoPostalLimpio)) {
+                    throw new Error('El código postal solo debe contener números');
+                }
+            }
+
+            // Validar calle
+            if (updates.calle) {
+                validarLongitud(updates.calle, 3, 200, 'La calle');
+            }
+
+            // Validar colonia
+            if (updates.colonia) {
+                validarLongitud(updates.colonia, 3, 150, 'La colonia');
+                if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(updates.colonia.trim())) {
+                    throw new Error('La colonia solo puede contener letras, números, espacios, puntos, comas y guiones');
+                }
+            }
+
+            // Validar referencias
+            if (updates.referencias) {
+                validarLongitud(updates.referencias, 0, 80, 'Las referencias');
+                if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(updates.referencias.trim())) {
+                    throw new Error('Las referencias solo pueden contener letras, números, espacios, puntos, comas y guiones');
+                }
+            }
+
             // Actualizar datos del paciente si se proporcionaron
             if (updates.nombre_mascota || updates.fecha_nacimiento || updates.peso || updates.id_raza || updates.foto_url !== undefined) {
                 const fieldsToUpdate = [];
@@ -300,6 +362,10 @@ const actualizarPaciente = async (req, res) => {
                 if (telefonoLimpio.length < 10) {
                     throw new Error('El teléfono debe tener al menos 10 dígitos');
                 }
+                // Validar que el teléfono solo contenga números
+                if (!/^\d+$/.test(telefonoLimpio)) {
+                    throw new Error('El teléfono solo debe contener números, sin caracteres especiales');
+                }
 
                 // Verificar si ya existe un teléfono principal
                 const [telefonos] = await connection.execute(
@@ -325,6 +391,18 @@ const actualizarPaciente = async (req, res) => {
                 console.log('✅ Teléfono actualizado en BD');
             } else {
                 console.log('⚠️ No se proporcionó teléfono para actualizar');
+            }
+
+            // ✅ Validar numero_ext antes de actualizar dirección
+            if (updates.numero_ext) {
+                const numeroExtLimpio = updates.numero_ext.toString().trim();
+                if (numeroExtLimpio.length > 6) {
+                    throw new Error('El número exterior debe tener máximo 6 caracteres');
+                }
+                // Solo permitir letras y números (alfanumérico)
+                if (!/^[a-zA-Z0-9]+$/.test(numeroExtLimpio)) {
+                    throw new Error('El número exterior solo debe contener letras y números, sin caracteres especiales');
+                }
             }
 
             // ✅ Actualizar dirección del propietario si se proporcionó
@@ -716,6 +794,58 @@ export {
 import conectarDB from '../config/db.js';
 
 /**
+ * 🔒 FUNCIONES DE SANITIZACIÓN Y VALIDACIÓN ROBUSTAS
+ * Protección contra SQL Injection, XSS y caracteres especiales peligrosos
+ */
+
+// ✅ Sanitizar texto: solo letras, espacios, acentos y ñ
+const sanitizarTexto = (texto) => {
+    if (!texto) return null;
+    // Eliminar cualquier carácter que no sea letra, espacio, acento o ñ
+    return texto.toString().trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+};
+
+// ✅ Sanitizar número alfanumérico: solo letras y números
+const sanitizarAlfanumerico = (valor) => {
+    if (!valor) return null;
+    return valor.toString().trim().replace(/[^a-zA-Z0-9]/g, '');
+};
+
+// ✅ Sanitizar solo números
+const sanitizarNumeros = (valor) => {
+    if (!valor) return null;
+    return valor.toString().replace(/\D/g, '');
+};
+
+// ✅ Sanitizar dirección: permitir caracteres seguros para direcciones
+const sanitizarDireccion = (texto) => {
+    if (!texto) return null;
+    // Permitir letras, números, espacios, puntos, comas y guiones
+    return texto.toString().trim().replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]/g, '');
+};
+
+// ✅ Validar longitud de cadenas
+const validarLongitud = (valor, min, max, nombreCampo) => {
+    const longitud = valor?.toString().trim().length || 0;
+    if (min && longitud < min) {
+        throw new Error(`${nombreCampo} debe tener al menos ${min} caracteres`);
+    }
+    if (max && longitud > max) {
+        throw new Error(`${nombreCampo} debe tener máximo ${max} caracteres`);
+    }
+    return true;
+};
+
+// ✅ Validar que solo contenga letras, espacios y acentos
+const validarSoloLetras = (valor, nombreCampo) => {
+    if (!valor) return true;
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(valor.toString().trim())) {
+        throw new Error(`${nombreCampo} solo debe contener letras, sin números ni caracteres especiales`);
+    }
+    return true;
+};
+
+/**
  * ✅ Agrega un nuevo paciente y su propietario al sistema
  * CORREGIDO: Mejor manejo de errores y validaciones
  */
@@ -786,17 +916,46 @@ const agregarPaciente = async (req, res) => {
             });
         }
 
-        // ✅ 3. Validar formato de teléfono
+        // ✅ 3. Validar formato de teléfono - solo números, sin caracteres especiales
         const telefonoLimpio = telefono.toString().replace(/\D/g, '');
         if (telefonoLimpio.length < 10) {
             return res.status(400).json({
                 success: false,
-                msg: 'El teléfono debe tener al menos 10 dígitos',
+                msg: 'El teléfono debe tener al menos 10 dígitos y solo contener números',
                 campo: 'telefono'
             });
         }
 
-        // ✅ 4. Validar email si se proporciona
+        // Validar que el teléfono solo contenga números
+        if (!/^\d+$/.test(telefonoLimpio)) {
+            return res.status(400).json({
+                success: false,
+                msg: 'El teléfono solo debe contener números, sin caracteres especiales',
+                campo: 'telefono'
+            });
+        }
+
+        // ✅ 4. Validar numero_ext - máximo 6 caracteres alfanuméricos, sin caracteres especiales
+        if (numero_ext) {
+            const numeroExtLimpio = numero_ext.toString().trim();
+            if (numeroExtLimpio.length > 6) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'El número exterior debe tener máximo 6 caracteres',
+                    campo: 'numero_ext'
+                });
+            }
+            // Solo permitir letras y números (alfanumérico)
+            if (!/^[a-zA-Z0-9]+$/.test(numeroExtLimpio)) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'El número exterior solo debe contener letras y números, sin caracteres especiales',
+                    campo: 'numero_ext'
+                });
+            }
+        }
+
+        // ✅ 5. Validar email si se proporciona
         if (email && email.trim()) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email.trim())) {
@@ -808,7 +967,88 @@ const agregarPaciente = async (req, res) => {
             }
         }
 
-        // ✅ 5. Establecer conexión y iniciar transacción
+        // ✅ 6. Validar nombre_mascota - solo letras, sin caracteres especiales
+        validarSoloLetras(nombre_mascota, 'El nombre de la mascota');
+        validarLongitud(nombre_mascota, 2, 100, 'El nombre de la mascota');
+
+        // ✅ 7. Validar nombre_propietario - solo letras, sin caracteres especiales
+        validarSoloLetras(nombre_propietario, 'El nombre del propietario');
+        validarLongitud(nombre_propietario, 2, 100, 'El nombre del propietario');
+
+        // ✅ 8. Validar apellidos_propietario - solo letras, sin caracteres especiales
+        validarSoloLetras(apellidos_propietario, 'Los apellidos del propietario');
+        validarLongitud(apellidos_propietario, 2, 150, 'Los apellidos del propietario');
+
+        // ✅ 9. Validar numero_int - máximo 3 dígitos, solo números
+        if (numero_int) {
+            const numeroIntLimpio = sanitizarNumeros(numero_int);
+            if (numeroIntLimpio.length > 3) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'El número interior debe tener máximo 3 dígitos',
+                    campo: 'numero_int'
+                });
+            }
+            if (!/^\d+$/.test(numeroIntLimpio)) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'El número interior solo debe contener números',
+                    campo: 'numero_int'
+                });
+            }
+        }
+
+        // ✅ 10. Validar codigo_postal - exactamente 5 dígitos
+        if (codigo_postal) {
+            const codigoPostalLimpio = sanitizarNumeros(codigo_postal);
+            if (codigoPostalLimpio.length !== 5) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'El código postal debe tener exactamente 5 dígitos',
+                    campo: 'codigo_postal'
+                });
+            }
+            if (!/^\d{5}$/.test(codigoPostalLimpio)) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'El código postal solo debe contener números',
+                    campo: 'codigo_postal'
+                });
+            }
+        }
+
+        // ✅ 11. Validar calle - sin caracteres especiales peligrosos
+        if (calle) {
+            validarLongitud(calle, 3, 200, 'La calle');
+        }
+
+        // ✅ 12. Validar colonia - sin caracteres especiales peligrosos
+        if (colonia) {
+            validarLongitud(colonia, 3, 150, 'La colonia');
+            // Solo permitir letras, números, espacios, puntos, comas y guiones
+            if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(colonia.trim())) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'La colonia solo puede contener letras, números, espacios, puntos, comas y guiones',
+                    campo: 'colonia'
+                });
+            }
+        }
+
+        // ✅ 13. Validar referencias - máximo 80 caracteres, sin caracteres especiales peligrosos
+        if (referencias) {
+            validarLongitud(referencias, 0, 80, 'Las referencias');
+            // Solo permitir letras, números, espacios, puntos, comas y guiones
+            if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]+$/.test(referencias.trim())) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Las referencias solo pueden contener letras, números, espacios, puntos, comas y guiones',
+                    campo: 'referencias'
+                });
+            }
+        }
+
+        // ✅ 14. Establecer conexión y iniciar transacción
         connection = await conectarDB();
         await connection.beginTransaction();
 

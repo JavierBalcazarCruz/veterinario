@@ -237,6 +237,86 @@ const PatientModal = ({
     }
   }, [isOpen, editMode, initialData, razas]); // ✅ Removí setValue de las dependencias
 
+  // ✅ Validación de teléfono - solo números
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir números (0-9)
+    const onlyNumbers = value.replace(/[^0-9]/g, '');
+    setValue('telefono', onlyNumbers);
+  };
+
+  // ✅ Validación de número exterior - máximo 6 caracteres alfanuméricos
+  const handleNumeroExtChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir letras y números, sin caracteres especiales, máximo 6 caracteres
+    const alphanumeric = value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
+    setValue('numero_ext', alphanumeric);
+  };
+
+  // ✅ Validación de nombre de mascota - sin caracteres especiales, solo letras y espacios
+  const handleNombreMascotaChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir letras, espacios, acentos y ñ
+    const cleanValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    setValue('nombre_mascota', cleanValue);
+  };
+
+  // ✅ Validación de nombre del propietario - sin caracteres especiales
+  const handleNombrePropietarioChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir letras, espacios, acentos y ñ
+    const cleanValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    setValue('nombre_propietario', cleanValue);
+  };
+
+  // ✅ Validación de apellidos del propietario - sin caracteres especiales
+  const handleApellidosPropietarioChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir letras, espacios, acentos y ñ
+    const cleanValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    setValue('apellidos_propietario', cleanValue);
+  };
+
+  // ✅ Validación de calle - sin caracteres especiales peligrosos
+  const handleCalleChange = (e) => {
+    const value = e.target.value;
+    // Permitir letras, números, espacios, puntos, comas y guiones
+    const cleanValue = value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]/g, '');
+    setValue('calle', cleanValue);
+  };
+
+  // ✅ Validación de número interior - máximo 3 dígitos, sin caracteres especiales
+  const handleNumeroIntChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir números, máximo 3 dígitos
+    const onlyNumbers = value.replace(/[^0-9]/g, '').slice(0, 3);
+    setValue('numero_int', onlyNumbers);
+  };
+
+  // ✅ Validación de código postal - exactamente 5 dígitos
+  const handleCodigoPostalChange = (e) => {
+    const value = e.target.value;
+    // Solo permitir números, máximo 5 dígitos
+    const onlyNumbers = value.replace(/[^0-9]/g, '').slice(0, 5);
+    setValue('codigo_postal', onlyNumbers);
+  };
+
+  // ✅ Validación de colonia - sin caracteres especiales peligrosos
+  const handleColoniaChange = (e) => {
+    const value = e.target.value;
+    // Permitir letras, números, espacios, puntos, comas y guiones
+    const cleanValue = value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]/g, '');
+    setValue('colonia', cleanValue);
+  };
+
+  // ✅ Validación de referencias - sin caracteres especiales, máximo 80 caracteres
+  const handleReferenciasChange = (e) => {
+    const value = e.target.value;
+    // Permitir letras, números, espacios, puntos, comas y guiones, máximo 80 caracteres
+    const cleanValue = value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-]/g, '').slice(0, 80);
+    setValue('referencias', cleanValue);
+  };
+
   const handleClose = () => {
     reset();
     setStep(1);
@@ -484,7 +564,9 @@ const PatientModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
                       <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
-                          {...getFieldProps('nombre_mascota')}
+                          name="nombre_mascota"
+                          value={values.nombre_mascota}
+                          onChange={handleNombreMascotaChange}
                           placeholder="Nombre de la mascota"
                           label="Nombre de la Mascota *"
                           icon={<PawPrint size={20} />}
@@ -663,7 +745,9 @@ const PatientModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
                       <div className="lg:col-span-2">
                         <GlassInput
-                          {...getFieldProps('nombre_propietario')}
+                          name="nombre_propietario"
+                          value={values.nombre_propietario}
+                          onChange={handleNombrePropietarioChange}
                           placeholder="Nombre"
                           label="Nombre *"
                           icon={<User size={20} />}
@@ -672,7 +756,9 @@ const PatientModal = ({
                       </div>
 
                       <GlassInput
-                        {...getFieldProps('apellidos_propietario')}
+                        name="apellidos_propietario"
+                        value={values.apellidos_propietario}
+                        onChange={handleApellidosPropietarioChange}
                         placeholder="Apellidos"
                         label="Apellidos *"
                         icon={<User size={20} />}
@@ -680,12 +766,15 @@ const PatientModal = ({
                       />
 
                       <GlassInput
-                        {...getFieldProps('telefono')}
+                        name="telefono"
+                        value={values.telefono}
+                        onChange={handlePhoneChange}
                         type="tel"
                         placeholder="Teléfono (10 dígitos)"
                         label="Teléfono *"
                         icon={<Phone size={20} />}
                         error={errors.telefono}
+                        maxLength={10}
                       />
 
                       <div>
@@ -739,7 +828,9 @@ const PatientModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
                       <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
-                          {...getFieldProps('calle')}
+                          name="calle"
+                          value={values.calle}
+                          onChange={handleCalleChange}
                           placeholder="Calle"
                           label="Calle"
                           icon={<MapPin size={20} />}
@@ -747,26 +838,37 @@ const PatientModal = ({
                       </div>
 
                       <GlassInput
-                        {...getFieldProps('numero_ext')}
-                        placeholder="Número exterior"
+                        name="numero_ext"
+                        value={values.numero_ext}
+                        onChange={handleNumeroExtChange}
+                        placeholder="Número exterior (máx. 6 caracteres)"
                         label="Número Exterior"
+                        maxLength={6}
                       />
 
                       <GlassInput
-                        {...getFieldProps('numero_int')}
-                        placeholder="Número interior (opcional)"
+                        name="numero_int"
+                        value={values.numero_int}
+                        onChange={handleNumeroIntChange}
+                        placeholder="Número interior (máx. 3 dígitos)"
                         label="Número Interior"
+                        maxLength={3}
                       />
 
                       <GlassInput
-                        {...getFieldProps('codigo_postal')}
-                        placeholder="Código postal"
+                        name="codigo_postal"
+                        value={values.codigo_postal}
+                        onChange={handleCodigoPostalChange}
+                        placeholder="Código postal (5 dígitos)"
                         label="Código Postal"
+                        maxLength={5}
                       />
 
                       <div className="md:col-span-2">
                         <GlassInput
-                          {...getFieldProps('colonia')}
+                          name="colonia"
+                          value={values.colonia}
+                          onChange={handleColoniaChange}
                           placeholder="Colonia"
                           label="Colonia"
                         />
@@ -774,9 +876,12 @@ const PatientModal = ({
 
                       <div className="md:col-span-2 lg:col-span-3">
                         <GlassInput
-                          {...getFieldProps('referencias')}
-                          placeholder="Referencias de ubicación"
+                          name="referencias"
+                          value={values.referencias}
+                          onChange={handleReferenciasChange}
+                          placeholder="Referencias de ubicación (máx. 80 caracteres)"
                           label="Referencias"
+                          maxLength={80}
                         />
                       </div>
                     </div>
