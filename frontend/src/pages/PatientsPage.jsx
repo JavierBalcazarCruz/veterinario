@@ -10,7 +10,7 @@ import GlassButton from '../components/ui/GlassButton';
 import GlassInput from '../components/ui/GlassInput';
 import MobileNavigation from '../components/layout/MobileNavigation';
 import PatientCard from '../components/patients/PatientCard';
-import AddPatientModal from '../components/patients/AddPatientModal';
+import PatientModal from '../components/ui/PatientModal';
 import { patientService } from '../services/patientService'; // ✅ Importar servicio real
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -21,7 +21,8 @@ const PatientsPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('todos');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingPatient, setEditingPatient] = useState(null);
   const [collapseSidebar, setCollapseSidebar] = useState(false);
 
   // ✅ Cargar pacientes reales desde la API
@@ -133,20 +134,56 @@ const PatientsPage = () => {
     { value: 'nuevos', label: 'Nuevos', icon: '✨', badge: 'NEW' }
   ];
 
-  // ✅ Manejar agregado de paciente con actualización optimista del DOM
-  const handleAddPatient = (newPatient) => {
-    console.log('✅ Nuevo paciente agregado:', newPatient);
+  // ✅ Abrir modal para agregar paciente
+  const handleAddPatient = () => {
+    setEditingPatient(null);
+    setCollapseSidebar(true);
+    setShowModal(true);
+  };
 
-    // ✅ Actualización optimista: agregar paciente inmediatamente al estado
-    setPatients(prevPatients => [newPatient, ...prevPatients]);
-    setShowAddModal(false);
+  // ✅ Abrir modal para editar paciente
+  const handleEditPatient = async (patientId) => {
+    try {
+      // Obtener datos completos del paciente para edición
+      const response = await patientService.getById(patientId);
+      console.log('📝 Respuesta completa del servidor:', response);
 
-    toast.success(`¡${newPatient.nombre_mascota} ha sido agregado exitosamente!`, {
-      duration: 4000,
-      icon: '🎉'
-    });
+      // Extraer datos correctamente según la estructura del backend
+      const patientData = response.data || response;
+      console.log('📝 Datos del paciente para editar:', patientData);
 
-    // ✅ Recargar en segundo plano para sincronizar con el servidor
+      setEditingPatient(patientData);
+      setCollapseSidebar(true);
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error al cargar datos del paciente:', error);
+      toast.error('Error al cargar datos del paciente');
+    }
+  };
+
+  // ✅ Manejar éxito del modal (agregar o editar)
+  const handleModalSuccess = (patientData) => {
+    console.log('✅ Operación exitosa:', patientData);
+
+    if (editingPatient) {
+      // Actualización: actualizar paciente en el estado
+      setPatients(prevPatients =>
+        prevPatients.map(p => p.id === patientData.id ? patientData : p)
+      );
+      toast.success(`¡${patientData.nombre_mascota} ha sido actualizado exitosamente!`, {
+        duration: 4000,
+        icon: '✏️'
+      });
+    } else {
+      // Nuevo: agregar paciente al estado
+      setPatients(prevPatients => [patientData, ...prevPatients]);
+      toast.success(`¡${patientData.nombre_mascota} ha sido agregado exitosamente!`, {
+        duration: 4000,
+        icon: '🎉'
+      });
+    }
+
+    // Recargar en segundo plano para sincronizar con el servidor
     setTimeout(() => loadPatients(), 2000);
   };
 
@@ -178,10 +215,7 @@ const PatientsPage = () => {
               {
                 icon: Plus,
                 label: 'Nuevo Paciente',
-                action: () => {
-                  setCollapseSidebar(true);
-                  setShowAddModal(true);
-                },
+                action: handleAddPatient,
                 color: 'from-emerald-500 to-green-600',
                 className: 'shadow-lg shadow-green-500/30 hover:shadow-green-500/50 font-semibold'
               }
@@ -341,10 +375,7 @@ const PatientsPage = () => {
                 {!searchTerm && (
                   <div className="space-y-3">
                     <GlassButton
-                      onClick={() => {
-                        setCollapseSidebar(true);
-                        setShowAddModal(true);
-                      }}
+                      onClick={handleAddPatient}
                       icon={<Plus size={20} />}
                     >
                       Agregar Paciente
@@ -382,6 +413,7 @@ const PatientsPage = () => {
                   >
                     <PatientCard
                       patient={patient}
+                      onEdit={handleEditPatient}
                       onDelete={handleDeletePatient}
                     />
                   </motion.div>
@@ -401,10 +433,7 @@ const PatientsPage = () => {
         className="fixed bottom-24 right-4 lg:hidden z-50"
       >
         <motion.button
-          onClick={() => {
-            setCollapseSidebar(true);
-            setShowAddModal(true);
-          }}
+          onClick={handleAddPatient}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-2xl shadow-green-500/50 flex items-center justify-center text-white border-2 border-white/20"
@@ -416,14 +445,17 @@ const PatientsPage = () => {
       {/* Mobile Navigation */}
       <MobileNavigation />
 
-      {/* Add Patient Modal */}
-      <AddPatientModal
-        isOpen={showAddModal}
+      {/* Patient Modal (Add/Edit) */}
+      <PatientModal
+        isOpen={showModal}
         onClose={() => {
-          setShowAddModal(false);
+          setShowModal(false);
+          setEditingPatient(null);
           setCollapseSidebar(false);
         }}
-        onSuccess={handleAddPatient}
+        onSuccess={handleModalSuccess}
+        editMode={!!editingPatient}
+        initialData={editingPatient}
       />
 
       {/* ✅ Debug info (solo en desarrollo) */}

@@ -132,16 +132,19 @@ const actualizarPaciente = async (req, res) => {
     try {
         const { id } = req.params;
         const pacienteId = parseInt(id);
-        
+
+        console.log('🔄 Actualizando paciente ID:', pacienteId);
+        console.log('📦 Datos recibidos del frontend:', JSON.stringify(req.body, null, 2));
+
         if (isNaN(pacienteId) || pacienteId <= 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                msg: 'ID de paciente no válido' 
+                msg: 'ID de paciente no válido'
             });
         }
-        
+
         connection = await conectarDB();
-        
+
         // Verificar que el paciente existe
         const [pacientes] = await connection.execute(
             `SELECT p.*, d.id AS doctor_id, pr.id AS propietario_id
@@ -151,51 +154,59 @@ const actualizarPaciente = async (req, res) => {
              WHERE p.id = ? AND p.estado = 'activo'`,
             [pacienteId]
         );
-        
+
         if (pacientes.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 success: false,
-                msg: 'Paciente no encontrado' 
+                msg: 'Paciente no encontrado'
             });
         }
-        
+
         const pacienteActual = pacientes[0];
-        
+        console.log('📋 Paciente actual en BD:', {
+            id: pacienteActual.id,
+            nombre: pacienteActual.nombre_mascota,
+            propietario_id: pacienteActual.propietario_id
+        });
+
         // Validar permisos
         if (req.usuario.rol === 'doctor') {
             const [doctores] = await connection.execute(
                 `SELECT id FROM doctores WHERE id_usuario = ?`,
                 [req.usuario.id]
             );
-            
+
             if (doctores.length === 0 || pacienteActual.doctor_id !== doctores[0].id) {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     success: false,
-                    msg: 'No tienes permiso para modificar este paciente' 
+                    msg: 'No tienes permiso para modificar este paciente'
                 });
             }
         }
-        
+
         await connection.beginTransaction();
-        
+
         try {
             const updates = req.body;
+            console.log('✍️ Procesando actualizaciones...');
             
             // Actualizar datos del paciente si se proporcionaron
             if (updates.nombre_mascota || updates.fecha_nacimiento || updates.peso || updates.id_raza || updates.foto_url !== undefined) {
                 const fieldsToUpdate = [];
                 const values = [];
-                
+
                 if (updates.nombre_mascota) {
                     fieldsToUpdate.push('nombre_mascota = ?');
                     values.push(updates.nombre_mascota.trim());
+                    console.log('✅ Actualizando nombre_mascota:', updates.nombre_mascota);
                 }
-                
+
                 if (updates.fecha_nacimiento) {
                     fieldsToUpdate.push('fecha_nacimiento = ?');
                     values.push(updates.fecha_nacimiento);
+                    console.log('✅ Actualizando fecha_nacimiento:', updates.fecha_nacimiento);
                 }
-                
+
                 if (updates.peso) {
                     const peso = parseFloat(updates.peso);
                     if (peso <= 0) {
@@ -203,110 +214,273 @@ const actualizarPaciente = async (req, res) => {
                     }
                     fieldsToUpdate.push('peso = ?');
                     values.push(peso);
+                    console.log('✅ Actualizando peso:', peso);
                 }
-                
+
                 if (updates.id_raza) {
                     // Verificar que la raza existe
                     const [razas] = await connection.execute(
                         'SELECT id FROM razas WHERE id = ? AND activo = TRUE',
                         [updates.id_raza]
                     );
-                    
+
                     if (razas.length === 0) {
                         throw new Error('Raza no válida');
                     }
-                    
+
                     fieldsToUpdate.push('id_raza = ?');
                     values.push(parseInt(updates.id_raza));
+                    console.log('✅ Actualizando id_raza:', updates.id_raza);
                 }
-                
+
                 if (updates.foto_url !== undefined) {
                     fieldsToUpdate.push('foto_url = ?');
                     values.push(updates.foto_url);
+                    console.log('✅ Actualizando foto_url:', updates.foto_url);
                 }
-                
+
                 if (fieldsToUpdate.length > 0) {
                     fieldsToUpdate.push('updated_at = NOW()');
                     values.push(pacienteId);
-                    
-                    await connection.execute(
-                        `UPDATE pacientes SET ${fieldsToUpdate.join(', ')} WHERE id = ?`,
-                        values
-                    );
+
+                    const updateQuery = `UPDATE pacientes SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
+                    console.log('🔧 Query de actualización de paciente:', updateQuery);
+                    console.log('🔧 Valores:', values);
+
+                    await connection.execute(updateQuery, values);
+                    console.log('✅ Paciente actualizado en BD');
                 }
             }
             
-            // Actualizar datos del propietario si se proporcionaron
-            if (updates.nombre_propietario || updates.apellidos_propietario || updates.email !== undefined) {
-                const fieldsToUpdate = [];
-                const values = [];
-                
-                if (updates.nombre_propietario) {
-                    fieldsToUpdate.push('nombre = ?');
-                    values.push(updates.nombre_propietario.trim());
+            // ✅ SIEMPRE actualizar datos del propietario (enviar todos los campos)
+            console.log('🔄 Actualizando datos del propietario...');
+            const fieldsToUpdateProp = [];
+            const valuesProp = [];
+
+            // Nombre del propietario
+            fieldsToUpdateProp.push('nombre = ?');
+            valuesProp.push(updates.nombre_propietario ? updates.nombre_propietario.trim() : pacienteActual.nombre_propietario);
+            console.log('✅ Actualizando nombre propietario:', updates.nombre_propietario || 'sin cambios');
+
+            // Apellidos del propietario
+            fieldsToUpdateProp.push('apellidos = ?');
+            valuesProp.push(updates.apellidos_propietario ? updates.apellidos_propietario.trim() : pacienteActual.apellidos_propietario || '');
+            console.log('✅ Actualizando apellidos propietario:', updates.apellidos_propietario || 'sin cambios');
+
+            // Email
+            if (updates.email !== undefined) {
+                if (updates.email && updates.email.trim()) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(updates.email.trim())) {
+                        throw new Error('Email no válido');
+                    }
+                    fieldsToUpdateProp.push('email = ?');
+                    valuesProp.push(updates.email.trim().toLowerCase());
+                    console.log('✅ Actualizando email:', updates.email);
+                } else {
+                    fieldsToUpdateProp.push('email = NULL');
+                    console.log('✅ Limpiando email');
                 }
-                
-                if (updates.apellidos_propietario) {
-                    fieldsToUpdate.push('apellidos = ?');
-                    values.push(updates.apellidos_propietario.trim());
+            }
+
+            fieldsToUpdateProp.push('updated_at = NOW()');
+            valuesProp.push(pacienteActual.propietario_id);
+
+            const updateQueryProp = `UPDATE propietarios SET ${fieldsToUpdateProp.join(', ')} WHERE id = ?`;
+            console.log('🔧 Query de actualización de propietario:', updateQueryProp);
+            console.log('🔧 Valores:', valuesProp);
+
+            await connection.execute(updateQueryProp, valuesProp);
+            console.log('✅ Propietario actualizado en BD');
+
+            // ✅ SIEMPRE actualizar teléfono principal
+            console.log('📞 Actualizando teléfono del propietario...');
+            if (updates.telefono) {
+                const telefonoLimpio = updates.telefono.replace(/\D/g, '');
+                if (telefonoLimpio.length < 10) {
+                    throw new Error('El teléfono debe tener al menos 10 dígitos');
                 }
-                
-                if (updates.email !== undefined) {
-                    if (updates.email && updates.email.trim()) {
-                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                        if (!emailRegex.test(updates.email.trim())) {
-                            throw new Error('Email no válido');
-                        }
-                        fieldsToUpdate.push('email = ?');
-                        values.push(updates.email.trim().toLowerCase());
+
+                // Verificar si ya existe un teléfono principal
+                const [telefonos] = await connection.execute(
+                    'SELECT id FROM telefonos WHERE id_propietario = ? AND principal = 1',
+                    [pacienteActual.propietario_id]
+                );
+
+                if (telefonos.length > 0) {
+                    // Actualizar teléfono existente
+                    console.log('✅ Actualizando teléfono existente:', telefonoLimpio);
+                    await connection.execute(
+                        'UPDATE telefonos SET numero = ?, tipo = ? WHERE id_propietario = ? AND principal = 1',
+                        [telefonoLimpio, updates.tipo_telefono || 'celular', pacienteActual.propietario_id]
+                    );
+                } else {
+                    // Insertar nuevo teléfono principal
+                    console.log('✅ Insertando nuevo teléfono:', telefonoLimpio);
+                    await connection.execute(
+                        'INSERT INTO telefonos (id_propietario, tipo, numero, principal) VALUES (?, ?, ?, TRUE)',
+                        [pacienteActual.propietario_id, updates.tipo_telefono || 'celular', telefonoLimpio]
+                    );
+                }
+                console.log('✅ Teléfono actualizado en BD');
+            } else {
+                console.log('⚠️ No se proporcionó teléfono para actualizar');
+            }
+
+            // ✅ Actualizar dirección del propietario si se proporcionó
+            if (updates.calle || updates.numero_ext || updates.codigo_postal || updates.colonia) {
+                // Verificar si ya existe una dirección de tipo 'casa'
+                const [direcciones] = await connection.execute(
+                    'SELECT id, id_codigo_postal FROM direcciones WHERE id_propietario = ? AND tipo = "casa"',
+                    [pacienteActual.propietario_id]
+                );
+
+                // Buscar o crear código postal si se proporcionó
+                let id_codigo_postal = null;
+                if (updates.codigo_postal && updates.colonia) {
+                    const [codigosPostales] = await connection.execute(
+                        'SELECT id FROM codigo_postal WHERE codigo = ? AND colonia = ? AND id_municipio = ?',
+                        [updates.codigo_postal.trim(), updates.colonia.trim(), updates.id_municipio || 1]
+                    );
+
+                    if (codigosPostales.length > 0) {
+                        id_codigo_postal = codigosPostales[0].id;
                     } else {
-                        fieldsToUpdate.push('email = NULL');
+                        // Crear nuevo código postal
+                        const [resultCP] = await connection.execute(
+                            'INSERT INTO codigo_postal (id_municipio, codigo, colonia, tipo_asentamiento) VALUES (?, ?, ?, "Colonia")',
+                            [updates.id_municipio || 1, updates.codigo_postal.trim(), updates.colonia.trim()]
+                        );
+                        id_codigo_postal = resultCP.insertId;
                     }
                 }
-                
-                if (fieldsToUpdate.length > 0) {
-                    fieldsToUpdate.push('updated_at = NOW()');
-                    values.push(pacienteActual.propietario_id);
-                    
+
+                if (direcciones.length > 0) {
+                    // Actualizar dirección existente
+                    const fieldsToUpdate = [];
+                    const values = [];
+
+                    if (updates.calle) {
+                        fieldsToUpdate.push('calle = ?');
+                        values.push(updates.calle.trim());
+                    }
+
+                    if (updates.numero_ext) {
+                        fieldsToUpdate.push('numero_ext = ?');
+                        values.push(updates.numero_ext.trim());
+                    }
+
+                    if (updates.numero_int !== undefined) {
+                        fieldsToUpdate.push('numero_int = ?');
+                        values.push(updates.numero_int ? updates.numero_int.trim() : null);
+                    }
+
+                    if (updates.referencias !== undefined) {
+                        fieldsToUpdate.push('referencias = ?');
+                        values.push(updates.referencias ? updates.referencias.trim() : null);
+                    }
+
+                    if (id_codigo_postal) {
+                        fieldsToUpdate.push('id_codigo_postal = ?');
+                        values.push(id_codigo_postal);
+                    }
+
+                    if (fieldsToUpdate.length > 0) {
+                        values.push(direcciones[0].id);
+                        await connection.execute(
+                            `UPDATE direcciones SET ${fieldsToUpdate.join(', ')} WHERE id = ?`,
+                            values
+                        );
+                    }
+                } else if (id_codigo_postal) {
+                    // Insertar nueva dirección
                     await connection.execute(
-                        `UPDATE propietarios SET ${fieldsToUpdate.join(', ')} WHERE id = ?`,
-                        values
+                        'INSERT INTO direcciones (id_propietario, tipo, calle, numero_ext, numero_int, id_codigo_postal, referencias) VALUES (?, "casa", ?, ?, ?, ?, ?)',
+                        [
+                            pacienteActual.propietario_id,
+                            updates.calle?.trim() || '',
+                            updates.numero_ext?.trim() || '1',
+                            updates.numero_int?.trim() || null,
+                            id_codigo_postal,
+                            updates.referencias?.trim() || null
+                        ]
                     );
                 }
             }
-            
+
             // Registrar actualización en audit_logs
+            console.log('📝 Registrando en audit_logs...');
             await connection.execute(
                 `INSERT INTO audit_logs (tabla, id_registro, id_usuario, accion, datos_nuevos)
                  VALUES ('pacientes', ?, ?, 'modificar', ?)`,
                 [pacienteId, req.usuario.id, JSON.stringify(updates)]
             );
-            
+            console.log('✅ Audit log registrado');
+
+            // ✅ COMMIT - Confirmar TODAS las actualizaciones
+            console.log('💾 Ejecutando COMMIT de la transacción...');
             await connection.commit();
-            
-            // Obtener datos actualizados
+            console.log('✅✅✅ COMMIT EXITOSO - Todos los cambios guardados en BD ✅✅✅');
+
+            // ✅ Obtener datos actualizados COMPLETOS (igual que obtenerPacientes)
             const [pacienteActualizado] = await connection.execute(
                 `SELECT p.*, r.nombre AS nombre_raza, e.nombre AS especie,
                         pr.nombre AS nombre_propietario, pr.apellidos AS apellidos_propietario,
                         pr.email,
-                        YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) - 
-                        (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(p.fecha_nacimiento, '%m%d')) AS edad
+                        GROUP_CONCAT(
+                            CASE WHEN t.principal = 1 THEN t.numero ELSE NULL END
+                        ) AS telefono_principal,
+                        MAX(d.calle) AS calle, MAX(d.numero_ext) AS numero_ext,
+                        MAX(d.numero_int) AS numero_int, MAX(d.referencias) AS referencias,
+                        MAX(cp.codigo) AS codigo_postal, MAX(cp.colonia) AS colonia,
+                        MAX(cp.id_municipio) AS id_municipio,
+                        MAX(m.nombre) AS municipio, MAX(est.nombre) AS estado, MAX(pa.nombre) AS pais,
+                        YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) -
+                        (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(p.fecha_nacimiento, '%m%d')) AS edad,
+                        p.updated_at AS ultima_visita
                  FROM pacientes p
                  INNER JOIN razas r ON p.id_raza = r.id
                  INNER JOIN especies e ON r.id_especie = e.id
                  INNER JOIN propietarios pr ON p.id_propietario = pr.id
-                 WHERE p.id = ?`,
+                 LEFT JOIN telefonos t ON t.id_propietario = pr.id
+                 LEFT JOIN direcciones d ON d.id_propietario = pr.id AND d.tipo = 'casa'
+                 LEFT JOIN codigo_postal cp ON d.id_codigo_postal = cp.id
+                 LEFT JOIN municipios m ON cp.id_municipio = m.id
+                 LEFT JOIN estados est ON m.id_estado = est.id
+                 LEFT JOIN paises pa ON est.id_pais = pa.id
+                 WHERE p.id = ?
+                 GROUP BY p.id`,
                 [pacienteId]
             );
-            
-            res.json({
+
+            // ✅ Estructurar respuesta igual que obtenerPacientes
+            const pacienteData = pacienteActualizado[0];
+
+            console.log('📦 Datos actualizados recuperados de BD:', pacienteData);
+
+            const respuesta = {
                 success: true,
                 msg: 'Paciente actualizado correctamente',
                 data: {
-                    ...pacienteActualizado[0],
-                    edad: pacienteActualizado[0].edad ? `${pacienteActualizado[0].edad} años` : 'No especificada'
+                    ...pacienteData,
+                    edad: pacienteData.edad ? `${pacienteData.edad} años` : 'No especificada',
+                    direccion: pacienteData.calle ? {
+                        calle: pacienteData.calle,
+                        numero_ext: pacienteData.numero_ext,
+                        numero_int: pacienteData.numero_int,
+                        referencias: pacienteData.referencias,
+                        codigo_postal: pacienteData.codigo_postal,
+                        colonia: pacienteData.colonia,
+                        id_municipio: pacienteData.id_municipio,
+                        municipio: pacienteData.municipio,
+                        estado: pacienteData.estado,
+                        pais: pacienteData.pais
+                    } : null
                 }
-            });
+            };
+
+            console.log('📨 Enviando respuesta al frontend:', JSON.stringify(respuesta, null, 2));
+            res.json(respuesta);
             
         } catch (error) {
             await connection.rollback();

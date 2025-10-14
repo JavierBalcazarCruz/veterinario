@@ -7,7 +7,7 @@ import Modal from '../ui/Modal';
 import { patientService } from '../../services/patientService';
 import toast from 'react-hot-toast';
 
-const PatientCard = ({ patient, onDelete }) => {
+const PatientCard = ({ patient, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -50,6 +50,10 @@ const PatientCard = ({ patient, onDelete }) => {
   const handleEdit = () => {
     // Abrir modal de edición
     console.log('Editar:', patient.id);
+    setShowMenu(false);
+    if (onEdit) {
+      onEdit(patient.id);
+    }
   };
 
   const handleCall = () => {

@@ -65,35 +65,50 @@ export const patientService = {
   // ✅ Actualizar paciente
   update: async (id, patientData) => {
     try {
-      // ✅ Formatear datos de la misma manera que en create
+      console.log('🔧 [patientService.update] Iniciando actualización para ID:', id);
+      console.log('🔧 [patientService.update] Datos recibidos:', patientData);
+
+      // ✅ Formatear datos IGUAL que en create - enviar TODOS los campos
       const formattedData = {
-        // Solo enviar campos que han cambiado
-        ...(patientData.nombre_mascota && { nombre_mascota: patientData.nombre_mascota.trim() }),
-        ...(patientData.fecha_nacimiento && { fecha_nacimiento: patientData.fecha_nacimiento }),
-        ...(patientData.peso && { peso: parseFloat(patientData.peso) }),
-        ...(patientData.id_raza && { id_raza: parseInt(patientData.id_raza) }),
-        ...(patientData.foto_url !== undefined && { foto_url: patientData.foto_url }),
-        
-        // Datos del propietario
-        ...(patientData.nombre_propietario && { nombre_propietario: patientData.nombre_propietario.trim() }),
-        ...(patientData.apellidos_propietario !== undefined && { apellidos_propietario: patientData.apellidos_propietario.trim() }),
-        ...(patientData.email !== undefined && { email: patientData.email?.trim().toLowerCase() || null }),
-        ...(patientData.telefono && { telefono: patientData.telefono.replace(/\D/g, '') }),
-        ...(patientData.tipo_telefono && { tipo_telefono: patientData.tipo_telefono }),
-        
-        // Datos de dirección
-        ...(patientData.calle !== undefined && { calle: patientData.calle?.trim() || null }),
-        ...(patientData.numero_ext !== undefined && { numero_ext: patientData.numero_ext?.trim() || null }),
-        ...(patientData.numero_int !== undefined && { numero_int: patientData.numero_int?.trim() || null }),
-        ...(patientData.codigo_postal !== undefined && { codigo_postal: patientData.codigo_postal?.trim() || null }),
-        ...(patientData.colonia !== undefined && { colonia: patientData.colonia?.trim() || null }),
-        ...(patientData.id_municipio && { id_municipio: parseInt(patientData.id_municipio) }),
-        ...(patientData.referencias !== undefined && { referencias: patientData.referencias?.trim() || null })
+        // Datos del propietario (OBLIGATORIOS)
+        nombre_propietario: patientData.nombre_propietario?.trim(),
+        apellidos_propietario: patientData.apellidos_propietario?.trim() || '',
+        email: patientData.email?.trim().toLowerCase() || null,
+        telefono: patientData.telefono?.replace(/\D/g, ''),
+        tipo_telefono: patientData.tipo_telefono || 'celular',
+
+        // Datos de dirección (opcionales)
+        calle: patientData.calle?.trim() || null,
+        numero_ext: patientData.numero_ext?.trim() || null,
+        numero_int: patientData.numero_int?.trim() || null,
+        codigo_postal: patientData.codigo_postal?.trim() || null,
+        colonia: patientData.colonia?.trim() || null,
+        id_municipio: parseInt(patientData.id_municipio) || 1,
+        referencias: patientData.referencias?.trim() || null,
+
+        // Datos del paciente (OBLIGATORIOS)
+        nombre_mascota: patientData.nombre_mascota?.trim(),
+        fecha_nacimiento: patientData.fecha_nacimiento || null,
+        peso: parseFloat(patientData.peso),
+        id_raza: parseInt(patientData.id_raza),
+        foto_url: patientData.foto_url || null
       };
 
+      console.log('📤 [patientService.update] Datos formateados para enviar:', formattedData);
+      console.log('🌐 [patientService.update] Haciendo PUT a: /pacientes/' + id);
+
       const response = await api.put(`/pacientes/${id}`, formattedData);
+
+      console.log('✅ [patientService.update] Respuesta del servidor:', response);
+      console.log('✅ [patientService.update] Status:', response.status);
+      console.log('✅ [patientService.update] Data:', response.data);
+
       return response.data;
     } catch (error) {
+      console.error('❌ [patientService.update] Error al actualizar paciente:', error);
+      console.error('❌ [patientService.update] Error response:', error.response?.data);
+      console.error('❌ [patientService.update] Error status:', error.response?.status);
+      console.error('❌ [patientService.update] Error message:', error.message);
       throw error;
     }
   },
