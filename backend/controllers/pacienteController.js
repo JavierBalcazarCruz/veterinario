@@ -789,13 +789,109 @@ const obtenerRazas = async (req, res) => {
     }
 };
 
+/**
+ * ✅ Buscar propietarios por nombre, apellidos, teléfono o email
+ */
+const buscarPropietarios = async (req, res) => {
+    let connection;
+    try {
+        const { q } = req.query; // Término de búsqueda
+
+        if (!q || q.trim().length < 2) {
+            return res.status(400).json({
+                success: false,
+                msg: 'El término de búsqueda debe tener al menos 2 caracteres'
+            });
+        }
+
+        connection = await conectarDB();
+
+        // Buscar propietarios por nombre, apellidos, teléfono o email
+        const searchTerm = `%${q.trim()}%`;
+
+        const [propietarios] = await connection.execute(
+            `SELECT DISTINCT
+                p.id,
+                p.nombre,
+                p.apellidos,
+                p.email,
+                t.numero AS telefono_principal,
+                COUNT(DISTINCT pac.id) AS total_mascotas,
+                d.calle,
+                d.numero_ext,
+                d.numero_int,
+                cp.codigo AS codigo_postal,
+                cp.colonia,
+                cp.id_municipio
+            FROM propietarios p
+            LEFT JOIN telefonos t ON t.id_propietario = p.id AND t.principal = 1
+            LEFT JOIN pacientes pac ON pac.id_propietario = p.id AND pac.estado = 'activo'
+            LEFT JOIN direcciones d ON d.id_propietario = p.id AND d.tipo = 'casa'
+            LEFT JOIN codigo_postal cp ON d.id_codigo_postal = cp.id
+            WHERE (
+                p.nombre LIKE ? OR
+                p.apellidos LIKE ? OR
+                p.email LIKE ? OR
+                t.numero LIKE ?
+            )
+            GROUP BY p.id, p.nombre, p.apellidos, p.email, t.numero,
+                     d.calle, d.numero_ext, d.numero_int, cp.codigo, cp.colonia, cp.id_municipio
+            ORDER BY p.nombre ASC, p.apellidos ASC
+            LIMIT 10`,
+            [searchTerm, searchTerm, searchTerm, searchTerm]
+        );
+
+        // Formatear resultados
+        const resultados = propietarios.map(prop => ({
+            id: prop.id,
+            nombre_completo: `${prop.nombre} ${prop.apellidos || ''}`.trim(),
+            nombre: prop.nombre,
+            apellidos: prop.apellidos,
+            email: prop.email,
+            telefono: prop.telefono_principal,
+            total_mascotas: prop.total_mascotas || 0,
+            direccion: prop.calle ? {
+                calle: prop.calle,
+                numero_ext: prop.numero_ext,
+                numero_int: prop.numero_int,
+                codigo_postal: prop.codigo_postal,
+                colonia: prop.colonia,
+                id_municipio: prop.id_municipio
+            } : null
+        }));
+
+        res.json({
+            success: true,
+            data: resultados,
+            total: resultados.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error en buscarPropietarios:', error);
+        res.status(500).json({
+            success: false,
+            msg: 'Error al buscar propietarios',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    } finally {
+        if (connection) {
+            try {
+                await connection.end();
+            } catch (error) {
+                console.error('❌ Error al cerrar conexión:', error);
+            }
+        }
+    }
+};
+
 export {
     agregarPaciente,
     obtenerPacientes,
     obtenerPaciente,
     actualizarPaciente,
     eliminarPaciente,
-    obtenerRazas
+    obtenerRazas,
+    buscarPropietarios
 };// backend/controllers/pacienteController.js - VERSIÓN CORREGIDA
 import conectarDB from '../config/db.js';
 
@@ -862,13 +958,16 @@ const agregarPaciente = async (req, res) => {
 
         // ✅ 1. Extraer y validar datos con nombres correctos
         const {
+            // ID de propietario existente (si se seleccionó uno)
+            id_propietario_existente,
+
             // Datos del propietario
             nombre_propietario,
             apellidos_propietario,
             email,
             telefono,
             tipo_telefono = 'celular',
-            
+
             // Datos de dirección (opcionales)
             calle,
             numero_ext,
@@ -877,7 +976,7 @@ const agregarPaciente = async (req, res) => {
             colonia,
             id_municipio = 1,
             referencias,
-            
+
             // Datos del paciente
             nombre_mascota,
             fecha_nacimiento,
@@ -1093,18 +1192,37 @@ const agregarPaciente = async (req, res) => {
                 });
             }
 
-            // ✅ 8. Buscar o crear propietario por teléfono
+            // ✅ 8. Usar propietario existente o buscar/crear uno nuevo
             let id_propietario;
 
-            const [propietarios] = await connection.execute(
-                `SELECT p.id, p.nombre, p.apellidos, p.email 
-                 FROM propietarios p
-                 INNER JOIN telefonos t ON t.id_propietario = p.id
-                 WHERE t.numero = ?`,
-                [telefonoLimpio]
-            );
+            // Si se proporcionó un ID de propietario existente, usarlo directamente
+            if (id_propietario_existente) {
+                const [propExistente] = await connection.execute(
+                    'SELECT id FROM propietarios WHERE id = ?',
+                    [parseInt(id_propietario_existente)]
+                );
 
-            if (propietarios.length === 0) {
+                if (propExistente.length === 0) {
+                    await connection.rollback();
+                    return res.status(400).json({
+                        success: false,
+                        msg: 'El propietario seleccionado no existe'
+                    });
+                }
+
+                id_propietario = parseInt(id_propietario_existente);
+                console.log('✅ Usando propietario seleccionado con ID:', id_propietario);
+            } else {
+                // Buscar propietario por teléfono
+                const [propietarios] = await connection.execute(
+                    `SELECT p.id, p.nombre, p.apellidos, p.email
+                     FROM propietarios p
+                     INNER JOIN telefonos t ON t.id_propietario = p.id
+                     WHERE t.numero = ?`,
+                    [telefonoLimpio]
+                );
+
+                if (propietarios.length === 0) {
                 // ✅ Crear nuevo propietario
                 const [resultPropietario] = await connection.execute(
                     `INSERT INTO propietarios (nombre, apellidos, email, created_at, updated_at)
@@ -1161,6 +1279,7 @@ const agregarPaciente = async (req, res) => {
                     console.log('✅ Datos del propietario actualizados');
                 }
             }
+        }
 
             // ✅ 9. Insertar paciente
             const [resultPaciente] = await connection.execute(

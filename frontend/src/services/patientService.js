@@ -275,7 +275,7 @@ export const patientService = {
       email: patientData.email?.trim().toLowerCase() || null,
       telefono: patientData.telefono?.replace(/\D/g, ''),
       tipo_telefono: patientData.tipo_telefono || 'celular',
-      
+
       // Datos de dirección
       calle: patientData.calle?.trim() || null,
       numero_ext: patientData.numero_ext?.trim() || '1',
@@ -284,7 +284,7 @@ export const patientService = {
       colonia: patientData.colonia?.trim() || null,
       id_municipio: parseInt(patientData.id_municipio) || 1,
       referencias: patientData.referencias?.trim() || null,
-      
+
       // Datos del paciente
       nombre_mascota: patientData.nombre_mascota?.trim(),
       fecha_nacimiento: patientData.fecha_nacimiento || null,
@@ -292,5 +292,19 @@ export const patientService = {
       id_raza: parseInt(patientData.id_raza),
       foto_url: patientData.foto_url || null
     };
+  },
+
+  // ✅ Buscar propietarios por nombre, teléfono o email
+  searchOwners: async (searchTerm) => {
+    try {
+      if (!searchTerm || searchTerm.trim().length < 2) {
+        return { success: true, data: [], total: 0 };
+      }
+      const response = await api.get(`/pacientes/propietarios/buscar?q=${encodeURIComponent(searchTerm.trim())}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al buscar propietarios:', error);
+      throw error;
+    }
   }
 };

@@ -11,6 +11,7 @@ import GlassInput from '../components/ui/GlassInput';
 import MobileNavigation from '../components/layout/MobileNavigation';
 import PatientCard from '../components/patients/PatientCard';
 import PatientModal from '../components/ui/PatientModal';
+import PerfilPaciente from '../components/patients/PerfilPaciente';
 import { patientService } from '../services/patientService'; // ✅ Importar servicio real
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -24,6 +25,8 @@ const PatientsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [collapseSidebar, setCollapseSidebar] = useState(false);
+  const [showPerfilModal, setShowPerfilModal] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
 
   // ✅ Cargar pacientes reales desde la API
   useEffect(() => {
@@ -199,6 +202,12 @@ const PatientsPage = () => {
 
     // Recargar en segundo plano para sincronizar con el servidor
     setTimeout(() => loadPatients(), 1000);
+  };
+
+  // ✅ Función para abrir el perfil del paciente
+  const handleViewDetails = (patientId) => {
+    setSelectedPatientId(patientId);
+    setShowPerfilModal(true);
   };
 
   return (
@@ -415,6 +424,7 @@ const PatientsPage = () => {
                       patient={patient}
                       onEdit={handleEditPatient}
                       onDelete={handleDeletePatient}
+                      onViewDetails={handleViewDetails}
                     />
                   </motion.div>
                 );
@@ -456,6 +466,16 @@ const PatientsPage = () => {
         onSuccess={handleModalSuccess}
         editMode={!!editingPatient}
         initialData={editingPatient}
+      />
+
+      {/* Perfil del Paciente Modal */}
+      <PerfilPaciente
+        isOpen={showPerfilModal}
+        onClose={() => {
+          setShowPerfilModal(false);
+          setSelectedPatientId(null);
+        }}
+        patientId={selectedPatientId}
       />
 
       {/* ✅ Debug info (solo en desarrollo) */}

@@ -7,7 +7,7 @@ import Modal from '../ui/Modal';
 import { patientService } from '../../services/patientService';
 import toast from 'react-hot-toast';
 
-const PatientCard = ({ patient, onEdit, onDelete }) => {
+const PatientCard = ({ patient, onEdit, onDelete, onViewDetails }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -43,8 +43,11 @@ const PatientCard = ({ patient, onEdit, onDelete }) => {
   };
 
   const handleViewDetails = () => {
-    // Navegar a detalles del paciente
     console.log('Ver detalles:', patient.id);
+    setShowMenu(false);
+    if (onViewDetails) {
+      onViewDetails(patient.id);
+    }
   };
 
   const handleEdit = () => {

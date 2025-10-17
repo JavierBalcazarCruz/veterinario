@@ -7,6 +7,7 @@ import * as yup from 'yup';
 import GlassCard from './GlassCard';
 import GlassButton from './GlassButton';
 import GlassInput from './GlassInput';
+import OwnerSearch from '../patients/OwnerSearch';
 import { useForm } from '../../hooks/useForm';
 import { patientService } from '../../services/patientService';
 import toast from 'react-hot-toast';
@@ -56,6 +57,8 @@ const PatientModal = ({
   const [loadingRazas, setLoadingRazas] = useState(false);
   const [especieSeleccionada, setEspecieSeleccionada] = useState('Perro');
   const [busquedaRaza, setBusquedaRaza] = useState('');
+  const [ownerType, setOwnerType] = useState('new'); // 'new' o 'existing'
+  const [selectedOwner, setSelectedOwner] = useState(null);
 
   // ✅ Ref para evitar que se recarguen los datos múltiples veces
   const datosYaCargados = useRef(false);
@@ -322,6 +325,8 @@ const PatientModal = ({
     setStep(1);
     setBusquedaRaza('');
     setEspecieSeleccionada('Perro');
+    setOwnerType('new');
+    setSelectedOwner(null);
     // ✅ Resetear el flag para que se puedan cargar datos en la próxima edición
     datosYaCargados.current = false;
     onClose();
@@ -359,6 +364,12 @@ const PatientModal = ({
         id_municipio: parseInt(formData.id_municipio) || 1,
         referencias: formData.referencias ? formData.referencias.trim() : null
       };
+
+      // ✅ Si se seleccionó un propietario existente, incluir su ID
+      if (!editMode && selectedOwner) {
+        dataToSend.id_propietario_existente = selectedOwner.id;
+        console.log('📎 Usando propietario existente ID:', selectedOwner.id);
+      }
 
       console.log('📋 Datos formateados para enviar:', dataToSend);
 
@@ -461,6 +472,26 @@ const PatientModal = ({
         return hasRequiredPetData;
 
       case 2:
+        // Verificar si el usuario está llenando campos manualmente
+        const hasManualData = values.nombre_propietario?.trim() ||
+                             values.apellidos_propietario?.trim() ||
+                             values.telefono?.trim();
+
+        // Si está en modo "existing" pero está escribiendo datos manualmente, cambiar a modo "new"
+        if (!editMode && ownerType === 'existing' && hasManualData && !selectedOwner) {
+          setOwnerType('new');
+        }
+
+        // Si ya seleccionó un propietario existente, validar que esté seleccionado
+        if (!editMode && ownerType === 'existing' && !hasManualData) {
+          if (!selectedOwner) {
+            toast.error('Por favor selecciona un propietario de la lista o ingresa los datos manualmente');
+            return false;
+          }
+          return true;
+        }
+
+        // Si es nuevo propietario o modo edición, validar campos
         const hasRequiredOwnerData = values.nombre_propietario?.trim() &&
                                     values.apellidos_propietario?.trim() &&
                                     values.telefono?.trim() &&
@@ -494,7 +525,6 @@ const PatientModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={handleClose}
           className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"
         />
 
@@ -742,69 +772,142 @@ const PatientModal = ({
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
-                      <div className="lg:col-span-2">
-                        <GlassInput
-                          name="nombre_propietario"
-                          value={values.nombre_propietario}
-                          onChange={handleNombrePropietarioChange}
-                          placeholder="Nombre"
-                          label="Nombre *"
-                          icon={<User size={20} />}
-                          error={errors.nombre_propietario}
-                        />
-                      </div>
-
-                      <GlassInput
-                        name="apellidos_propietario"
-                        value={values.apellidos_propietario}
-                        onChange={handleApellidosPropietarioChange}
-                        placeholder="Apellidos"
-                        label="Apellidos *"
-                        icon={<User size={20} />}
-                        error={errors.apellidos_propietario}
-                      />
-
-                      <GlassInput
-                        name="telefono"
-                        value={values.telefono}
-                        onChange={handlePhoneChange}
-                        type="tel"
-                        placeholder="Teléfono (10 dígitos)"
-                        label="Teléfono *"
-                        icon={<Phone size={20} />}
-                        error={errors.telefono}
-                        maxLength={10}
-                      />
-
-                      <div>
-                        <label className="block text-sm sm:text-base font-medium text-white mb-2">
-                          Tipo de Teléfono
+                    {/* Radio Buttons: Nuevo vs Existente - Solo en modo crear */}
+                    {!editMode && (
+                      <div className="mb-6">
+                        <label className="block text-sm sm:text-base font-medium text-white mb-3">
+                          ¿El propietario ya está registrado?
                         </label>
-                        <select
-                          {...getFieldProps('tipo_telefono')}
-                          className="w-full px-4 py-3.5 sm:py-3 bg-white/10 backdrop-blur-md border-2 border-white/20
-                            rounded-xl text-white text-base sm:text-sm font-medium
-                            focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
-                            touch-manipulation appearance-none cursor-pointer"
-                          style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem'}}
-                        >
-                          <option value="celular" className="bg-gray-800">📱 Celular</option>
-                          <option value="casa" className="bg-gray-800">🏠 Casa</option>
-                          <option value="trabajo" className="bg-gray-800">💼 Trabajo</option>
-                        </select>
+                        <div className="flex gap-3">
+                          <motion.button
+                            type="button"
+                            onClick={() => {
+                              setOwnerType('new');
+                              setSelectedOwner(null);
+                            }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
+                              ownerType === 'new'
+                                ? 'bg-primary-500/30 border-primary-400/70 text-white shadow-lg shadow-primary-500/20'
+                                : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            ✨ No, nuevo propietario
+                          </motion.button>
+                          <motion.button
+                            type="button"
+                            onClick={() => setOwnerType('existing')}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
+                              ownerType === 'existing'
+                                ? 'bg-green-500/30 border-green-400/70 text-white shadow-lg shadow-green-500/20'
+                                : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            🔍 Sí, buscar existente
+                          </motion.button>
+                        </div>
                       </div>
+                    )}
 
-                      <div className="md:col-span-2 lg:col-span-3">
-                        <GlassInput
-                          {...getFieldProps('email')}
-                          type="email"
-                          placeholder="correo@ejemplo.com (opcional)"
-                          label="Email (Opcional)"
-                          error={errors.email}
+                    {/* Buscador de propietarios existentes */}
+                    {!editMode && ownerType === 'existing' && (
+                      <div className="mb-6">
+                        <label className="block text-sm sm:text-base font-medium text-white mb-3">
+                          Buscar Propietario
+                        </label>
+                        <OwnerSearch
+                          onSelectOwner={(owner) => {
+                            setSelectedOwner(owner);
+                            if (owner) {
+                              // Rellenar campos automáticamente
+                              setValue('nombre_propietario', owner.nombre);
+                              setValue('apellidos_propietario', owner.apellidos);
+                              setValue('telefono', owner.telefono);
+                              setValue('email', owner.email || '');
+                              if (owner.direccion) {
+                                setValue('calle', owner.direccion.calle || '');
+                                setValue('numero_ext', owner.direccion.numero_ext || '');
+                                setValue('numero_int', owner.direccion.numero_int || '');
+                                setValue('codigo_postal', owner.direccion.codigo_postal || '');
+                                setValue('colonia', owner.direccion.colonia || '');
+                                setValue('id_municipio', owner.direccion.id_municipio || 1);
+                              }
+                            }
+                          }}
+                          selectedOwner={selectedOwner}
                         />
                       </div>
-                    </div>
+                    )}
+
+                    {/* Campos del propietario - Solo si es nuevo o en modo edición */}
+                    {(editMode || ownerType === 'new' || !selectedOwner) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                        <div className="lg:col-span-2">
+                          <GlassInput
+                            name="nombre_propietario"
+                            value={values.nombre_propietario}
+                            onChange={handleNombrePropietarioChange}
+                            placeholder="Nombre"
+                            label="Nombre *"
+                            icon={<User size={20} />}
+                            error={errors.nombre_propietario}
+                          />
+                        </div>
+
+                        <GlassInput
+                          name="apellidos_propietario"
+                          value={values.apellidos_propietario}
+                          onChange={handleApellidosPropietarioChange}
+                          placeholder="Apellidos"
+                          label="Apellidos *"
+                          icon={<User size={20} />}
+                          error={errors.apellidos_propietario}
+                        />
+
+                        <GlassInput
+                          name="telefono"
+                          value={values.telefono}
+                          onChange={handlePhoneChange}
+                          type="tel"
+                          placeholder="Teléfono (10 dígitos)"
+                          label="Teléfono *"
+                          icon={<Phone size={20} />}
+                          error={errors.telefono}
+                          maxLength={10}
+                        />
+
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-white mb-2">
+                            Tipo de Teléfono
+                          </label>
+                          <select
+                            {...getFieldProps('tipo_telefono')}
+                            className="w-full px-4 py-3.5 sm:py-3 bg-white/10 backdrop-blur-md border-2 border-white/20
+                              rounded-xl text-white text-base sm:text-sm font-medium
+                              focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
+                              touch-manipulation appearance-none cursor-pointer"
+                            style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem'}}
+                          >
+                            <option value="celular" className="bg-gray-800">📱 Celular</option>
+                            <option value="casa" className="bg-gray-800">🏠 Casa</option>
+                            <option value="trabajo" className="bg-gray-800">💼 Trabajo</option>
+                          </select>
+                        </div>
+
+                        <div className="md:col-span-2 lg:col-span-3">
+                          <GlassInput
+                            {...getFieldProps('email')}
+                            type="email"
+                            placeholder="correo@ejemplo.com (opcional)"
+                            label="Email (Opcional)"
+                            error={errors.email}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
