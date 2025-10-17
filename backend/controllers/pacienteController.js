@@ -320,99 +320,133 @@ const actualizarPaciente = async (req, res) => {
                 }
             }
             
-            // ✅ SIEMPRE actualizar datos del propietario (enviar todos los campos)
-            console.log('🔄 Actualizando datos del propietario...');
-            const fieldsToUpdateProp = [];
-            const valuesProp = [];
+            // ✅ CAMBIO DE PROPIETARIO: Si se seleccionó un propietario existente, solo cambiar la relación
+            if (updates.id_propietario_existente) {
+                console.log('🔄 Cambiando paciente a propietario existente ID:', updates.id_propietario_existente);
 
-            // Nombre del propietario
-            fieldsToUpdateProp.push('nombre = ?');
-            valuesProp.push(updates.nombre_propietario ? updates.nombre_propietario.trim() : pacienteActual.nombre_propietario);
-            console.log('✅ Actualizando nombre propietario:', updates.nombre_propietario || 'sin cambios');
-
-            // Apellidos del propietario
-            fieldsToUpdateProp.push('apellidos = ?');
-            valuesProp.push(updates.apellidos_propietario ? updates.apellidos_propietario.trim() : pacienteActual.apellidos_propietario || '');
-            console.log('✅ Actualizando apellidos propietario:', updates.apellidos_propietario || 'sin cambios');
-
-            // Email
-            if (updates.email !== undefined) {
-                if (updates.email && updates.email.trim()) {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(updates.email.trim())) {
-                        throw new Error('Email no válido');
-                    }
-                    fieldsToUpdateProp.push('email = ?');
-                    valuesProp.push(updates.email.trim().toLowerCase());
-                    console.log('✅ Actualizando email:', updates.email);
-                } else {
-                    fieldsToUpdateProp.push('email = NULL');
-                    console.log('✅ Limpiando email');
-                }
-            }
-
-            fieldsToUpdateProp.push('updated_at = NOW()');
-            valuesProp.push(pacienteActual.propietario_id);
-
-            const updateQueryProp = `UPDATE propietarios SET ${fieldsToUpdateProp.join(', ')} WHERE id = ?`;
-            console.log('🔧 Query de actualización de propietario:', updateQueryProp);
-            console.log('🔧 Valores:', valuesProp);
-
-            await connection.execute(updateQueryProp, valuesProp);
-            console.log('✅ Propietario actualizado en BD');
-
-            // ✅ SIEMPRE actualizar teléfono principal
-            console.log('📞 Actualizando teléfono del propietario...');
-            if (updates.telefono) {
-                const telefonoLimpio = updates.telefono.replace(/\D/g, '');
-                if (telefonoLimpio.length < 10) {
-                    throw new Error('El teléfono debe tener al menos 10 dígitos');
-                }
-                // Validar que el teléfono solo contenga números
-                if (!/^\d+$/.test(telefonoLimpio)) {
-                    throw new Error('El teléfono solo debe contener números, sin caracteres especiales');
-                }
-
-                // Verificar si ya existe un teléfono principal
-                const [telefonos] = await connection.execute(
-                    'SELECT id FROM telefonos WHERE id_propietario = ? AND principal = 1',
-                    [pacienteActual.propietario_id]
+                // Verificar que el propietario existe
+                const [propExistente] = await connection.execute(
+                    'SELECT id FROM propietarios WHERE id = ?',
+                    [parseInt(updates.id_propietario_existente)]
                 );
 
-                if (telefonos.length > 0) {
-                    // Actualizar teléfono existente
-                    console.log('✅ Actualizando teléfono existente:', telefonoLimpio);
-                    await connection.execute(
-                        'UPDATE telefonos SET numero = ?, tipo = ? WHERE id_propietario = ? AND principal = 1',
-                        [telefonoLimpio, updates.tipo_telefono || 'celular', pacienteActual.propietario_id]
-                    );
-                } else {
-                    // Insertar nuevo teléfono principal
-                    console.log('✅ Insertando nuevo teléfono:', telefonoLimpio);
-                    await connection.execute(
-                        'INSERT INTO telefonos (id_propietario, tipo, numero, principal) VALUES (?, ?, ?, TRUE)',
-                        [pacienteActual.propietario_id, updates.tipo_telefono || 'celular', telefonoLimpio]
-                    );
+                if (propExistente.length === 0) {
+                    throw new Error('El propietario seleccionado no existe');
                 }
-                console.log('✅ Teléfono actualizado en BD');
+
+                // ✅ SOLO actualizar la relación id_propietario en la tabla pacientes
+                await connection.execute(
+                    'UPDATE pacientes SET id_propietario = ? WHERE id = ?',
+                    [parseInt(updates.id_propietario_existente), pacienteId]
+                );
+
+                console.log('✅ Paciente ahora pertenece al propietario ID:', updates.id_propietario_existente);
+
+                // ✅ NO actualizar datos del propietario anterior ni del nuevo
+                // Mantener ambos propietarios intactos en la BD
+
             } else {
-                console.log('⚠️ No se proporcionó teléfono para actualizar');
+                // ✅ Si NO se cambió de propietario, actualizar datos del propietario actual
+                console.log('🔄 Actualizando datos del propietario actual...');
+                const fieldsToUpdateProp = [];
+                const valuesProp = [];
+
+                // Nombre del propietario
+                if (updates.nombre_propietario) {
+                    fieldsToUpdateProp.push('nombre = ?');
+                    valuesProp.push(updates.nombre_propietario.trim());
+                    console.log('✅ Actualizando nombre propietario:', updates.nombre_propietario);
+                }
+
+                // Apellidos del propietario
+                if (updates.apellidos_propietario) {
+                    fieldsToUpdateProp.push('apellidos = ?');
+                    valuesProp.push(updates.apellidos_propietario.trim());
+                    console.log('✅ Actualizando apellidos propietario:', updates.apellidos_propietario);
+                }
+
+                // Email
+                if (updates.email !== undefined) {
+                    if (updates.email && updates.email.trim()) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(updates.email.trim())) {
+                            throw new Error('Email no válido');
+                        }
+                        fieldsToUpdateProp.push('email = ?');
+                        valuesProp.push(updates.email.trim().toLowerCase());
+                        console.log('✅ Actualizando email:', updates.email);
+                    } else {
+                        fieldsToUpdateProp.push('email = NULL');
+                        console.log('✅ Limpiando email');
+                    }
+                }
+
+                if (fieldsToUpdateProp.length > 0) {
+                    fieldsToUpdateProp.push('updated_at = NOW()');
+                    valuesProp.push(pacienteActual.propietario_id);
+
+                    const updateQueryProp = `UPDATE propietarios SET ${fieldsToUpdateProp.join(', ')} WHERE id = ?`;
+                    console.log('🔧 Query de actualización de propietario:', updateQueryProp);
+                    console.log('🔧 Valores:', valuesProp);
+
+                    await connection.execute(updateQueryProp, valuesProp);
+                    console.log('✅ Propietario actualizado en BD');
+                }
+
+                // ✅ Actualizar teléfono del propietario actual
+                console.log('📞 Actualizando teléfono del propietario...');
+                if (updates.telefono) {
+                    const telefonoLimpio = updates.telefono.replace(/\D/g, '');
+                    if (telefonoLimpio.length < 10) {
+                        throw new Error('El teléfono debe tener al menos 10 dígitos');
+                    }
+                    // Validar que el teléfono solo contenga números
+                    if (!/^\d+$/.test(telefonoLimpio)) {
+                        throw new Error('El teléfono solo debe contener números, sin caracteres especiales');
+                    }
+
+                    // Verificar si ya existe un teléfono principal
+                    const [telefonos] = await connection.execute(
+                        'SELECT id FROM telefonos WHERE id_propietario = ? AND principal = 1',
+                        [pacienteActual.propietario_id]
+                    );
+
+                    if (telefonos.length > 0) {
+                        // Actualizar teléfono existente
+                        console.log('✅ Actualizando teléfono existente:', telefonoLimpio);
+                        await connection.execute(
+                            'UPDATE telefonos SET numero = ?, tipo = ? WHERE id_propietario = ? AND principal = 1',
+                            [telefonoLimpio, updates.tipo_telefono || 'celular', pacienteActual.propietario_id]
+                        );
+                    } else {
+                        // Insertar nuevo teléfono principal
+                        console.log('✅ Insertando nuevo teléfono:', telefonoLimpio);
+                        await connection.execute(
+                            'INSERT INTO telefonos (id_propietario, tipo, numero, principal) VALUES (?, ?, ?, TRUE)',
+                            [pacienteActual.propietario_id, updates.tipo_telefono || 'celular', telefonoLimpio]
+                        );
+                    }
+                    console.log('✅ Teléfono actualizado en BD');
+                } else {
+                    console.log('⚠️ No se proporcionó teléfono para actualizar');
+                }
             }
 
-            // ✅ Validar numero_ext antes de actualizar dirección
-            if (updates.numero_ext) {
-                const numeroExtLimpio = updates.numero_ext.toString().trim().toUpperCase();
-                if (numeroExtLimpio.length > 10) {
-                    throw new Error('El número exterior debe tener máximo 10 caracteres');
+            // ✅ Actualizar dirección SOLO si NO se cambió de propietario
+            if (!updates.id_propietario_existente && (updates.calle || updates.numero_ext || updates.codigo_postal || updates.colonia)) {
+                // Validar numero_ext antes de actualizar dirección
+                if (updates.numero_ext) {
+                    const numeroExtLimpio = updates.numero_ext.toString().trim().toUpperCase();
+                    if (numeroExtLimpio.length > 10) {
+                        throw new Error('El número exterior debe tener máximo 10 caracteres');
+                    }
+                    // Permitir: letras, números, S/N, diagonales, guiones
+                    if (!/^[a-zA-Z0-9\/\-]+$/.test(numeroExtLimpio)) {
+                        throw new Error('El número exterior solo puede contener letras, números, diagonales y guiones');
+                    }
                 }
-                // Permitir: letras, números, S/N, diagonales, guiones
-                if (!/^[a-zA-Z0-9\/\-]+$/.test(numeroExtLimpio)) {
-                    throw new Error('El número exterior solo puede contener letras, números, diagonales y guiones');
-                }
-            }
 
-            // ✅ Actualizar dirección del propietario si se proporcionó
-            if (updates.calle || updates.numero_ext || updates.codigo_postal || updates.colonia) {
+                // Actualizar dirección del propietario actual
                 // Verificar si ya existe una dirección de tipo 'casa'
                 const [direcciones] = await connection.execute(
                     'SELECT id, id_codigo_postal FROM direcciones WHERE id_propietario = ? AND tipo = "casa"',

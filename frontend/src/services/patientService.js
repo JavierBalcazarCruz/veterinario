@@ -68,31 +68,53 @@ export const patientService = {
       console.log('🔧 [patientService.update] Iniciando actualización para ID:', id);
       console.log('🔧 [patientService.update] Datos recibidos:', patientData);
 
-      // ✅ Formatear datos IGUAL que en create - enviar TODOS los campos
-      const formattedData = {
-        // Datos del propietario (OBLIGATORIOS)
-        nombre_propietario: patientData.nombre_propietario?.trim(),
-        apellidos_propietario: patientData.apellidos_propietario?.trim() || '',
-        email: patientData.email?.trim().toLowerCase() || null,
-        telefono: patientData.telefono?.replace(/\D/g, ''),
-        tipo_telefono: patientData.tipo_telefono || 'celular',
+      let formattedData;
 
-        // Datos de dirección (opcionales)
-        calle: patientData.calle?.trim() || null,
-        numero_ext: patientData.numero_ext?.trim() || null,
-        numero_int: patientData.numero_int?.trim() || null,
-        codigo_postal: patientData.codigo_postal?.trim() || null,
-        colonia: patientData.colonia?.trim() || null,
-        id_municipio: parseInt(patientData.id_municipio) || 1,
-        referencias: patientData.referencias?.trim() || null,
+      // ✅ Si viene id_propietario_existente, NO formatear datos del propietario
+      if (patientData.id_propietario_existente) {
+        console.log('🎯 [patientService.update] Modo: Cambio de propietario existente');
+        console.log('📌 [patientService.update] Solo enviando datos del paciente + ID propietario');
 
-        // Datos del paciente (OBLIGATORIOS)
-        nombre_mascota: patientData.nombre_mascota?.trim(),
-        fecha_nacimiento: patientData.fecha_nacimiento || null,
-        peso: parseFloat(patientData.peso),
-        id_raza: parseInt(patientData.id_raza),
-        foto_url: patientData.foto_url || null
-      };
+        formattedData = {
+          // SOLO datos del paciente
+          nombre_mascota: patientData.nombre_mascota?.trim(),
+          fecha_nacimiento: patientData.fecha_nacimiento || null,
+          peso: parseFloat(patientData.peso),
+          id_raza: parseInt(patientData.id_raza),
+          foto_url: patientData.foto_url || null,
+
+          // ✅ SOLO el ID del propietario existente
+          id_propietario_existente: patientData.id_propietario_existente
+        };
+      } else {
+        // ✅ Modo normal: Formatear todos los campos
+        console.log('🎯 [patientService.update] Modo: Actualización normal (con datos propietario)');
+
+        formattedData = {
+          // Datos del propietario (OBLIGATORIOS)
+          nombre_propietario: patientData.nombre_propietario?.trim(),
+          apellidos_propietario: patientData.apellidos_propietario?.trim() || '',
+          email: patientData.email?.trim().toLowerCase() || null,
+          telefono: patientData.telefono?.replace(/\D/g, ''),
+          tipo_telefono: patientData.tipo_telefono || 'celular',
+
+          // Datos de dirección (opcionales)
+          calle: patientData.calle?.trim() || null,
+          numero_ext: patientData.numero_ext?.trim() || null,
+          numero_int: patientData.numero_int?.trim() || null,
+          codigo_postal: patientData.codigo_postal?.trim() || null,
+          colonia: patientData.colonia?.trim() || null,
+          id_municipio: parseInt(patientData.id_municipio) || 1,
+          referencias: patientData.referencias?.trim() || null,
+
+          // Datos del paciente (OBLIGATORIOS)
+          nombre_mascota: patientData.nombre_mascota?.trim(),
+          fecha_nacimiento: patientData.fecha_nacimiento || null,
+          peso: parseFloat(patientData.peso),
+          id_raza: parseInt(patientData.id_raza),
+          foto_url: patientData.foto_url || null
+        };
+      }
 
       console.log('📤 [patientService.update] Datos formateados para enviar:', formattedData);
       console.log('🌐 [patientService.update] Haciendo PUT a: /pacientes/' + id);

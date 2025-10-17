@@ -48,6 +48,7 @@ export default {
       },
       backdropBlur: {
         xs: '2px',
+        md: '3px',
         '4xl': '72px',
       },
       boxShadow: {

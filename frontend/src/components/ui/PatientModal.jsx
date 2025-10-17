@@ -336,51 +336,115 @@ const PatientModal = ({
   const onSubmit = async (formData) => {
     try {
       console.log('📤 Datos del formulario antes de enviar:', formData);
+      console.log('🔍 Estado de selectedOwner:', selectedOwner);
+      console.log('🔍 Modo edición:', editMode);
+      console.log('🔍 Tipo de propietario:', ownerType);
 
-      // ✅ Formatear datos EXACTAMENTE como espera el backend
-      const dataToSend = {
-        // Datos del propietario (OBLIGATORIOS)
-        nombre_propietario: formData.nombre_propietario.trim(),
-        apellidos_propietario: formData.apellidos_propietario.trim(),
-        telefono: formData.telefono.replace(/\D/g, ''), // Solo números
-        email: formData.email ? formData.email.trim().toLowerCase() : null,
-        tipo_telefono: formData.tipo_telefono || 'celular',
+      let dataToSend = {};
 
-        // Datos del paciente (OBLIGATORIOS)
-        nombre_mascota: formData.nombre_mascota.trim(),
-        peso: parseFloat(formData.peso),
-        id_raza: parseInt(formData.id_raza),
+      // ✅ MODO EDITAR + PROPIETARIO EXISTENTE SELECCIONADO
+      // Solo enviar ID del nuevo propietario, NO enviar datos del propietario
+      if (editMode && selectedOwner) {
+        console.log('🎯 MODO: Editar paciente + Cambiar a propietario existente');
+        console.log('📌 Solo enviando ID del nuevo propietario:', selectedOwner.id);
 
-        // Datos opcionales
-        fecha_nacimiento: formData.fecha_nacimiento || null,
-        foto_url: formData.foto_url || null,
+        dataToSend = {
+          // Datos del paciente (OBLIGATORIOS)
+          nombre_mascota: formData.nombre_mascota.trim(),
+          peso: parseFloat(formData.peso),
+          id_raza: parseInt(formData.id_raza),
 
-        // Datos de dirección (opcionales)
-        calle: formData.calle ? formData.calle.trim() : null,
-        numero_ext: formData.numero_ext ? formData.numero_ext.trim() : null,
-        numero_int: formData.numero_int ? formData.numero_int.trim() : null,
-        codigo_postal: formData.codigo_postal ? formData.codigo_postal.trim() : null,
-        colonia: formData.colonia ? formData.colonia.trim() : null,
-        id_municipio: parseInt(formData.id_municipio) || 1,
-        referencias: formData.referencias ? formData.referencias.trim() : null
-      };
+          // Datos opcionales del paciente
+          fecha_nacimiento: formData.fecha_nacimiento || null,
+          foto_url: formData.foto_url || null,
 
-      // ✅ Si se seleccionó un propietario existente, incluir su ID
-      if (!editMode && selectedOwner) {
-        dataToSend.id_propietario_existente = selectedOwner.id;
-        console.log('📎 Usando propietario existente ID:', selectedOwner.id);
+          // ✅ SOLO el ID del nuevo propietario
+          id_propietario_existente: selectedOwner.id
+        };
+
+        console.log('✅ NO se envían datos del propietario, solo el ID de relación');
+      }
+      // ✅ MODO CREAR + PROPIETARIO EXISTENTE SELECCIONADO
+      else if (!editMode && selectedOwner) {
+        console.log('🎯 MODO: Crear paciente + Propietario existente');
+
+        dataToSend = {
+          // Datos del paciente (OBLIGATORIOS)
+          nombre_mascota: formData.nombre_mascota.trim(),
+          peso: parseFloat(formData.peso),
+          id_raza: parseInt(formData.id_raza),
+
+          // Datos opcionales del paciente
+          fecha_nacimiento: formData.fecha_nacimiento || null,
+          foto_url: formData.foto_url || null,
+
+          // Datos del propietario (necesarios para el backend en modo crear)
+          nombre_propietario: formData.nombre_propietario.trim(),
+          apellidos_propietario: formData.apellidos_propietario.trim(),
+          telefono: formData.telefono.replace(/\D/g, ''),
+          email: formData.email ? formData.email.trim().toLowerCase() : null,
+          tipo_telefono: formData.tipo_telefono || 'celular',
+
+          // Datos de dirección (opcionales)
+          calle: formData.calle ? formData.calle.trim() : null,
+          numero_ext: formData.numero_ext ? formData.numero_ext.trim() : null,
+          numero_int: formData.numero_int ? formData.numero_int.trim() : null,
+          codigo_postal: formData.codigo_postal ? formData.codigo_postal.trim() : null,
+          colonia: formData.colonia ? formData.colonia.trim() : null,
+          id_municipio: parseInt(formData.id_municipio) || 1,
+          referencias: formData.referencias ? formData.referencias.trim() : null,
+
+          // ✅ ID del propietario existente
+          id_propietario_existente: selectedOwner.id
+        };
+      }
+      // ✅ CUALQUIER MODO SIN PROPIETARIO EXISTENTE (nuevo o editar manualmente)
+      else {
+        console.log('🎯 MODO:', editMode ? 'Editar propietario actual' : 'Crear nuevo propietario');
+
+        dataToSend = {
+          // Datos del propietario (OBLIGATORIOS)
+          nombre_propietario: formData.nombre_propietario.trim(),
+          apellidos_propietario: formData.apellidos_propietario.trim(),
+          telefono: formData.telefono.replace(/\D/g, ''),
+          email: formData.email ? formData.email.trim().toLowerCase() : null,
+          tipo_telefono: formData.tipo_telefono || 'celular',
+
+          // Datos del paciente (OBLIGATORIOS)
+          nombre_mascota: formData.nombre_mascota.trim(),
+          peso: parseFloat(formData.peso),
+          id_raza: parseInt(formData.id_raza),
+
+          // Datos opcionales
+          fecha_nacimiento: formData.fecha_nacimiento || null,
+          foto_url: formData.foto_url || null,
+
+          // Datos de dirección (opcionales)
+          calle: formData.calle ? formData.calle.trim() : null,
+          numero_ext: formData.numero_ext ? formData.numero_ext.trim() : null,
+          numero_int: formData.numero_int ? formData.numero_int.trim() : null,
+          codigo_postal: formData.codigo_postal ? formData.codigo_postal.trim() : null,
+          colonia: formData.colonia ? formData.colonia.trim() : null,
+          id_municipio: parseInt(formData.id_municipio) || 1,
+          referencias: formData.referencias ? formData.referencias.trim() : null
+        };
       }
 
-      console.log('📋 Datos formateados para enviar:', dataToSend);
+      console.log('📋 Datos finales a enviar:', dataToSend);
 
-      // ✅ Validar datos antes de enviar
-      const validation = patientService.validate(dataToSend);
-      if (!validation.isValid) {
-        console.error('❌ Errores de validación:', validation.errors);
-        Object.keys(validation.errors).forEach(field => {
-          toast.error(`${field}: ${validation.errors[field]}`);
-        });
-        return;
+      // ✅ Validar datos antes de enviar (SOLO si NO es modo editar con propietario existente)
+      // En modo editar con propietario existente, no enviamos datos del propietario, así que no validar
+      if (!(editMode && selectedOwner)) {
+        const validation = patientService.validate(dataToSend);
+        if (!validation.isValid) {
+          console.error('❌ Errores de validación:', validation.errors);
+          Object.keys(validation.errors).forEach(field => {
+            toast.error(`${field}: ${validation.errors[field]}`);
+          });
+          return;
+        }
+      } else {
+        console.log('✅ Validación de yup omitida: propietario existente en modo editar');
       }
 
       // ✅ Crear o actualizar según el modo
@@ -388,8 +452,18 @@ const PatientModal = ({
       if (editMode && initialData?.id) {
         console.log('🔄 Actualizando paciente ID:', initialData.id);
         console.log('📤 Enviando datos:', dataToSend);
+        console.log('📤 URL del request:', `/api/pacientes/${initialData.id}`);
         result = await patientService.update(initialData.id, dataToSend);
-        console.log('✅ Respuesta del servidor:', result);
+        console.log('✅ Respuesta COMPLETA del servidor:', result);
+        console.log('✅ result.data:', result?.data);
+        console.log('✅ result.success:', result?.success);
+        console.log('✅ result.msg:', result?.msg);
+
+        // Si la respuesta tiene datos del paciente actualizado, verificar el id_propietario
+        if (result?.data) {
+          console.log('🔍 Propietario en respuesta - id_propietario:', result.data.id_propietario);
+          console.log('🔍 Nombre del propietario en respuesta:', result.data.nombre_propietario);
+        }
 
         // Verificar que la actualización fue exitosa
         if (result && (result.success || result.data)) {
@@ -472,18 +546,24 @@ const PatientModal = ({
         return hasRequiredPetData;
 
       case 2:
+        // ✅ Si está en modo EDITAR y seleccionó un propietario existente, NO validar campos
+        if (editMode && selectedOwner) {
+          console.log('✅ Validación omitida: propietario existente seleccionado en modo editar');
+          return true; // ✅ Permitir continuar sin validar campos bloqueados
+        }
+
         // Verificar si el usuario está llenando campos manualmente
         const hasManualData = values.nombre_propietario?.trim() ||
                              values.apellidos_propietario?.trim() ||
                              values.telefono?.trim();
 
         // Si está en modo "existing" pero está escribiendo datos manualmente, cambiar a modo "new"
-        if (!editMode && ownerType === 'existing' && hasManualData && !selectedOwner) {
+        if (ownerType === 'existing' && hasManualData && !selectedOwner) {
           setOwnerType('new');
         }
 
-        // Si ya seleccionó un propietario existente, validar que esté seleccionado
-        if (!editMode && ownerType === 'existing' && !hasManualData) {
+        // Si está en modo "existing" y no ha escrito nada ni seleccionado, pedir que seleccione o escriba
+        if (ownerType === 'existing' && !hasManualData) {
           if (!selectedOwner) {
             toast.error('Por favor selecciona un propietario de la lista o ingresa los datos manualmente');
             return false;
@@ -491,7 +571,7 @@ const PatientModal = ({
           return true;
         }
 
-        // Si es nuevo propietario o modo edición, validar campos
+        // Si es nuevo propietario o está editando manualmente, validar campos
         const hasRequiredOwnerData = values.nombre_propietario?.trim() &&
                                     values.apellidos_propietario?.trim() &&
                                     values.telefono?.trim() &&
@@ -772,54 +852,54 @@ const PatientModal = ({
                       </h3>
                     </div>
 
-                    {/* Radio Buttons: Nuevo vs Existente - Solo en modo crear */}
-                    {!editMode && (
-                      <div className="mb-6">
-                        <label className="block text-sm sm:text-base font-medium text-white mb-3">
-                          ¿El propietario ya está registrado?
-                        </label>
-                        <div className="flex gap-3">
-                          <motion.button
-                            type="button"
-                            onClick={() => {
-                              setOwnerType('new');
-                              setSelectedOwner(null);
-                            }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
-                              ownerType === 'new'
-                                ? 'bg-primary-500/30 border-primary-400/70 text-white shadow-lg shadow-primary-500/20'
-                                : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
-                            }`}
-                          >
-                            ✨ No, nuevo propietario
-                          </motion.button>
-                          <motion.button
-                            type="button"
-                            onClick={() => setOwnerType('existing')}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
-                              ownerType === 'existing'
-                                ? 'bg-green-500/30 border-green-400/70 text-white shadow-lg shadow-green-500/20'
-                                : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
-                            }`}
-                          >
-                            🔍 Sí, buscar existente
-                          </motion.button>
-                        </div>
+                    {/* Radio Buttons: Nuevo vs Existente - Disponible en modo crear Y editar */}
+                    <div className="mb-6">
+                      <label className="block text-sm sm:text-base font-medium text-white mb-3">
+                        {editMode ? '¿Cambiar a otro propietario?' : '¿El propietario ya está registrado?'}
+                      </label>
+                      <div className="flex gap-3">
+                        <motion.button
+                          type="button"
+                          onClick={() => {
+                            console.log('🔓 Cambiando a modo edición manual');
+                            setOwnerType('new');
+                            setSelectedOwner(null); // ✅ Limpiar selección para desbloquear campos
+                          }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
+                            ownerType === 'new'
+                              ? 'bg-primary-500/30 border-primary-400/70 text-white shadow-lg shadow-primary-500/20'
+                              : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
+                          }`}
+                        >
+                          {editMode ? '✏️ Editar manualmente' : '✨ No, nuevo propietario'}
+                        </motion.button>
+                        <motion.button
+                          type="button"
+                          onClick={() => setOwnerType('existing')}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 border-2 ${
+                            ownerType === 'existing'
+                              ? 'bg-green-500/30 border-green-400/70 text-white shadow-lg shadow-green-500/20'
+                              : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
+                          }`}
+                        >
+                          🔍 {editMode ? 'Cambiar a existente' : 'Sí, buscar existente'}
+                        </motion.button>
                       </div>
-                    )}
+                    </div>
 
                     {/* Buscador de propietarios existentes */}
-                    {!editMode && ownerType === 'existing' && (
+                    {ownerType === 'existing' && (
                       <div className="mb-6">
                         <label className="block text-sm sm:text-base font-medium text-white mb-3">
                           Buscar Propietario
                         </label>
                         <OwnerSearch
                           onSelectOwner={(owner) => {
+                            console.log('🎯 Owner seleccionado desde dropdown:', owner);
                             setSelectedOwner(owner);
                             if (owner) {
                               // Rellenar campos automáticamente
@@ -835,6 +915,9 @@ const PatientModal = ({
                                 setValue('colonia', owner.direccion.colonia || '');
                                 setValue('id_municipio', owner.direccion.id_municipio || 1);
                               }
+                              console.log('✅ Propietario guardado en estado. ID:', owner.id);
+                            } else {
+                              console.log('⚠️ Se limpió la selección de propietario');
                             }
                           }}
                           selectedOwner={selectedOwner}
@@ -842,71 +925,89 @@ const PatientModal = ({
                       </div>
                     )}
 
-                    {/* Campos del propietario - Solo si es nuevo o en modo edición */}
-                    {(editMode || ownerType === 'new' || !selectedOwner) && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
-                        <div className="lg:col-span-2">
+                    {/* Campos del propietario - Siempre visibles pero bloqueados si se seleccionó uno existente */}
+                    {(ownerType === 'new' || selectedOwner) && (
+                      <>
+                        {/* Mensaje informativo cuando está bloqueado */}
+                        {selectedOwner && editMode && (
+                          <div className="mb-4 p-4 bg-blue-500/10 border-2 border-blue-400/30 rounded-xl">
+                            <p className="text-blue-300 text-sm font-medium flex items-center gap-2">
+                              <span>🔒</span>
+                              Los campos están bloqueados porque seleccionaste un propietario existente.
+                              Para modificar estos datos, haz clic en "Editar manualmente".
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                          <div className="lg:col-span-2">
+                            <GlassInput
+                              name="nombre_propietario"
+                              value={values.nombre_propietario}
+                              onChange={handleNombrePropietarioChange}
+                              placeholder="Nombre"
+                              label="Nombre *"
+                              icon={<User size={20} />}
+                              error={errors.nombre_propietario}
+                              disabled={editMode && selectedOwner}
+                            />
+                          </div>
+
                           <GlassInput
-                            name="nombre_propietario"
-                            value={values.nombre_propietario}
-                            onChange={handleNombrePropietarioChange}
-                            placeholder="Nombre"
-                            label="Nombre *"
+                            name="apellidos_propietario"
+                            value={values.apellidos_propietario}
+                            onChange={handleApellidosPropietarioChange}
+                            placeholder="Apellidos"
+                            label="Apellidos *"
                             icon={<User size={20} />}
-                            error={errors.nombre_propietario}
+                            error={errors.apellidos_propietario}
+                            disabled={editMode && selectedOwner}
                           />
-                        </div>
 
-                        <GlassInput
-                          name="apellidos_propietario"
-                          value={values.apellidos_propietario}
-                          onChange={handleApellidosPropietarioChange}
-                          placeholder="Apellidos"
-                          label="Apellidos *"
-                          icon={<User size={20} />}
-                          error={errors.apellidos_propietario}
-                        />
-
-                        <GlassInput
-                          name="telefono"
-                          value={values.telefono}
-                          onChange={handlePhoneChange}
-                          type="tel"
-                          placeholder="Teléfono (10 dígitos)"
-                          label="Teléfono *"
-                          icon={<Phone size={20} />}
-                          error={errors.telefono}
-                          maxLength={10}
-                        />
-
-                        <div>
-                          <label className="block text-sm sm:text-base font-medium text-white mb-2">
-                            Tipo de Teléfono
-                          </label>
-                          <select
-                            {...getFieldProps('tipo_telefono')}
-                            className="w-full px-4 py-3.5 sm:py-3 bg-white/10 backdrop-blur-md border-2 border-white/20
-                              rounded-xl text-white text-base sm:text-sm font-medium
-                              focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
-                              touch-manipulation appearance-none cursor-pointer"
-                            style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem'}}
-                          >
-                            <option value="celular" className="bg-gray-800">📱 Celular</option>
-                            <option value="casa" className="bg-gray-800">🏠 Casa</option>
-                            <option value="trabajo" className="bg-gray-800">💼 Trabajo</option>
-                          </select>
-                        </div>
-
-                        <div className="md:col-span-2 lg:col-span-3">
                           <GlassInput
-                            {...getFieldProps('email')}
-                            type="email"
-                            placeholder="correo@ejemplo.com (opcional)"
-                            label="Email (Opcional)"
-                            error={errors.email}
+                            name="telefono"
+                            value={values.telefono}
+                            onChange={handlePhoneChange}
+                            type="tel"
+                            placeholder="Teléfono (10 dígitos)"
+                            label="Teléfono *"
+                            icon={<Phone size={20} />}
+                            error={errors.telefono}
+                            maxLength={10}
+                            disabled={editMode && selectedOwner}
                           />
+
+                          <div>
+                            <label className="block text-sm sm:text-base font-medium text-white mb-2">
+                              Tipo de Teléfono
+                            </label>
+                            <select
+                              {...getFieldProps('tipo_telefono')}
+                              disabled={editMode && selectedOwner}
+                              className={`w-full px-4 py-3.5 sm:py-3 bg-white/10 backdrop-blur-md border-2 border-white/20
+                                rounded-xl text-white text-base sm:text-sm font-medium
+                                focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50
+                                touch-manipulation appearance-none ${editMode && selectedOwner ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                              style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem'}}
+                            >
+                              <option value="celular" className="bg-gray-800">📱 Celular</option>
+                              <option value="casa" className="bg-gray-800">🏠 Casa</option>
+                              <option value="trabajo" className="bg-gray-800">💼 Trabajo</option>
+                            </select>
+                          </div>
+
+                          <div className="md:col-span-2 lg:col-span-3">
+                            <GlassInput
+                              {...getFieldProps('email')}
+                              type="email"
+                              placeholder="correo@ejemplo.com (opcional)"
+                              label="Email (Opcional)"
+                              error={errors.email}
+                              disabled={editMode && selectedOwner}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
                   </motion.div>
                 )}
