@@ -18,10 +18,15 @@ import {
   Pill,
   ClipboardList,
   ChevronRight,
-  Heart
+  Heart,
+  Edit,
+  ArrowRight
 } from 'lucide-react';
 import { patientService } from '../../services/patientService';
 import toast from 'react-hot-toast';
+import PatientModal from '../ui/PatientModal';
+import EditarPropietario from './EditarPropietario';
+import TransferirMascota from './TransferirMascota';
 
 /**
  * Componente PerfilPaciente - Modal de pantalla completa con perfil del paciente
@@ -34,6 +39,11 @@ const PerfilPaciente = ({ isOpen = false, onClose, patientId }) => {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Estados para los 3 flujos de edición
+  const [showEditPatientModal, setShowEditPatientModal] = useState(false);
+  const [showEditOwnerModal, setShowEditOwnerModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -178,6 +188,12 @@ const PerfilPaciente = ({ isOpen = false, onClose, patientId }) => {
         <ChevronRight size={20} />
       </motion.button>
     );
+  };
+
+  // Función para recargar datos después de una edición exitosa
+  const handleEditSuccess = () => {
+    loadPatientDetails(); // Recargar datos del paciente
+    toast.success('Cambios guardados exitosamente');
   };
 
   if (!isOpen) return null;
@@ -325,6 +341,89 @@ const PerfilPaciente = ({ isOpen = false, onClose, patientId }) => {
                   </div>
                 </section>
 
+                {/* ✅ NUEVA SECCIÓN: 3 Flujos de Edición */}
+                <section>
+                  <h2 className="text-xl lg:text-2xl font-semibold text-white mb-4 lg:mb-6 flex items-center space-x-2">
+                    <Edit size={24} className="text-primary-400" />
+                    <span>Opciones de Edición</span>
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    {/* FLUJO 1: Editar Paciente */}
+                    <motion.button
+                      onClick={() => setShowEditPatientModal(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30
+                        border-2 border-blue-400/30 rounded-xl p-6 transition-all duration-200 text-left"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-blue-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <PawPrint size={24} className="text-blue-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-2">Editar Paciente</h3>
+                          <p className="text-blue-200/70 text-sm">
+                            Modifica solo los datos de la mascota (nombre, peso, raza, etc.)
+                          </p>
+                          <p className="text-blue-300/50 text-xs mt-2">
+                            No afecta al propietario
+                          </p>
+                        </div>
+                      </div>
+                    </motion.button>
+
+                    {/* FLUJO 2: Editar Propietario */}
+                    <motion.button
+                      onClick={() => setShowEditOwnerModal(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30
+                        border-2 border-yellow-400/30 rounded-xl p-6 transition-all duration-200 text-left"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-yellow-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <User size={24} className="text-yellow-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-2">Editar Propietario</h3>
+                          <p className="text-yellow-200/70 text-sm">
+                            Modifica datos del propietario (nombre, teléfono, dirección)
+                          </p>
+                          <p className="text-yellow-300/50 text-xs mt-2 flex items-center gap-1">
+                            <span className="text-yellow-400">⚠️</span> Afecta a todas sus mascotas
+                          </p>
+                        </div>
+                      </div>
+                    </motion.button>
+
+                    {/* FLUJO 3: Transferir Mascota */}
+                    <motion.button
+                      onClick={() => setShowTransferModal(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30
+                        border-2 border-purple-400/30 rounded-xl p-6 transition-all duration-200 text-left"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-purple-500/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <ArrowRight size={24} className="text-purple-300" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-2">Transferir Mascota</h3>
+                          <p className="text-purple-200/70 text-sm">
+                            Cambia la mascota a otro propietario (adopción, venta, etc.)
+                          </p>
+                          <p className="text-purple-300/50 text-xs mt-2">
+                            Solo afecta a esta mascota
+                          </p>
+                        </div>
+                      </div>
+                    </motion.button>
+
+                  </div>
+                </section>
+
                 {/* Información del Paciente */}
                 <section>
                   <h2 className="text-xl lg:text-2xl font-semibold text-white mb-4 lg:mb-6 flex items-center space-x-2">
@@ -452,7 +551,58 @@ const PerfilPaciente = ({ isOpen = false, onClose, patientId }) => {
     </AnimatePresence>
   );
 
-  return createPortal(modalContent, document.body);
+  // Modales de edición
+  const editModals = patient ? (
+    <>
+      {/* ✅ FLUJO 1: Editar solo datos del paciente */}
+      <PatientModal
+        isOpen={showEditPatientModal}
+        onClose={() => setShowEditPatientModal(false)}
+        onSuccess={handleEditSuccess}
+        editMode={true}
+        initialData={patient}
+      />
+
+      {/* ✅ FLUJO 2: Editar datos del propietario */}
+      <EditarPropietario
+        isOpen={showEditOwnerModal}
+        onClose={() => setShowEditOwnerModal(false)}
+        onSuccess={handleEditSuccess}
+        owner={{
+          id: patient.id_propietario,
+          id_propietario: patient.id_propietario,
+          nombre: patient.nombre_propietario,
+          apellidos: patient.apellidos_propietario,
+          telefono: patient.telefono_principal,
+          email: patient.email,
+          direccion: patient.direccion,
+          tipo_telefono: patient.tipo_telefono
+        }}
+        petsCount={1} // TODO: Obtener el número real de mascotas del propietario
+      />
+
+      {/* ✅ FLUJO 3: Transferir mascota a otro propietario */}
+      <TransferirMascota
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        onSuccess={handleEditSuccess}
+        patient={{
+          id: patient.id,
+          nombre_mascota: patient.nombre_mascota,
+          nombre_propietario: patient.nombre_propietario,
+          apellidos_propietario: patient.apellidos_propietario,
+          foto_url: patient.foto_url
+        }}
+      />
+    </>
+  ) : null;
+
+  return (
+    <>
+      {createPortal(modalContent, document.body)}
+      {createPortal(editModals, document.body)}
+    </>
+  );
 };
 
 export default PerfilPaciente;

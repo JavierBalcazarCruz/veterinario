@@ -597,8 +597,8 @@ const PatientModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 overflow-y-auto"
-        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '2rem', paddingBottom: '2rem' }}
+        className="fixed inset-0 overflow-y-auto"
+        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '2rem', paddingBottom: '2rem', zIndex: 10000 }}
       >
         {/* Backdrop */}
         <motion.div
@@ -625,7 +625,7 @@ const PatientModal = ({
                     {editMode ? '✏️ Editar Paciente' : '➕ Nuevo Paciente'}
                   </h2>
                   <p className="text-sm sm:text-base text-white/70 mt-1">
-                    Paso {step} de 3
+                    {editMode ? 'Solo datos de la mascota' : `Paso ${step} de 3`}
                   </p>
                 </div>
 
@@ -639,19 +639,21 @@ const PatientModal = ({
                 </motion.button>
               </div>
 
-              {/* Progress bar - Más grueso para mobile */}
-              <div className="flex space-x-2">
-                {[1, 2, 3].map((stepNumber) => (
-                  <div
-                    key={stepNumber}
-                    className={`flex-1 h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-                      step >= stepNumber
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30'
-                        : 'bg-white/20'
-                    }`}
-                  />
-                ))}
-              </div>
+              {/* Progress bar - Más grueso para mobile (solo en modo crear) */}
+              {!editMode && (
+                <div className="flex space-x-2">
+                  {[1, 2, 3].map((stepNumber) => (
+                    <div
+                      key={stepNumber}
+                      className={`flex-1 h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+                        step >= stepNumber
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30'
+                          : 'bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Content - Optimized for both mobile and desktop */}
@@ -838,8 +840,8 @@ const PatientModal = ({
                   </motion.div>
                 )}
 
-                {/* Paso 2: Datos del propietario */}
-                {step === 2 && (
+                {/* Paso 2: Datos del propietario (SOLO en modo crear) */}
+                {step === 2 && !editMode && (
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -852,18 +854,17 @@ const PatientModal = ({
                       </h3>
                     </div>
 
-                    {/* Radio Buttons: Nuevo vs Existente - Disponible en modo crear Y editar */}
+                    {/* Radio Buttons: Nuevo vs Existente - SOLO en modo crear */}
                     <div className="mb-6">
                       <label className="block text-sm sm:text-base font-medium text-white mb-3">
-                        {editMode ? '¿Cambiar a otro propietario?' : '¿El propietario ya está registrado?'}
+                        ¿El propietario ya está registrado?
                       </label>
                       <div className="flex gap-3">
                         <motion.button
                           type="button"
                           onClick={() => {
-                            console.log('🔓 Cambiando a modo edición manual');
                             setOwnerType('new');
-                            setSelectedOwner(null); // ✅ Limpiar selección para desbloquear campos
+                            setSelectedOwner(null);
                           }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
@@ -873,7 +874,7 @@ const PatientModal = ({
                               : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
                           }`}
                         >
-                          {editMode ? '✏️ Editar manualmente' : '✨ No, nuevo propietario'}
+                          ✨ No, nuevo propietario
                         </motion.button>
                         <motion.button
                           type="button"
@@ -886,7 +887,7 @@ const PatientModal = ({
                               : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
                           }`}
                         >
-                          🔍 {editMode ? 'Cambiar a existente' : 'Sí, buscar existente'}
+                          🔍 Sí, buscar existente
                         </motion.button>
                       </div>
                     </div>
@@ -1012,8 +1013,8 @@ const PatientModal = ({
                   </motion.div>
                 )}
 
-                {/* Paso 3: Dirección */}
-                {step === 3 && (
+                {/* Paso 3: Dirección (SOLO en modo crear) */}
+                {step === 3 && !editMode && (
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -1097,7 +1098,8 @@ const PatientModal = ({
             {/* Footer - Mobile Optimized Buttons */}
             <div className="p-4 sm:p-6 border-t border-white/10">
               <div className="flex gap-3 justify-between">
-                {step > 1 ? (
+                {/* Botón Anterior (solo en modo crear y paso > 1) */}
+                {!editMode && step > 1 ? (
                   <button
                     onClick={prevStep}
                     disabled={isSubmitting}
@@ -1112,20 +1114,9 @@ const PatientModal = ({
                   <div></div>
                 )}
 
-                {step < 3 ? (
-                  <button
-                    onClick={nextStep}
-                    disabled={isSubmitting}
-                    className="flex-1 sm:flex-none px-6 py-3.5 sm:py-3 bg-gradient-to-r from-primary-500 to-primary-600
-                      hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800
-                      border-2 border-primary-400/50 rounded-xl text-white font-semibold
-                      shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                      transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
-                  >
-                    Siguiente →
-                  </button>
-                ) : (
+                {/* Botón Siguiente o Guardar */}
+                {editMode ? (
+                  // En modo edición, siempre mostrar botón de guardar
                   <button
                     onClick={handleSubmit(onSubmit)}
                     disabled={isSubmitting}
@@ -1140,12 +1131,51 @@ const PatientModal = ({
                     {isSubmitting ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        {editMode ? 'Actualizando...' : 'Guardando...'}
+                        Actualizando...
                       </>
                     ) : (
                       <>
                         <Save size={20} />
-                        {editMode ? 'Actualizar Paciente' : 'Guardar Paciente'}
+                        Actualizar Paciente
+                      </>
+                    )}
+                  </button>
+                ) : step < 3 ? (
+                  // Modo crear: botón siguiente
+                  <button
+                    onClick={nextStep}
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none px-6 py-3.5 sm:py-3 bg-gradient-to-r from-primary-500 to-primary-600
+                      hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800
+                      border-2 border-primary-400/50 rounded-xl text-white font-semibold
+                      shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
+                  >
+                    Siguiente →
+                  </button>
+                ) : (
+                  // Modo crear: botón guardar (paso 3)
+                  <button
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none px-6 py-3.5 sm:py-3 bg-gradient-to-r from-green-500 to-green-600
+                      hover:from-green-600 hover:to-green-700 active:from-green-700 active:to-green-800
+                      border-2 border-green-400/50 rounded-xl text-white font-bold
+                      shadow-lg shadow-green-500/30 hover:shadow-green-500/50
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      transition-all duration-200 hover:scale-105 active:scale-95
+                      flex items-center justify-center gap-2 touch-manipulation"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={20} />
+                        Guardar Paciente
                       </>
                     )}
                   </button>

@@ -328,5 +328,27 @@ export const patientService = {
       console.error('Error al buscar propietarios:', error);
       throw error;
     }
+  },
+
+  // ✅ FLUJO 3: Transferir mascota a otro propietario
+  transfer: async (patientId, transferData) => {
+    try {
+      console.log('🔄 [patientService.transfer] Iniciando transferencia para ID:', patientId);
+      console.log('📤 [patientService.transfer] Datos de transferencia:', transferData);
+
+      const response = await api.post(`/pacientes/${patientId}/transferir`, transferData);
+
+      console.log('✅ [patientService.transfer] Respuesta del servidor:', response);
+      console.log('✅ [patientService.transfer] Status:', response.status);
+      console.log('✅ [patientService.transfer] Data:', response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ [patientService.transfer] Error al transferir mascota:', error);
+      console.error('❌ [patientService.transfer] Error response:', error.response?.data);
+      console.error('❌ [patientService.transfer] Error status:', error.response?.status);
+      console.error('❌ [patientService.transfer] Error message:', error.message);
+      throw error;
+    }
   }
 };

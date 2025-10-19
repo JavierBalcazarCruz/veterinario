@@ -25,6 +25,12 @@ const GlassButton = forwardRef(({
       text-white
       border border-white/15
     `,
+    success: `
+      bg-gradient-to-r from-green-500/80 to-green-600/80
+      text-white
+      shadow-lg shadow-green-500/25
+      border border-green-400/30
+    `,
     danger: `
       bg-gradient-to-r from-red-500/80 to-red-600/80
       text-white
