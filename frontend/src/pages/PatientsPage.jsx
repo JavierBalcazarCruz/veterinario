@@ -475,6 +475,10 @@ const PatientsPage = () => {
           setShowPerfilModal(false);
           setSelectedPatientId(null);
         }}
+        onSuccess={() => {
+          // Recargar la lista de pacientes después de una transferencia
+          loadPatients();
+        }}
         patientId={selectedPatientId}
       />
 

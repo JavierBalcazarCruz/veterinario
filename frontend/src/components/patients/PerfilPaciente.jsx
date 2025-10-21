@@ -33,9 +33,10 @@ import TransferirMascota from './TransferirMascota';
  *
  * @param {boolean} isOpen - Controla si el modal está abierto
  * @param {function} onClose - Callback cuando se cierra el modal
+ * @param {function} onSuccess - Callback cuando se realiza una operación exitosa (transferencia, edición, etc.)
  * @param {number} patientId - ID del paciente a mostrar
  */
-const PerfilPaciente = ({ isOpen = false, onClose, patientId }) => {
+const PerfilPaciente = ({ isOpen = false, onClose, onSuccess, patientId }) => {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -192,7 +193,10 @@ const PerfilPaciente = ({ isOpen = false, onClose, patientId }) => {
 
   // Función para recargar datos después de una edición exitosa
   const handleEditSuccess = () => {
-    loadPatientDetails(); // Recargar datos del paciente
+    loadPatientDetails(); // Recargar datos del paciente en el modal
+    if (onSuccess) {
+      onSuccess(); // Notificar al padre para que actualice la lista
+    }
     toast.success('Cambios guardados exitosamente');
   };
 

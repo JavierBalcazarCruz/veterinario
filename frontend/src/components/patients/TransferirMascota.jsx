@@ -91,6 +91,25 @@ const TransferirMascota = ({
       errors.push('Email inválido');
     }
 
+    // Validar dirección obligatoria para nuevos clientes
+    if (!newOwnerData.calle?.trim()) {
+      errors.push('La calle es obligatoria para nuevos clientes');
+    }
+
+    if (!newOwnerData.numero_ext?.trim()) {
+      errors.push('El número exterior es obligatorio para nuevos clientes');
+    }
+
+    if (!newOwnerData.codigo_postal?.trim()) {
+      errors.push('El código postal es obligatorio para nuevos clientes');
+    } else if (newOwnerData.codigo_postal.replace(/\D/g, '').length !== 5) {
+      errors.push('El código postal debe tener 5 dígitos');
+    }
+
+    if (!newOwnerData.colonia?.trim()) {
+      errors.push('La colonia es obligatoria para nuevos clientes');
+    }
+
     return errors;
   };
 
@@ -374,19 +393,20 @@ const TransferirMascota = ({
                             />
                           </div>
 
-                          {/* Campos adicionales opcionales */}
-                          <details className="group">
-                            <summary className="cursor-pointer text-white/70 hover:text-white transition-colors font-medium">
-                              + Agregar dirección (opcional)
-                            </summary>
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-white/10">
+                          {/* Dirección (obligatoria para nuevos clientes) */}
+                          <div className="space-y-4">
+                            <h4 className="text-md font-semibold text-white flex items-center gap-2">
+                              📍 Dirección *
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-primary-400/30">
                               <div className="md:col-span-2">
                                 <GlassInput
                                   name="calle"
                                   value={newOwnerData.calle}
                                   onChange={(e) => handleNewOwnerChange('calle', e.target.value)}
                                   placeholder="Calle"
-                                  label="Calle"
+                                  label="Calle *"
+                                  required
                                 />
                               </div>
 
@@ -395,7 +415,16 @@ const TransferirMascota = ({
                                 value={newOwnerData.numero_ext}
                                 onChange={(e) => handleNewOwnerChange('numero_ext', e.target.value)}
                                 placeholder="Núm. Ext."
-                                label="Número Exterior"
+                                label="Número Exterior *"
+                                required
+                              />
+
+                              <GlassInput
+                                name="numero_int"
+                                value={newOwnerData.numero_int}
+                                onChange={(e) => handleNewOwnerChange('numero_int', e.target.value)}
+                                placeholder="Núm. Int. (Opcional)"
+                                label="Número Interior"
                               />
 
                               <GlassInput
@@ -403,19 +432,31 @@ const TransferirMascota = ({
                                 value={newOwnerData.colonia}
                                 onChange={(e) => handleNewOwnerChange('colonia', e.target.value)}
                                 placeholder="Colonia"
-                                label="Colonia"
+                                label="Colonia *"
+                                required
                               />
 
                               <GlassInput
                                 name="codigo_postal"
                                 value={newOwnerData.codigo_postal}
                                 onChange={(e) => handleNewOwnerChange('codigo_postal', e.target.value.replace(/\D/g, '').slice(0, 5))}
-                                placeholder="C.P."
-                                label="Código Postal"
+                                placeholder="C.P. (5 dígitos)"
+                                label="Código Postal *"
                                 maxLength={5}
+                                required
                               />
+
+                              <div className="md:col-span-2">
+                                <GlassInput
+                                  name="referencias"
+                                  value={newOwnerData.referencias}
+                                  onChange={(e) => handleNewOwnerChange('referencias', e.target.value)}
+                                  placeholder="Referencias (Opcional)"
+                                  label="Referencias"
+                                />
+                              </div>
                             </div>
-                          </details>
+                          </div>
                         </div>
                       )}
                     </>
@@ -748,18 +789,20 @@ const TransferirMascota = ({
                     </p>
                   </div>
 
-                  <GlassButton
-                    onClick={() => {
-                      if (onSuccess) {
-                        onSuccess(transferResult);
-                      }
-                      handleClose();
-                    }}
-                    variant="success"
-                    className="px-8 py-3"
-                  >
-                    Finalizar
-                  </GlassButton>
+                  <div className="flex justify-center">
+                    <GlassButton
+                      onClick={() => {
+                        if (onSuccess) {
+                          onSuccess(transferResult);
+                        }
+                        handleClose();
+                      }}
+                      variant="success"
+                      className="px-8 py-3"
+                    >
+                      Finalizar
+                    </GlassButton>
+                  </div>
                 </motion.div>
 
               </div>

@@ -107,13 +107,13 @@ const PatientCard = ({ patient, onEdit, onDelete, onViewDetails }) => {
         transition={{ duration: 0.2 }}
       >
         <GlassCard className="p-6 relative overflow-hidden group">
-        {/* Menú de opciones - Visible siempre en móvil */}
+        {/* Menú de opciones - Visible siempre con efecto hover mejorado */}
         <div className="absolute top-4 right-4 z-10">
           <motion.button
             onClick={() => setShowMenu(!showMenu)}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.15, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 bg-white/10 rounded-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
+            className="p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg opacity-100 lg:opacity-60 lg:group-hover:opacity-100 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary-500/20 border border-white/10 hover:border-white/30"
           >
             <MoreVertical size={18} className="text-white" />
           </motion.button>
@@ -123,32 +123,44 @@ const PatientCard = ({ patient, onEdit, onDelete, onViewDetails }) => {
               initial={{ opacity: 0, scale: 0.9, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              className="absolute top-full right-0 mt-2 w-48 bg-gray-900/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden"
+              className="absolute top-full right-0 mt-2 w-52 bg-gray-900/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden"
             >
-              <button
+              <motion.button
                 onClick={handleViewDetails}
-                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors duration-200 flex items-center space-x-3"
+                whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors duration-200 flex items-center space-x-3 group/item"
               >
-                <Eye size={16} />
+                <motion.div whileHover={{ scale: 1.2 }}>
+                  <Eye size={18} className="text-blue-400 group-hover/item:text-blue-300" />
+                </motion.div>
                 <span className="font-medium">Ver detalles</span>
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={handleEdit}
-                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors duration-200 flex items-center space-x-3"
+                whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors duration-200 flex items-center space-x-3 group/item"
               >
-                <Edit size={16} />
+                <motion.div whileHover={{ scale: 1.2, rotate: 15 }}>
+                  <Edit size={18} className="text-yellow-400 group-hover/item:text-yellow-300" />
+                </motion.div>
                 <span className="font-medium">Editar</span>
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => {
                   setShowDeleteConfirm(true);
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-3 text-left text-red-400 hover:bg-red-500/20 transition-colors duration-200 flex items-center space-x-3 border-t border-white/10"
+                whileHover={{ x: 4, backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-4 py-3 text-left text-red-400 hover:bg-red-500/20 transition-colors duration-200 flex items-center space-x-3 border-t border-white/10 group/item"
               >
-                <Trash2 size={16} />
+                <motion.div whileHover={{ scale: 1.2, rotate: -10 }}>
+                  <Trash2 size={18} className="text-red-400 group-hover/item:text-red-300" />
+                </motion.div>
                 <span className="font-medium">Eliminar</span>
-              </button>
+              </motion.button>
             </motion.div>
           )}
         </div>

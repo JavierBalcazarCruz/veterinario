@@ -833,8 +833,8 @@ const transferirMascota = async (req, res) => {
                 console.log('🆕 Creando nuevo propietario');
 
                 const {
-                    nombre,
-                    apellidos,
+                    nombre_propietario,
+                    apellidos_propietario,
                     email,
                     telefono,
                     tipo_telefono = 'celular',
@@ -847,13 +847,18 @@ const transferirMascota = async (req, res) => {
                     referencias
                 } = nuevo_propietario;
 
-                // Validaciones
-                if (!nombre?.trim() || !apellidos?.trim() || !telefono?.trim()) {
+                // Validaciones obligatorias
+                if (!nombre_propietario?.trim() || !apellidos_propietario?.trim() || !telefono?.trim()) {
                     throw new Error('Nombre, apellidos y teléfono son obligatorios para el nuevo propietario');
                 }
 
-                validarSoloLetras(nombre, 'El nombre del propietario');
-                validarSoloLetras(apellidos, 'Los apellidos del propietario');
+                // Validar que la dirección completa sea obligatoria para nuevos clientes
+                if (!calle?.trim() || !numero_ext?.trim() || !codigo_postal?.trim() || !colonia?.trim()) {
+                    throw new Error('La dirección completa (calle, número exterior, código postal y colonia) es obligatoria para nuevos clientes');
+                }
+
+                validarSoloLetras(nombre_propietario, 'El nombre del propietario');
+                validarSoloLetras(apellidos_propietario, 'Los apellidos del propietario');
 
                 const telefonoLimpio = telefono.replace(/\D/g, '');
                 if (telefonoLimpio.length < 10) {
@@ -865,8 +870,8 @@ const transferirMascota = async (req, res) => {
                     `INSERT INTO propietarios (nombre, apellidos, email, created_at, updated_at)
                      VALUES (?, ?, ?, NOW(), NOW())`,
                     [
-                        nombre.trim(),
-                        apellidos.trim(),
+                        nombre_propietario.trim(),
+                        apellidos_propietario.trim(),
                         email?.trim().toLowerCase() || null
                     ]
                 );
@@ -939,10 +944,13 @@ const transferirMascota = async (req, res) => {
                     paciente: pacienteTransferido[0],
                     propietario_anterior: {
                         id: paciente.id_propietario,
-                        nombre: `${paciente.propietario_nombre} ${paciente.propietario_apellidos}`
+                        nombre: paciente.propietario_nombre,
+                        apellidos: paciente.propietario_apellidos
                     },
                     propietario_nuevo: {
-                        id: nuevoIdPropietario
+                        id: nuevoIdPropietario,
+                        nombre: pacienteTransferido[0].nombre_propietario,
+                        apellidos: pacienteTransferido[0].apellidos_propietario
                     }
                 }
             });
