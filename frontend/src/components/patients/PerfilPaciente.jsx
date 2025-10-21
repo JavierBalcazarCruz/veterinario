@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import PatientModal from '../ui/PatientModal';
 import EditarPropietario from './EditarPropietario';
 import TransferirMascota from './TransferirMascota';
+import HistorialClinico from './HistorialClinico';
 
 /**
  * Componente PerfilPaciente - Modal de pantalla completa con perfil del paciente
@@ -462,91 +463,14 @@ const PerfilPaciente = ({ isOpen = false, onClose, onSuccess, patientId }) => {
                   </div>
                 </section>
 
-                {/* Resumen de Actividad Reciente */}
+                {/* Historial Clínico */}
                 <section>
-                  <h2 className="text-xl lg:text-2xl font-semibold text-white mb-4 lg:mb-6 flex items-center space-x-2">
-                    <Activity size={24} className="text-primary-400" />
-                    <span>Actividad Reciente</span>
-                  </h2>
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                    <div className="text-center py-8">
-                      <Activity size={48} className="text-white/30 mx-auto mb-4" />
-                      <p className="text-white/60 text-sm">
-                        No hay actividad reciente registrada
-                      </p>
-                      <p className="text-white/40 text-xs mt-2">
-                        Las visitas, vacunas y tratamientos aparecerán aquí
-                      </p>
-                    </div>
-                  </div>
+                  <HistorialClinico
+                    pacienteId={patient.id}
+                    nombreMascota={patient.nombre_mascota}
+                  />
                 </section>
 
-                {/* Acciones Rápidas */}
-                <section>
-                  <h2 className="text-xl lg:text-2xl font-semibold text-white mb-4 lg:mb-6 flex items-center space-x-2">
-                    <ClipboardList size={24} className="text-primary-400" />
-                    <span>Acciones Rápidas</span>
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <ActionButton
-                      icon={FileText}
-                      label="Ver Historial Clínico Completo"
-                      onClick={() => {
-                        toast.info('Función en desarrollo');
-                        // TODO: Navegar al historial clínico
-                      }}
-                      color="primary"
-                    />
-                    <ActionButton
-                      icon={Syringe}
-                      label="Registrar Vacuna"
-                      onClick={() => toast.info('Función en desarrollo')}
-                      color="green"
-                    />
-                    <ActionButton
-                      icon={Pill}
-                      label="Registrar Desparasitación"
-                      onClick={() => toast.info('Función en desarrollo')}
-                      color="blue"
-                    />
-                    <ActionButton
-                      icon={Calendar}
-                      label="Agendar Cita"
-                      onClick={() => toast.info('Función en desarrollo')}
-                      color="purple"
-                    />
-                  </div>
-                </section>
-
-                {/* Enlace destacado al historial clínico */}
-                <section>
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="bg-gradient-to-r from-primary-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl p-6 border border-white/20 cursor-pointer"
-                    onClick={() => {
-                      toast.info('Función en desarrollo');
-                      // TODO: Navegar al historial clínico completo
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-14 h-14 bg-primary-500/30 rounded-xl flex items-center justify-center">
-                          <FileText size={28} className="text-primary-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white mb-1">
-                            Historial Clínico Completo
-                          </h3>
-                          <p className="text-white/60 text-sm">
-                            Ver todas las consultas, tratamientos y seguimientos
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight size={32} className="text-white/40" />
-                    </div>
-                  </motion.div>
-                </section>
               </div>
             )}
           </div>

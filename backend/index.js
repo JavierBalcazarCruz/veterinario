@@ -3,6 +3,7 @@ import express from "express";
 import conectarDB from './config/db.js';
 import veterinarioRoutes from './routes/veterinarioRoutes.js';
 import pacienteRoutes from './routes/pacienteRoutes.js';
+import historialRoutes from './routes/historialRoutes.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
@@ -64,6 +65,7 @@ const iniciarServidor = async () => {
 // ✅ Rutas
 app.use("/api/veterinarios", veterinarioRoutes);
 app.use("/api/pacientes", pacienteRoutes);
+app.use("/api/historial", historialRoutes);
 
 // ✅ AGREGADO: Ruta de health check
 app.get('/api/health', (req, res) => {
