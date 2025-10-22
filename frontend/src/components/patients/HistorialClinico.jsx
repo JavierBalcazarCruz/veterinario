@@ -102,54 +102,55 @@ const HistorialClinico = ({
   return (
     <div className="space-y-6">
       {/* Encabezado con estadísticas rápidas */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="w-6 h-6 text-blue-400" />
-            {resumeMode ? 'Resumen de Historial Clínico' : 'Historial Clínico Completo'}
-          </h2>
-          <p className="text-white/60 mt-1">
-            {resumeMode
-              ? `Últimas actividades de ${nombreMascota}`
-              : `Registro médico completo de ${nombreMascota}`
-            }
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          {/* Estadísticas rápidas */}
-          <div className="flex gap-3">
-            <StatCard
-              icon={FileText}
-              label="Consultas"
-              value={estadisticas?.total_consultas || 0}
-              color="blue"
-            />
-            <StatCard
-              icon={Syringe}
-              label="Vacunas"
-              value={estadisticas?.total_vacunas || 0}
-              color="green"
-            />
-            <StatCard
-              icon={AlertTriangle}
-              label="Alergias"
-              value={estadisticas?.alergias_activas || 0}
-              color="red"
-            />
+      <div className="flex flex-col gap-4">
+        {/* Título y botón en la misma línea */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Activity className="w-6 h-6 text-blue-400" />
+              {resumeMode ? 'Resumen de Historial Clínico' : 'Historial Clínico Completo'}
+            </h2>
+            <p className="text-white/60 mt-1">
+              {resumeMode
+                ? `Últimas actividades de ${nombreMascota}`
+                : `Registro médico completo de ${nombreMascota}`
+              }
+            </p>
           </div>
 
           {/* Botón Ver Historial Completo - solo en modo resumen */}
           {resumeMode && onVerCompleto && (
-            <GlassButton
+            <button
               onClick={onVerCompleto}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30 hover:from-blue-500/30 hover:to-purple-500/30 px-6 py-3 font-semibold"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white backdrop-blur-md border-2 border-white/20 transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg hover:border-white/40"
             >
-              <FileText className="w-5 h-5" />
+              <FileText size={20} strokeWidth={2.5} />
               Ver Historial Completo
-              <ChevronRight className="w-5 h-5" />
-            </GlassButton>
+              <ChevronRight size={20} strokeWidth={2.5} />
+            </button>
           )}
+        </div>
+
+        {/* Estadísticas rápidas */}
+        <div className="flex flex-wrap gap-3">
+          <StatCard
+            icon={FileText}
+            label="Consultas"
+            value={estadisticas?.total_consultas || 0}
+            color="blue"
+          />
+          <StatCard
+            icon={Syringe}
+            label="Vacunas"
+            value={estadisticas?.total_vacunas || 0}
+            color="green"
+          />
+          <StatCard
+            icon={AlertTriangle}
+            label="Alergias"
+            value={estadisticas?.alergias_activas || 0}
+            color="red"
+          />
         </div>
       </div>
 
@@ -324,10 +325,13 @@ const ConsultasTab = ({ consultas, onAddNew, onReload, resumeMode = false, limit
             </span>
           )}
         </h3>
-        <GlassButton onClick={onAddNew} className="flex items-center gap-2">
+        <button
+          onClick={onAddNew}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
+        >
           <Plus className="w-4 h-4" />
           Nueva Consulta
-        </GlassButton>
+        </button>
       </div>
 
       <div className="space-y-3">
@@ -529,10 +533,13 @@ const VacunasTab = ({ vacunas, onAddNew, onReload, resumeMode = false, limite = 
             </span>
           )}
         </h3>
-        <GlassButton onClick={onAddNew} className="flex items-center gap-2">
+        <button
+          onClick={onAddNew}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-500/20 border border-green-400/30 hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200"
+        >
           <Plus className="w-4 h-4" />
           Registrar Vacuna
-        </GlassButton>
+        </button>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -718,10 +725,13 @@ const AlergiasTab = ({ alergias, onAddNew, onReload, resumeMode = false, limite 
             </span>
           )}
         </h3>
-        <GlassButton onClick={onAddNew} className="flex items-center gap-2">
+        <button
+          onClick={onAddNew}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-500/20 border border-red-400/30 hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200"
+        >
           <Plus className="w-4 h-4" />
           Registrar Alergia
-        </GlassButton>
+        </button>
       </div>
 
       <div className="space-y-3">
@@ -813,10 +823,13 @@ const CirugiasTab = ({ cirugias, onAddNew, onReload, resumeMode = false, limite 
             </span>
           )}
         </h3>
-        <GlassButton onClick={onAddNew} className="flex items-center gap-2">
+        <button
+          onClick={onAddNew}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-500/20 border border-indigo-400/30 hover:bg-indigo-500/30 hover:border-indigo-400/50 transition-all duration-200"
+        >
           <Plus className="w-4 h-4" />
           Registrar Cirugía
-        </GlassButton>
+        </button>
       </div>
 
       <div className="space-y-3">
@@ -957,9 +970,13 @@ const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }) =
         <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
         <p className="text-white/60 mb-6">{description}</p>
         {actionLabel && onAction && (
-          <GlassButton onClick={onAction} className="mx-auto">
+          <button
+            onClick={onAction}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 mx-auto"
+          >
+            <Plus className="w-4 h-4" />
             {actionLabel}
-          </GlassButton>
+          </button>
         )}
       </div>
     </GlassCard>

@@ -353,9 +353,9 @@ const HistorialClinicoPage = () => {
         <div className="mb-6">
           <button
             onClick={() => navigate('/pacientes')}
-            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             <span>Volver a Pacientes</span>
           </button>
         </div>
@@ -418,14 +418,18 @@ const HistorialClinicoPage = () => {
             </div>
 
             {/* Botón filtros */}
-            <GlassButton
+            <button
               onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-              className={`flex items-center gap-2 ${filtrosAbiertos ? 'bg-blue-500/20' : ''}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border transition-all duration-200 ${
+                filtrosAbiertos
+                  ? 'bg-blue-500/30 border-blue-400/50'
+                  : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+              }`}
             >
               <Filter className="w-4 h-4" />
               Filtros
               <ChevronDown className={`w-4 h-4 transition-transform ${filtrosAbiertos ? 'rotate-180' : ''}`} />
-            </GlassButton>
+            </button>
 
             {/* Cambiar vista */}
             <div className="flex gap-2 bg-white/5 rounded-xl p-1">
@@ -498,28 +502,37 @@ const HistorialClinicoPage = () => {
             </div>
 
             {/* Acciones de exportación */}
-            <GlassButton onClick={handleExportPDF} className="flex items-center gap-2">
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-500/20 border border-red-400/30 hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200"
+            >
               <Download className="w-4 h-4" />
               PDF
-            </GlassButton>
+            </button>
 
-            <GlassButton onClick={handleExportExcel} className="flex items-center gap-2">
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-500/20 border border-green-400/30 hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200"
+            >
               <Download className="w-4 h-4" />
               Excel
-            </GlassButton>
+            </button>
 
-            <GlassButton onClick={handlePrint} className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-500/20 border border-purple-400/30 hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
+            >
               <Printer className="w-4 h-4" />
               Imprimir
-            </GlassButton>
+            </button>
 
-            <GlassButton
+            <button
               onClick={() => setMostrarCompartir(true)}
-              className="flex items-center gap-2 bg-green-500/10 hover:bg-green-500/20 border-green-400/30 text-green-400"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
             >
               <Share2 className="w-4 h-4" />
               Compartir
-            </GlassButton>
+            </button>
 
             {/* Theme Toggle */}
             <ThemeToggle />
@@ -809,23 +822,23 @@ const TimelineView = ({ items, total, paginaActual, totalPaginas, onCambiarPagin
       {/* Paginación */}
       {totalPaginas > 1 && (
         <div className="flex justify-center gap-2 mt-8">
-          <GlassButton
+          <button
             onClick={() => onCambiarPagina(Math.max(1, paginaActual - 1))}
             disabled={paginaActual === 1}
-            className="disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Anterior
-          </GlassButton>
+          </button>
 
           <div className="flex gap-2">
             {[...Array(totalPaginas)].map((_, i) => (
               <button
                 key={i + 1}
                 onClick={() => onCambiarPagina(i + 1)}
-                className={`px-4 py-2 rounded-xl transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   paginaActual === i + 1
                     ? 'bg-blue-500/30 text-white border border-blue-400/50'
-                    : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+                    : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10 hover:border-white/20'
                 }`}
               >
                 {i + 1}
@@ -833,13 +846,13 @@ const TimelineView = ({ items, total, paginaActual, totalPaginas, onCambiarPagin
             ))}
           </div>
 
-          <GlassButton
+          <button
             onClick={() => onCambiarPagina(Math.min(totalPaginas, paginaActual + 1))}
             disabled={paginaActual === totalPaginas}
-            className="disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Siguiente
-          </GlassButton>
+          </button>
         </div>
       )}
     </div>
