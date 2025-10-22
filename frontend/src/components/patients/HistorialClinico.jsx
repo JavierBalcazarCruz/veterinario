@@ -31,8 +31,15 @@ import GlassButton from '../ui/GlassButton';
  * Componente principal del historial clínico
  * @param {number} pacienteId - ID del paciente
  * @param {string} nombreMascota - Nombre de la mascota para mostrar
+ * @param {boolean} resumeMode - Si es true, muestra solo 5 registros recientes (default: true)
+ * @param {function} onVerCompleto - Callback para ver historial completo
  */
-const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
+const HistorialClinico = ({
+  pacienteId,
+  nombreMascota = 'Paciente',
+  resumeMode = true,
+  onVerCompleto
+}) => {
   const [historial, setHistorial] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('consultas');
@@ -43,6 +50,9 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
   const [showVacunaModal, setShowVacunaModal] = useState(false);
   const [showAlergiaModal, setShowAlergiaModal] = useState(false);
   const [showCirugiaModal, setShowCirugiaModal] = useState(false);
+
+  // Límite de registros en modo resumen
+  const LIMITE_RESUMEN = 5;
 
   // Cargar historial al montar el componente
   useEffect(() => {
@@ -92,35 +102,54 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
   return (
     <div className="space-y-6">
       {/* Encabezado con estadísticas rápidas */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Activity className="w-6 h-6 text-blue-400" />
-            Historial Clínico
+            {resumeMode ? 'Resumen de Historial Clínico' : 'Historial Clínico Completo'}
           </h2>
-          <p className="text-white/60 mt-1">Registro médico completo de {nombreMascota}</p>
+          <p className="text-white/60 mt-1">
+            {resumeMode
+              ? `Últimas actividades de ${nombreMascota}`
+              : `Registro médico completo de ${nombreMascota}`
+            }
+          </p>
         </div>
 
-        {/* Estadísticas rápidas */}
-        <div className="flex gap-4">
-          <StatCard
-            icon={FileText}
-            label="Consultas"
-            value={estadisticas?.total_consultas || 0}
-            color="blue"
-          />
-          <StatCard
-            icon={Syringe}
-            label="Vacunas"
-            value={estadisticas?.total_vacunas || 0}
-            color="green"
-          />
-          <StatCard
-            icon={AlertTriangle}
-            label="Alergias"
-            value={estadisticas?.alergias_activas || 0}
-            color="red"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+          {/* Estadísticas rápidas */}
+          <div className="flex gap-3">
+            <StatCard
+              icon={FileText}
+              label="Consultas"
+              value={estadisticas?.total_consultas || 0}
+              color="blue"
+            />
+            <StatCard
+              icon={Syringe}
+              label="Vacunas"
+              value={estadisticas?.total_vacunas || 0}
+              color="green"
+            />
+            <StatCard
+              icon={AlertTriangle}
+              label="Alergias"
+              value={estadisticas?.alergias_activas || 0}
+              color="red"
+            />
+          </div>
+
+          {/* Botón Ver Historial Completo - solo en modo resumen */}
+          {resumeMode && onVerCompleto && (
+            <GlassButton
+              onClick={onVerCompleto}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/30 hover:from-blue-500/30 hover:to-purple-500/30 px-6 py-3 font-semibold"
+            >
+              <FileText className="w-5 h-5" />
+              Ver Historial Completo
+              <ChevronRight className="w-5 h-5" />
+            </GlassButton>
+          )}
         </div>
       </div>
 
@@ -154,6 +183,8 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
               consultas={historial?.consultas || []}
               onAddNew={() => setShowConsultaModal(true)}
               onReload={cargarHistorial}
+              resumeMode={resumeMode}
+              limite={LIMITE_RESUMEN}
             />
           )}
 
@@ -162,6 +193,8 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
               vacunas={historial?.vacunas || []}
               onAddNew={() => setShowVacunaModal(true)}
               onReload={cargarHistorial}
+              resumeMode={resumeMode}
+              limite={LIMITE_RESUMEN}
             />
           )}
 
@@ -169,6 +202,8 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
             <DesparasitacionesTab
               desparasitaciones={historial?.desparasitaciones || []}
               onReload={cargarHistorial}
+              resumeMode={resumeMode}
+              limite={LIMITE_RESUMEN}
             />
           )}
 
@@ -177,6 +212,8 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
               alergias={historial?.alergias || []}
               onAddNew={() => setShowAlergiaModal(true)}
               onReload={cargarHistorial}
+              resumeMode={resumeMode}
+              limite={LIMITE_RESUMEN}
             />
           )}
 
@@ -185,6 +222,8 @@ const HistorialClinico = ({ pacienteId, nombreMascota = 'Paciente' }) => {
               cirugias={historial?.cirugias || []}
               onAddNew={() => setShowCirugiaModal(true)}
               onReload={cargarHistorial}
+              resumeMode={resumeMode}
+              limite={LIMITE_RESUMEN}
             />
           )}
         </motion.div>
@@ -257,7 +296,7 @@ const TabButton = ({ active, onClick, icon: Icon, label, count }) => {
 // =====================================================
 // TAB: Consultas médicas
 // =====================================================
-const ConsultasTab = ({ consultas, onAddNew, onReload }) => {
+const ConsultasTab = ({ consultas, onAddNew, onReload, resumeMode = false, limite = 5 }) => {
   if (consultas.length === 0) {
     return (
       <EmptyState
@@ -270,11 +309,20 @@ const ConsultasTab = ({ consultas, onAddNew, onReload }) => {
     );
   }
 
+  // En modo resumen, mostrar solo los primeros registros
+  const consultasMostrar = resumeMode ? consultas.slice(0, limite) : consultas;
+  const hayMas = resumeMode && consultas.length > limite;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-white">
           Consultas Médicas ({consultas.length})
+          {resumeMode && hayMas && (
+            <span className="ml-2 text-sm text-white/60">
+              (mostrando {limite} de {consultas.length})
+            </span>
+          )}
         </h3>
         <GlassButton onClick={onAddNew} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -283,10 +331,19 @@ const ConsultasTab = ({ consultas, onAddNew, onReload }) => {
       </div>
 
       <div className="space-y-3">
-        {consultas.map((consulta) => (
+        {consultasMostrar.map((consulta) => (
           <ConsultaCard key={consulta.id} consulta={consulta} />
         ))}
       </div>
+
+      {hayMas && (
+        <div className="text-center py-4">
+          <p className="text-white/60 text-sm">
+            + {consultas.length - limite} consultas más.
+            <span className="text-blue-400 ml-1">Ver historial completo para ver todas</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -445,7 +502,7 @@ const VitalSignBadge = ({ label, value }) => {
 // =====================================================
 // TAB: Vacunas
 // =====================================================
-const VacunasTab = ({ vacunas, onAddNew, onReload }) => {
+const VacunasTab = ({ vacunas, onAddNew, onReload, resumeMode = false, limite = 5 }) => {
   if (vacunas.length === 0) {
     return (
       <EmptyState
@@ -458,11 +515,19 @@ const VacunasTab = ({ vacunas, onAddNew, onReload }) => {
     );
   }
 
+  const vacunasMostrar = resumeMode ? vacunas.slice(0, limite) : vacunas;
+  const hayMas = resumeMode && vacunas.length > limite;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-white">
           Vacunas Aplicadas ({vacunas.length})
+          {resumeMode && hayMas && (
+            <span className="ml-2 text-sm text-white/60">
+              (mostrando {limite} de {vacunas.length})
+            </span>
+          )}
         </h3>
         <GlassButton onClick={onAddNew} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -471,10 +536,19 @@ const VacunasTab = ({ vacunas, onAddNew, onReload }) => {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        {vacunas.map((vacuna) => (
+        {vacunasMostrar.map((vacuna) => (
           <VacunaCard key={vacuna.id} vacuna={vacuna} />
         ))}
       </div>
+
+      {hayMas && (
+        <div className="text-center py-4">
+          <p className="text-white/60 text-sm">
+            + {vacunas.length - limite} vacunas más.
+            <span className="text-blue-400 ml-1">Ver historial completo para ver todas</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -530,7 +604,7 @@ const VacunaCard = ({ vacuna }) => {
 // =====================================================
 // TAB: Desparasitaciones
 // =====================================================
-const DesparasitacionesTab = ({ desparasitaciones, onReload }) => {
+const DesparasitacionesTab = ({ desparasitaciones, onReload, resumeMode = false, limite = 5 }) => {
   if (desparasitaciones.length === 0) {
     return (
       <EmptyState
@@ -541,17 +615,34 @@ const DesparasitacionesTab = ({ desparasitaciones, onReload }) => {
     );
   }
 
+  const desparasitacionesMostrar = resumeMode ? desparasitaciones.slice(0, limite) : desparasitaciones;
+  const hayMas = resumeMode && desparasitaciones.length > limite;
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white">
         Desparasitaciones ({desparasitaciones.length})
+        {resumeMode && hayMas && (
+          <span className="ml-2 text-sm text-white/60">
+            (mostrando {limite} de {desparasitaciones.length})
+          </span>
+        )}
       </h3>
 
       <div className="grid gap-3 md:grid-cols-2">
-        {desparasitaciones.map((desparasitacion) => (
+        {desparasitacionesMostrar.map((desparasitacion) => (
           <DesparasitacionCard key={desparasitacion.id} desparasitacion={desparasitacion} />
         ))}
       </div>
+
+      {hayMas && (
+        <div className="text-center py-4">
+          <p className="text-white/60 text-sm">
+            + {desparasitaciones.length - limite} desparasitaciones más.
+            <span className="text-blue-400 ml-1">Ver historial completo para ver todas</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -599,7 +690,8 @@ const DesparasitacionCard = ({ desparasitacion }) => {
 // =====================================================
 // TAB: Alergias
 // =====================================================
-const AlergiasTab = ({ alergias, onAddNew, onReload }) => {
+const AlergiasTab = ({ alergias, onAddNew, onReload, resumeMode = false, limite = 10 }) => {
+  // Las alergias son críticas, mostramos más en resumen (10 en vez de 5)
   if (alergias.length === 0) {
     return (
       <EmptyState
@@ -612,11 +704,19 @@ const AlergiasTab = ({ alergias, onAddNew, onReload }) => {
     );
   }
 
+  const alergiasMostrar = resumeMode ? alergias.slice(0, limite) : alergias;
+  const hayMas = resumeMode && alergias.length > limite;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-white">
           Alergias Activas ({alergias.length})
+          {resumeMode && hayMas && (
+            <span className="ml-2 text-sm text-white/60">
+              (mostrando {limite} de {alergias.length})
+            </span>
+          )}
         </h3>
         <GlassButton onClick={onAddNew} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -625,10 +725,19 @@ const AlergiasTab = ({ alergias, onAddNew, onReload }) => {
       </div>
 
       <div className="space-y-3">
-        {alergias.map((alergia) => (
+        {alergiasMostrar.map((alergia) => (
           <AlergiaCard key={alergia.id} alergia={alergia} onReload={onReload} />
         ))}
       </div>
+
+      {hayMas && (
+        <div className="text-center py-4">
+          <p className="text-white/60 text-sm">
+            + {alergias.length - limite} alergias más.
+            <span className="text-blue-400 ml-1">Ver historial completo para ver todas</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -677,7 +786,7 @@ const AlergiaCard = ({ alergia, onReload }) => {
 // =====================================================
 // TAB: Cirugías
 // =====================================================
-const CirugiasTab = ({ cirugias, onAddNew, onReload }) => {
+const CirugiasTab = ({ cirugias, onAddNew, onReload, resumeMode = false, limite = 5 }) => {
   if (cirugias.length === 0) {
     return (
       <EmptyState
@@ -690,11 +799,19 @@ const CirugiasTab = ({ cirugias, onAddNew, onReload }) => {
     );
   }
 
+  const cirugiasMostrar = resumeMode ? cirugias.slice(0, limite) : cirugias;
+  const hayMas = resumeMode && cirugias.length > limite;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-white">
           Cirugías y Procedimientos ({cirugias.length})
+          {resumeMode && hayMas && (
+            <span className="ml-2 text-sm text-white/60">
+              (mostrando {limite} de {cirugias.length})
+            </span>
+          )}
         </h3>
         <GlassButton onClick={onAddNew} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -703,10 +820,19 @@ const CirugiasTab = ({ cirugias, onAddNew, onReload }) => {
       </div>
 
       <div className="space-y-3">
-        {cirugias.map((cirugia) => (
+        {cirugiasMostrar.map((cirugia) => (
           <CirugiaCard key={cirugia.id} cirugia={cirugia} />
         ))}
       </div>
+
+      {hayMas && (
+        <div className="text-center py-4">
+          <p className="text-white/60 text-sm">
+            + {cirugias.length - limite} cirugías más.
+            <span className="text-blue-400 ml-1">Ver historial completo para ver todas</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 };

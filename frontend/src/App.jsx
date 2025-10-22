@@ -10,6 +10,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import HistorialClinicoPage from './pages/HistorialClinicoPage';
 import ConfirmAccountPage from './pages/ConfirmAccountPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -58,7 +59,13 @@ const AppRoutes = () => {
           <PatientsPage />
         </ProtectedRoute>
       } />
-      
+
+      <Route path="/historial/:pacienteId" element={
+        <ProtectedRoute>
+          <HistorialClinicoPage />
+        </ProtectedRoute>
+      } />
+
       <Route path="/citas" element={
         <ProtectedRoute>
           <AppointmentsPage />

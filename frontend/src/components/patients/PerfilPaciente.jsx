@@ -28,6 +28,7 @@ import PatientModal from '../ui/PatientModal';
 import EditarPropietario from './EditarPropietario';
 import TransferirMascota from './TransferirMascota';
 import HistorialClinico from './HistorialClinico';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Componente PerfilPaciente - Modal de pantalla completa con perfil del paciente
@@ -38,6 +39,7 @@ import HistorialClinico from './HistorialClinico';
  * @param {number} patientId - ID del paciente a mostrar
  */
 const PerfilPaciente = ({ isOpen = false, onClose, onSuccess, patientId }) => {
+  const navigate = useNavigate();
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -468,6 +470,12 @@ const PerfilPaciente = ({ isOpen = false, onClose, onSuccess, patientId }) => {
                   <HistorialClinico
                     pacienteId={patient.id}
                     nombreMascota={patient.nombre_mascota}
+                    resumeMode={true}
+                    onVerCompleto={() => {
+                      // Navegar a la página completa del historial
+                      onClose(); // Cerrar modal primero
+                      navigate(`/historial/${patient.id}`);
+                    }}
                   />
                 </section>
 
