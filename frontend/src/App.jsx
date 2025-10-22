@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
@@ -11,12 +12,14 @@ import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import HistorialClinicoPage from './pages/HistorialClinicoPage';
+import HistorialCompartidoPage from './pages/HistorialCompartidoPage';
 import ConfirmAccountPage from './pages/ConfirmAccountPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Estilos globales
 import './styles/globals.css';
+import './styles/themes.css';
 
 // Componente para manejar redirecciones automáticas
 const AppRoutes = () => {
@@ -46,6 +49,7 @@ const AppRoutes = () => {
       <Route path="/confirmar/:token" element={<ConfirmAccountPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/olvide-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/historial-compartido/:token" element={<HistorialCompartidoPage />} />
 
       {/* Rutas protegidas */}
       <Route path="/dashboard" element={
@@ -100,8 +104,9 @@ const AppRoutes = () => {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <div className="App">
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="App">
           {/* ✅ CORREGIDO: Configuración de toast mejorada con mayor duración */}
           <Toaster
             position="top-center" // ✅ Cambiar a top-center para mejor visibilidad
@@ -216,6 +221,7 @@ function App() {
           <AppRoutes />
         </div>
       </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

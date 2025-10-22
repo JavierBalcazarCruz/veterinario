@@ -29,7 +29,12 @@ import {
   Clock,
   ChevronDown,
   X,
-  Loader
+  Loader,
+  TrendingUp,
+  BarChart3,
+  Bell,
+  Zap,
+  Share2
 } from 'lucide-react';
 
 import AppLayout from '../components/layout/AppLayout';
@@ -42,17 +47,29 @@ import HistorialClinico from '../components/patients/HistorialClinico';
 import { historialService } from '../services/historialService';
 import { patientService } from '../services/patientService';
 import toast from 'react-hot-toast';
+import { exportarHistorialPDF } from '../utils/pdfExport';
+import { exportarHistorialExcel, exportarTimelineExcel } from '../utils/excelExport';
+import GraficasEvolucion from '../components/patients/GraficasEvolucion';
+import ComparadorPeriodos from '../components/patients/ComparadorPeriodos';
+import NotificacionesPaciente from '../components/patients/NotificacionesPaciente';
+import DashboardAnalytics from '../components/patients/DashboardAnalytics';
+import TimelineZoomable from '../components/patients/TimelineZoomable';
+import CompartirHistorial from '../components/patients/CompartirHistorial';
+import ThemeToggle from '../components/ui/ThemeToggle';
+import { useReactToPrint } from 'react-to-print';
+import { useRef } from 'react';
 
 const HistorialClinicoPage = () => {
   const { pacienteId } = useParams();
   const navigate = useNavigate();
+  const printRef = useRef();
 
   const [patient, setPatient] = useState(null);
   const [historial, setHistorial] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Estados de vista
-  const [vistaActual, setVistaActual] = useState('timeline'); // 'timeline' o 'categorias'
+  const [vistaActual, setVistaActual] = useState('timeline'); // 'timeline', 'categorias', 'graficas', 'comparador', 'notificaciones', 'analytics'
 
   // Estados de filtros
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
@@ -71,6 +88,9 @@ const HistorialClinicoPage = () => {
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const ITEMS_POR_PAGINA = 20;
+
+  // Estado para modal de compartir
+  const [mostrarCompartir, setMostrarCompartir] = useState(false);
 
   useEffect(() => {
     if (pacienteId) {
@@ -258,6 +278,58 @@ const HistorialClinicoPage = () => {
     });
   };
 
+  /**
+   * 📄 Exportar a PDF
+   */
+  const handleExportPDF = () => {
+    try {
+      if (!patient || !historial) {
+        toast.error('No hay datos para exportar');
+        return;
+      }
+
+      toast.loading('Generando PDF...');
+      exportarHistorialPDF(patient, historial, timelineItems);
+      toast.dismiss();
+      toast.success('PDF generado exitosamente');
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      toast.error('Error al generar el PDF');
+    }
+  };
+
+  /**
+   * 📊 Exportar a Excel
+   */
+  const handleExportExcel = () => {
+    try {
+      if (!patient || !historial) {
+        toast.error('No hay datos para exportar');
+        return;
+      }
+
+      if (vistaActual === 'timeline') {
+        exportarTimelineExcel(patient, timelineItems);
+      } else {
+        exportarHistorialExcel(patient, historial);
+      }
+
+      toast.success('Excel generado exitosamente');
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      toast.error('Error al generar el archivo Excel');
+    }
+  };
+
+  /**
+   * 🖨️ Imprimir
+   */
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: `Historial_${patient?.nombre_mascota || 'Paciente'}`,
+    onAfterPrint: () => toast.success('Listo para imprimir')
+  });
+
   const tieneAlergiasActivas = historial?.alergias?.length > 0;
 
   if (loading) {
@@ -359,33 +431,98 @@ const HistorialClinicoPage = () => {
             <div className="flex gap-2 bg-white/5 rounded-xl p-1">
               <button
                 onClick={() => setVistaActual('timeline')}
-                className={`px-4 py-2 rounded-lg transition-all ${
+                className={`px-3 py-2 rounded-lg transition-all text-sm ${
                   vistaActual === 'timeline'
                     ? 'bg-blue-500/30 text-white'
                     : 'text-white/60 hover:text-white'
                 }`}
               >
-                <Clock className="w-4 h-4 inline mr-2" />
+                <Clock className="w-4 h-4 inline mr-1" />
                 Timeline
               </button>
               <button
                 onClick={() => setVistaActual('categorias')}
-                className={`px-4 py-2 rounded-lg transition-all ${
+                className={`px-3 py-2 rounded-lg transition-all text-sm ${
                   vistaActual === 'categorias'
                     ? 'bg-blue-500/30 text-white'
                     : 'text-white/60 hover:text-white'
                 }`}
               >
-                <Activity className="w-4 h-4 inline mr-2" />
+                <Activity className="w-4 h-4 inline mr-1" />
                 Categorías
+              </button>
+              <button
+                onClick={() => setVistaActual('graficas')}
+                className={`px-3 py-2 rounded-lg transition-all text-sm ${
+                  vistaActual === 'graficas'
+                    ? 'bg-blue-500/30 text-white'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4 inline mr-1" />
+                Gráficas
+              </button>
+              <button
+                onClick={() => setVistaActual('comparador')}
+                className={`px-3 py-2 rounded-lg transition-all text-sm ${
+                  vistaActual === 'comparador'
+                    ? 'bg-blue-500/30 text-white'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4 inline mr-1" />
+                Comparar
+              </button>
+              <button
+                onClick={() => setVistaActual('notificaciones')}
+                className={`px-3 py-2 rounded-lg transition-all text-sm ${
+                  vistaActual === 'notificaciones'
+                    ? 'bg-blue-500/30 text-white'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <Bell className="w-4 h-4 inline mr-1" />
+                Avisos
+              </button>
+              <button
+                onClick={() => setVistaActual('analytics')}
+                className={`px-3 py-2 rounded-lg transition-all text-sm ${
+                  vistaActual === 'analytics'
+                    ? 'bg-blue-500/30 text-white'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <Zap className="w-4 h-4 inline mr-1" />
+                Analytics
               </button>
             </div>
 
-            {/* Acciones */}
-            <GlassButton className="flex items-center gap-2">
+            {/* Acciones de exportación */}
+            <GlassButton onClick={handleExportPDF} className="flex items-center gap-2">
               <Download className="w-4 h-4" />
-              Exportar PDF
+              PDF
             </GlassButton>
+
+            <GlassButton onClick={handleExportExcel} className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Excel
+            </GlassButton>
+
+            <GlassButton onClick={handlePrint} className="flex items-center gap-2">
+              <Printer className="w-4 h-4" />
+              Imprimir
+            </GlassButton>
+
+            <GlassButton
+              onClick={() => setMostrarCompartir(true)}
+              className="flex items-center gap-2 bg-green-500/10 hover:bg-green-500/20 border-green-400/30 text-green-400"
+            >
+              <Share2 className="w-4 h-4" />
+              Compartir
+            </GlassButton>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
           </div>
 
           {/* Panel de filtros expandible */}
@@ -470,44 +607,103 @@ const HistorialClinicoPage = () => {
         </GlassCard>
 
         {/* Contenido principal */}
-        <AnimatePresence mode="wait">
-          {vistaActual === 'timeline' ? (
-            <motion.div
-              key="timeline"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <TimelineView
-                items={itemsPaginados}
-                total={itemsFiltrados.length}
-                paginaActual={paginaActual}
-                totalPaginas={totalPaginas}
-                onCambiarPagina={setPaginaActual}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="categorias"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {patient && (
-                <HistorialClinico
-                  pacienteId={pacienteId}
-                  nombreMascota={patient.nombre_mascota}
-                  resumeMode={false}
+        <div ref={printRef}>
+          <AnimatePresence mode="wait">
+            {vistaActual === 'timeline' ? (
+              <motion.div
+                key="timeline"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TimelineZoomable
+                  items={itemsPaginados}
+                  total={itemsFiltrados.length}
+                  paginaActual={paginaActual}
+                  totalPaginas={totalPaginas}
+                  onCambiarPagina={setPaginaActual}
                 />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            ) : vistaActual === 'categorias' ? (
+              <motion.div
+                key="categorias"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {patient && (
+                  <HistorialClinico
+                    pacienteId={pacienteId}
+                    nombreMascota={patient.nombre_mascota}
+                    resumeMode={false}
+                  />
+                )}
+              </motion.div>
+            ) : vistaActual === 'graficas' ? (
+              <motion.div
+                key="graficas"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {historial && (
+                  <GraficasEvolucion consultas={historial.consultas || []} />
+                )}
+              </motion.div>
+            ) : vistaActual === 'comparador' ? (
+              <motion.div
+                key="comparador"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {historial && (
+                  <ComparadorPeriodos historial={historial} />
+                )}
+              </motion.div>
+            ) : vistaActual === 'notificaciones' ? (
+              <motion.div
+                key="notificaciones"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {patient && historial && (
+                  <NotificacionesPaciente paciente={patient} historial={historial} />
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="analytics"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {patient && historial && (
+                  <DashboardAnalytics paciente={patient} historial={historial} />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <MobileNavigation />
+
+      {/* Modal de compartir */}
+      {mostrarCompartir && patient && historial && (
+        <CompartirHistorial
+          paciente={patient}
+          historial={historial}
+          onClose={() => setMostrarCompartir(false)}
+        />
+      )}
     </AppLayout>
   );
 };

@@ -49,6 +49,40 @@ body {
   /* ✅ REMOVIDO: max-width, margin auto, padding que centraban todo */
 }
 
+/* =====================================================
+ * SCROLLBAR PERSONALIZADO
+ * ===================================================== */
+
+/* Scrollbar para Webkit (Chrome, Safari, Edge) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar para Firefox */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Smooth scroll horizontal */
+.scrollbar-thin {
+  scroll-behavior: smooth;
+}
+
 /* Animaciones personalizadas mejoradas */
 @keyframes fadeIn {
   from {
