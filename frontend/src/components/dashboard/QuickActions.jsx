@@ -4,7 +4,7 @@ import { Plus, Calendar, PawPrint, FileText, Users, Stethoscope } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 import GlassCard from '../ui/GlassCard';
 
-const QuickActions = () => {
+const QuickActions = ({ onOpenNewPatient, onOpenNewAppointment, onOpenPatientSearch }) => {
   const navigate = useNavigate();
 
   const actions = [
@@ -14,7 +14,7 @@ const QuickActions = () => {
       subtitle: 'Registrar mascota',
       icon: PawPrint,
       color: 'from-green-400 to-green-600',
-      onClick: () => navigate('/pacientes?action=new')
+      onClick: onOpenNewPatient
     },
     {
       id: 'new-appointment',
@@ -22,15 +22,15 @@ const QuickActions = () => {
       subtitle: 'Programar consulta',
       icon: Calendar,
       color: 'from-blue-400 to-blue-600',
-      onClick: () => navigate('/citas?action=new')
+      onClick: onOpenNewAppointment
     },
     {
       id: 'medical-history',
       title: 'Historia Clínica',
-      subtitle: 'Crear registro',
+      subtitle: 'Buscar paciente',
       icon: FileText,
       color: 'from-purple-400 to-purple-600',
-      onClick: () => console.log('Nueva historia clínica')
+      onClick: onOpenPatientSearch
     },
     {
       id: 'emergency',
@@ -38,7 +38,10 @@ const QuickActions = () => {
       subtitle: 'Atención inmediata',
       icon: Stethoscope,
       color: 'from-red-400 to-red-600',
-      onClick: () => console.log('Nueva urgencia')
+      onClick: () => {
+        // Abrir modal de cita con tipo urgencia preseleccionado
+        onOpenNewAppointment({ tipo: 'urgencia' });
+      }
     }
   ];
 

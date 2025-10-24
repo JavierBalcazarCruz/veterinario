@@ -10,7 +10,11 @@ import StatsCard from '../components/dashboard/StatsCard';
 import QuickActions from '../components/dashboard/QuickActions';
 import RecentPatients from '../components/dashboard/RecentPatients';
 import UpcomingAppointments from '../components/dashboard/UpcomingAppointments';
+import AddPatientModal from '../components/patients/AddPatientModal';
+import AddAppointmentModal from '../components/appointments/AddAppointmentModal';
+import PatientSpotlight from '../components/dashboard/PatientSpotlight';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -21,6 +25,12 @@ const DashboardPage = () => {
     completedAppointments: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // Estados para modales
+  const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
+  const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
+  const [isPatientSpotlightOpen, setIsPatientSpotlightOpen] = useState(false);
+  const [collapseSidebar, setCollapseSidebar] = useState(false);
 
   // Simular carga de datos (reemplazar con API real)
   useEffect(() => {
@@ -45,6 +55,23 @@ const DashboardPage = () => {
     loadDashboardData();
   }, []);
 
+  // Atajo de teclado Cmd+K / Ctrl+K para abrir el Spotlight
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Cmd+K (Mac) o Ctrl+K (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsPatientSpotlightOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Buenos días';
@@ -61,7 +88,7 @@ const DashboardPage = () => {
   });
 
   return (
-    <AppLayout>
+    <AppLayout collapseSidebar={collapseSidebar}>
       <div className="h-screen flex flex-col overflow-hidden">
         {/* Header - Fijo */}
         <div className="flex-shrink-0">
@@ -112,7 +139,18 @@ const DashboardPage = () => {
 
           {/* Quick Actions */}
           <section>
-            <QuickActions />
+            <QuickActions
+              onOpenNewPatient={() => {
+                setCollapseSidebar(true);
+                setIsNewPatientModalOpen(true);
+              }}
+              onOpenNewAppointment={(params) => {
+                setCollapseSidebar(true);
+                setIsNewAppointmentModalOpen(true);
+                // params puede contener { tipo: 'urgencia' } para futuras mejoras
+              }}
+              onOpenPatientSearch={() => setIsPatientSpotlightOpen(true)}
+            />
           </section>
 
           {/* Recent Activity */}
@@ -139,6 +177,36 @@ const DashboardPage = () => {
 
       {/* Mobile Navigation */}
       <MobileNavigation />
+
+      {/* Modales */}
+      <AddPatientModal
+        isOpen={isNewPatientModalOpen}
+        onClose={() => {
+          setIsNewPatientModalOpen(false);
+          setCollapseSidebar(false);
+        }}
+        onSuccess={(newPatient) => {
+          toast.success(`¡Paciente ${newPatient.nombre_mascota} registrado exitosamente!`);
+          // Aquí podrías recargar las estadísticas o la lista de pacientes recientes
+        }}
+      />
+
+      <AddAppointmentModal
+        isOpen={isNewAppointmentModalOpen}
+        onClose={() => {
+          setIsNewAppointmentModalOpen(false);
+          setCollapseSidebar(false);
+        }}
+        onSuccess={(newAppointment) => {
+          toast.success('¡Cita programada exitosamente!');
+          // Aquí podrías recargar las citas próximas
+        }}
+      />
+
+      <PatientSpotlight
+        isOpen={isPatientSpotlightOpen}
+        onClose={() => setIsPatientSpotlightOpen(false)}
+      />
     </AppLayout>
   );
 };
