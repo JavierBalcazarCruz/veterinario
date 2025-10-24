@@ -78,9 +78,11 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
           className="fixed inset-0 z-0"
         >
           <div
-            className="w-full h-full bg-cover bg-center bg-no-repeat"
+            className="w-full h-full bg-cover bg-no-repeat"
             style={{
               backgroundImage: `url(${wallpapers[currentTheme.wallpaper]})`,
+              backgroundPosition: '50% 50%',
+              backgroundAttachment: 'fixed'
             }}
           />
           {/* Overlay dinámico para mejor legibilidad */}

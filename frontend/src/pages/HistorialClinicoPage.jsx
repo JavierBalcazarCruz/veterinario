@@ -34,7 +34,8 @@ import {
   BarChart3,
   Bell,
   Zap,
-  Share2
+  Share2,
+  FileSpreadsheet
 } from 'lucide-react';
 
 import AppLayout from '../components/layout/AppLayout';
@@ -346,196 +347,140 @@ const HistorialClinicoPage = () => {
 
   return (
     <AppLayout>
-      <Header />
+      <Header
+        title={patient ? `🐾 ${patient.nombre_mascota}` : 'Historial Clínico'}
+        subtitle={patient ? `${patient.nombre_raza} • ${patient.especie} • ${patient.edad} • Propietario: ${patient.nombre_propietario} ${patient.apellidos_propietario}` : 'Cargando información...'}
+        actions={[
+          {
+            icon: ArrowLeft,
+            label: 'Volver a Pacientes',
+            action: () => navigate('/pacientes'),
+            color: 'from-gray-500 to-gray-600',
+            className: 'shadow-lg shadow-gray-500/30 hover:shadow-gray-500/50 font-semibold'
+          }
+        ]}
+      />
 
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Breadcrumb y botón volver */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/pacientes')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver a Pacientes</span>
-          </button>
-        </div>
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6 max-w-7xl">
 
-        {/* Header del paciente */}
-        {patient && (
-          <GlassCard className="p-6 mb-6">
-            <div className="flex items-center gap-4">
-              {patient.foto_url ? (
-                <img
-                  src={patient.foto_url}
-                  alt={patient.nombre_mascota}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-white/20"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-3xl">
-                  🐾
-                </div>
-              )}
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-white mb-1">
-                  {patient.nombre_mascota}
-                </h1>
-                <p className="text-white/70">
-                  {patient.nombre_raza} • {patient.especie} • {patient.edad}
-                </p>
-                <p className="text-white/60 text-sm mt-1">
-                  Propietario: {patient.nombre_propietario} {patient.apellidos_propietario}
-                </p>
-              </div>
-
-              {/* Alerta de alergias */}
-              {tieneAlergiasActivas && (
-                <div className="bg-red-500/20 border-2 border-red-400/50 rounded-xl px-4 py-3">
-                  <div className="flex items-center gap-2 text-red-400">
-                    <AlertTriangle className="w-5 h-5" />
-                    <span className="font-semibold">{historial.alergias.length} Alergia(s) Activa(s)</span>
-                  </div>
-                </div>
-              )}
+        {/* Alerta de alergias */}
+        {tieneAlergiasActivas && (
+          <div className="bg-red-500/20 border-2 border-red-400/50 rounded-xl px-4 py-3 mb-4 md:mb-6">
+            <div className="flex items-center justify-center gap-2 text-red-400">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="font-semibold text-sm md:text-base">⚠️ ALERTA: {historial.alergias.length} Alergia(s) Activa(s) - Revisar antes de medicar</span>
             </div>
-          </GlassCard>
+          </div>
         )}
 
         {/* Barra de herramientas */}
-        <GlassCard className="p-4 mb-6">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Búsqueda */}
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <input
-                  type="text"
-                  placeholder="Buscar en historial..."
-                  value={filtros.busqueda}
-                  onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-blue-400/50"
-                />
+        <GlassCard className="p-3 md:p-4 mb-4 md:mb-6">
+          <div className="space-y-3">
+            {/* Fila 1: Búsqueda y Filtros */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Búsqueda */}
+              <div className="flex-1 min-w-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-white/40" />
+                  <input
+                    type="text"
+                    placeholder="Buscar en historial..."
+                    value={filtros.busqueda}
+                    onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-blue-400/50"
+                  />
+                </div>
+              </div>
+
+              {/* Botón filtros */}
+              <button
+                onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border transition-all duration-200 ${
+                  filtrosAbiertos
+                    ? 'bg-blue-500/30 border-blue-400/50'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                }`}
+              >
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Filtros</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${filtrosAbiertos ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Fila 2: Cambiar vista - Select estilizado */}
+            <div>
+              <select
+                value={vistaActual}
+                onChange={(e) => setVistaActual(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-xl text-white text-sm md:text-base font-semibold appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 1rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.5em 1.5em',
+                  paddingRight: '3rem'
+                }}
+              >
+                <option value="timeline" className="bg-gray-900 text-white py-3">
+                  🕐 Timeline
+                </option>
+                <option value="categorias" className="bg-gray-900 text-white py-3">
+                  📋 Categorías
+                </option>
+                <option value="graficas" className="bg-gray-900 text-white py-3">
+                  📈 Gráficas
+                </option>
+                <option value="comparador" className="bg-gray-900 text-white py-3">
+                  📊 Comparar
+                </option>
+                <option value="notificaciones" className="bg-gray-900 text-white py-3">
+                  🔔 Avisos
+                </option>
+                <option value="analytics" className="bg-gray-900 text-white py-3">
+                  ⚡ Analytics
+                </option>
+              </select>
+            </div>
+
+            {/* Fila 3: Acciones de exportación y Theme Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleExportPDF}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-white bg-red-500/20 border border-red-400/30 hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200"
+              >
+                <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-white bg-green-500/20 border border-green-400/30 hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Excel</span>
+              </button>
+
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-white bg-purple-500/20 border border-purple-400/30 hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
+              >
+                <Printer className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Imprimir</span>
+              </button>
+
+              <button
+                onClick={() => setMostrarCompartir(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs md:text-sm font-medium text-white bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
+              >
+                <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Compartir</span>
+              </button>
+
+              {/* Theme Toggle */}
+              <div className="ml-auto">
+                <ThemeToggle />
               </div>
             </div>
-
-            {/* Botón filtros */}
-            <button
-              onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border transition-all duration-200 ${
-                filtrosAbiertos
-                  ? 'bg-blue-500/30 border-blue-400/50'
-                  : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              Filtros
-              <ChevronDown className={`w-4 h-4 transition-transform ${filtrosAbiertos ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Cambiar vista */}
-            <div className="flex gap-2 bg-white/5 rounded-xl p-1">
-              <button
-                onClick={() => setVistaActual('timeline')}
-                className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                  vistaActual === 'timeline'
-                    ? 'bg-blue-500/30 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <Clock className="w-4 h-4 inline mr-1" />
-                Timeline
-              </button>
-              <button
-                onClick={() => setVistaActual('categorias')}
-                className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                  vistaActual === 'categorias'
-                    ? 'bg-blue-500/30 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <Activity className="w-4 h-4 inline mr-1" />
-                Categorías
-              </button>
-              <button
-                onClick={() => setVistaActual('graficas')}
-                className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                  vistaActual === 'graficas'
-                    ? 'bg-blue-500/30 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <TrendingUp className="w-4 h-4 inline mr-1" />
-                Gráficas
-              </button>
-              <button
-                onClick={() => setVistaActual('comparador')}
-                className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                  vistaActual === 'comparador'
-                    ? 'bg-blue-500/30 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4 inline mr-1" />
-                Comparar
-              </button>
-              <button
-                onClick={() => setVistaActual('notificaciones')}
-                className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                  vistaActual === 'notificaciones'
-                    ? 'bg-blue-500/30 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <Bell className="w-4 h-4 inline mr-1" />
-                Avisos
-              </button>
-              <button
-                onClick={() => setVistaActual('analytics')}
-                className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                  vistaActual === 'analytics'
-                    ? 'bg-blue-500/30 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                <Zap className="w-4 h-4 inline mr-1" />
-                Analytics
-              </button>
-            </div>
-
-            {/* Acciones de exportación */}
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-500/20 border border-red-400/30 hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200"
-            >
-              <Download className="w-4 h-4" />
-              PDF
-            </button>
-
-            <button
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-500/20 border border-green-400/30 hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200"
-            >
-              <Download className="w-4 h-4" />
-              Excel
-            </button>
-
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-500/20 border border-purple-400/30 hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
-            >
-              <Printer className="w-4 h-4" />
-              Imprimir
-            </button>
-
-            <button
-              onClick={() => setMostrarCompartir(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
-            >
-              <Share2 className="w-4 h-4" />
-              Compartir
-            </button>
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
           </div>
 
           {/* Panel de filtros expandible */}
@@ -548,15 +493,15 @@ const HistorialClinicoPage = () => {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="border-t border-white/10 mt-4 pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="border-t border-white/10 mt-3 pt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     {/* Tipo */}
                     <div>
-                      <label className="text-white/70 text-sm mb-2 block">Tipo</label>
+                      <label className="text-white/70 text-xs md:text-sm mb-1.5 block">Tipo</label>
                       <select
                         value={filtros.tipo}
                         onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-400/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400/50"
                       >
                         <option value="todos">Todos</option>
                         <option value="consulta">Consultas</option>
@@ -569,33 +514,33 @@ const HistorialClinicoPage = () => {
 
                     {/* Fecha desde */}
                     <div>
-                      <label className="text-white/70 text-sm mb-2 block">Desde</label>
+                      <label className="text-white/70 text-xs md:text-sm mb-1.5 block">Desde</label>
                       <input
                         type="date"
                         value={filtros.fechaDesde}
                         onChange={(e) => setFiltros({ ...filtros, fechaDesde: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-400/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400/50"
                       />
                     </div>
 
                     {/* Fecha hasta */}
                     <div>
-                      <label className="text-white/70 text-sm mb-2 block">Hasta</label>
+                      <label className="text-white/70 text-xs md:text-sm mb-1.5 block">Hasta</label>
                       <input
                         type="date"
                         value={filtros.fechaHasta}
                         onChange={(e) => setFiltros({ ...filtros, fechaHasta: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-400/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400/50"
                       />
                     </div>
 
                     {/* Ordenar */}
                     <div>
-                      <label className="text-white/70 text-sm mb-2 block">Ordenar por</label>
+                      <label className="text-white/70 text-xs md:text-sm mb-1.5 block">Ordenar por</label>
                       <select
                         value={filtros.ordenPor}
                         onChange={(e) => setFiltros({ ...filtros, ordenPor: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-400/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400/50"
                       >
                         <option value="fecha_desc">Más recientes primero</option>
                         <option value="fecha_asc">Más antiguos primero</option>
@@ -604,10 +549,10 @@ const HistorialClinicoPage = () => {
                   </div>
 
                   {/* Botón limpiar filtros */}
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-3 flex justify-center sm:justify-end">
                     <button
                       onClick={limpiarFiltros}
-                      className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
+                      className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-xs md:text-sm"
                     >
                       <X className="w-4 h-4" />
                       Limpiar filtros
@@ -718,144 +663,6 @@ const HistorialClinicoPage = () => {
         />
       )}
     </AppLayout>
-  );
-};
-
-// =====================================================
-// COMPONENTE: Vista Timeline
-// =====================================================
-const TimelineView = ({ items, total, paginaActual, totalPaginas, onCambiarPagina }) => {
-  if (items.length === 0) {
-    return (
-      <GlassCard className="p-12 text-center">
-        <Activity className="w-16 h-16 text-white/30 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">
-          No se encontraron registros
-        </h3>
-        <p className="text-white/60">
-          Intenta ajustar los filtros de búsqueda
-        </p>
-      </GlassCard>
-    );
-  }
-
-  const colorClasses = {
-    blue: 'bg-blue-500/20 border-blue-400/30 text-blue-400',
-    green: 'bg-green-500/20 border-green-400/30 text-green-400',
-    purple: 'bg-purple-500/20 border-purple-400/30 text-purple-400',
-    red: 'bg-red-500/20 border-red-400/30 text-red-400',
-    indigo: 'bg-indigo-500/20 border-indigo-400/30 text-indigo-400'
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Info */}
-      <div className="flex items-center justify-between">
-        <p className="text-white/60">
-          Mostrando {items.length} de {total} registros
-        </p>
-        <p className="text-white/60 text-sm">
-          Página {paginaActual} de {totalPaginas}
-        </p>
-      </div>
-
-      {/* Timeline */}
-      <div className="relative">
-        {/* Línea vertical */}
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-white/10" />
-
-        {/* Items */}
-        <div className="space-y-6">
-          {items.map((item, index) => {
-            const Icon = item.icono;
-            const colorClass = colorClasses[item.color] || colorClasses.blue;
-
-            return (
-              <motion.div
-                key={`${item.tipo}-${index}`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="relative pl-16"
-              >
-                {/* Icono */}
-                <div className={`absolute left-0 w-12 h-12 rounded-xl border-2 ${colorClass} flex items-center justify-center`}>
-                  <Icon className="w-6 h-6" />
-                </div>
-
-                {/* Contenido */}
-                <GlassCard className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-white text-lg">
-                          {item.titulo}
-                        </h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${colorClass}`}>
-                          {item.tipo}
-                        </span>
-                      </div>
-                      {item.subtitulo && (
-                        <p className="text-white/60 mb-3">{item.subtitulo}</p>
-                      )}
-                      <div className="flex items-center gap-2 text-white/50 text-sm">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {item.fecha.toLocaleDateString('es-MX', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Paginación */}
-      {totalPaginas > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          <button
-            onClick={() => onCambiarPagina(Math.max(1, paginaActual - 1))}
-            disabled={paginaActual === 1}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-
-          <div className="flex gap-2">
-            {[...Array(totalPaginas)].map((_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => onCambiarPagina(i + 1)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  paginaActual === i + 1
-                    ? 'bg-blue-500/30 text-white border border-blue-400/50'
-                    : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10 hover:border-white/20'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => onCambiarPagina(Math.min(totalPaginas, paginaActual + 1))}
-            disabled={paginaActual === totalPaginas}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
-    </div>
   );
 };
 

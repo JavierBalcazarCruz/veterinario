@@ -82,20 +82,6 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
                 </div>
               </div>
 
-              {/* Info Contextual */}
-              <div className="hidden lg:flex items-center space-x-6 text-xs text-white/50">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>En línea</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar size={12} />
-                  <span>{getCurrentTime()}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span>Dr. {user?.nombre}</span>
-                </div>
-              </div>
             </div>
 
             {/* Barra de Búsqueda */}
@@ -147,10 +133,27 @@ const Header = ({ title, subtitle, actions = [], searchPlaceholder, onSearch, sh
           )}
         </div>
 
-        {/* Stats Footer - Solo visible en páginas específicas */}
+        {/* Stats Footer - Info Contextual y Estado del Sistema */}
         {location.pathname !== '/dashboard' && (
           <div className="hidden lg:flex items-center justify-between mt-6 pt-4 border-t border-white/10">
             <div className="flex items-center space-x-6 text-xs text-white/50">
+              {/* Info Contextual - En línea, Fecha y Doctor */}
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>En línea</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Calendar size={12} />
+                <span>{getCurrentTime()}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>Dr. {user?.nombre}</span>
+              </div>
+
+              {/* Separador */}
+              <div className="w-px h-4 bg-white/20"></div>
+
+              {/* Estado del Sistema */}
               <div className="flex items-center space-x-2">
                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                 <span>Sistema Operativo</span>
