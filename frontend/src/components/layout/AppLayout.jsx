@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import MobileNavigation from './MobileNavigation';
+import { useTheme } from '../../context/ThemeContext';
+// import DarkModeWallpaper from './DarkModeWallpaper'; // 🌙 Descomenta para usar el componente independiente
 
 // Wallpapers temáticos mejorados
 const wallpapers = [
@@ -44,6 +46,7 @@ const sectionThemes = {
 const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) => {
   const [currentTheme, setCurrentTheme] = useState(sectionThemes['/dashboard']);
   const location = useLocation();
+  const { isDark } = useTheme();
 
   // Cambiar tema basado en la ruta
   useEffect(() => {
@@ -68,6 +71,25 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
       className="min-h-screen relative overflow-hidden bg-slate-900"
     >
       {/* Background Wallpaper Dinámico */}
+      {/*
+        🌙 MODO OSCURO DISPONIBLE:
+        ===========================
+        Para activar el modo oscuro, tienes 2 opciones:
+
+        OPCIÓN 1 (Actual - Recomendada):
+        Ya está implementado con filtro CSS. Solo descomenta el ThemeToggle en las páginas.
+
+        OPCIÓN 2 (Componente Independiente):
+        Reemplaza todo este bloque con:
+
+        <AnimatePresence mode="wait">
+          <motion.div key={currentTheme.wallpaper} className="fixed inset-0 z-0">
+            <DarkModeWallpaper wallpaperUrl={wallpapers[currentTheme.wallpaper]} />
+          </motion.div>
+        </AnimatePresence>
+
+        Ver: DARK_MODE_ACTIVATION_GUIDE.md para instrucciones completas
+      */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentTheme.wallpaper}
@@ -85,11 +107,21 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
               backgroundAttachment: 'fixed'
             }}
           />
-          {/* Overlay dinámico para mejor legibilidad */}
-          <motion.div 
+          {/* Overlay base para mejor legibilidad */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-black/50 backdrop-blur-[1px]"
+          />
+
+          {/* Overlay adicional para modo oscuro - Con transición suave */}
+          {/* 🌙 FILTRO MODO OSCURO: Ya implementado y funcional */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isDark ? 1 : 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            style={{ mixBlendMode: 'multiply' }}
           />
         </motion.div>
       </AnimatePresence>

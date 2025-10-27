@@ -1075,6 +1075,152 @@ const actualizarDireccionPropietario = async (connection, id_propietario, datos)
     }
 };
 
+/**
+ * ✅ Obtener pacientes con consulta más reciente
+ * Para el Dashboard - Muestra últimos pacientes atendidos
+ * Query params:
+ * - limit: número de pacientes (default: 5)
+ * - days: filtrar últimos X días (default: 90)
+ */
+const obtenerPacientesRecientes = async (req, res) => {
+    let connection;
+    try {
+        const limit = parseInt(req.query.limit) || 5; // Por defecto 5 pacientes
+        const days = parseInt(req.query.days) || 90; // Por defecto últimos 90 días
+
+        connection = await conectarDB();
+
+        // ✅ Verificar rol y obtener pacientes con consulta reciente
+        let query;
+        let params;
+
+        if (req.usuario.rol === 'doctor') {
+            // Obtener ID del doctor
+            const [doctores] = await connection.execute(
+                `SELECT id FROM doctores WHERE id_usuario = ?`,
+                [req.usuario.id]
+            );
+
+            if (doctores.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    msg: 'No se encontró el doctor asociado al usuario'
+                });
+            }
+
+            const id_doctor = doctores[0].id;
+
+            // Consulta para pacientes del doctor con última consulta
+            query = `
+                SELECT
+                    p.id,
+                    p.nombre_mascota,
+                    p.foto_url,
+                    p.peso,
+                    r.nombre AS nombre_raza,
+                    e.nombre AS especie,
+                    pr.nombre AS nombre_propietario,
+                    pr.apellidos AS apellidos_propietario,
+                    t.numero AS telefono_principal,
+                    MAX(hc.fecha_consulta) AS ultima_consulta,
+                    (SELECT motivo_consulta
+                     FROM historias_clinicas
+                     WHERE id_paciente = p.id
+                     ORDER BY fecha_consulta DESC
+                     LIMIT 1) AS ultimo_motivo,
+                    YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) -
+                    (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(p.fecha_nacimiento, '%m%d')) AS edad,
+                    DATEDIFF(CURDATE(), MAX(hc.fecha_consulta)) AS dias_desde_consulta
+                FROM pacientes p
+                INNER JOIN razas r ON p.id_raza = r.id
+                INNER JOIN especies e ON r.id_especie = e.id
+                INNER JOIN propietarios pr ON p.id_propietario = pr.id
+                LEFT JOIN telefonos t ON t.id_propietario = pr.id AND t.principal = 1
+                INNER JOIN historias_clinicas hc ON p.id = hc.id_paciente
+                WHERE p.id_doctor = ? AND p.estado = 'activo'
+                  AND hc.fecha_consulta >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                GROUP BY p.id
+                ORDER BY ultima_consulta DESC
+                LIMIT ?`;
+            params = [id_doctor, days, limit];
+
+        } else if (['admin', 'superadmin', 'recepcion'].includes(req.usuario.rol)) {
+            // Consulta para admin/superadmin/recepción
+            query = `
+                SELECT
+                    p.id,
+                    p.nombre_mascota,
+                    p.foto_url,
+                    p.peso,
+                    r.nombre AS nombre_raza,
+                    e.nombre AS especie,
+                    pr.nombre AS nombre_propietario,
+                    pr.apellidos AS apellidos_propietario,
+                    t.numero AS telefono_principal,
+                    CONCAT(u.nombre, ' ', u.apellidos) AS doctor,
+                    MAX(hc.fecha_consulta) AS ultima_consulta,
+                    (SELECT motivo_consulta
+                     FROM historias_clinicas
+                     WHERE id_paciente = p.id
+                     ORDER BY fecha_consulta DESC
+                     LIMIT 1) AS ultimo_motivo,
+                    YEAR(CURDATE()) - YEAR(p.fecha_nacimiento) -
+                    (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(p.fecha_nacimiento, '%m%d')) AS edad,
+                    DATEDIFF(CURDATE(), MAX(hc.fecha_consulta)) AS dias_desde_consulta
+                FROM pacientes p
+                INNER JOIN razas r ON p.id_raza = r.id
+                INNER JOIN especies e ON r.id_especie = e.id
+                INNER JOIN propietarios pr ON p.id_propietario = pr.id
+                INNER JOIN doctores doc ON p.id_doctor = doc.id
+                INNER JOIN usuarios u ON doc.id_usuario = u.id
+                LEFT JOIN telefonos t ON t.id_propietario = pr.id AND t.principal = 1
+                INNER JOIN historias_clinicas hc ON p.id = hc.id_paciente
+                WHERE u.id_licencia_clinica = ? AND p.estado = 'activo'
+                  AND hc.fecha_consulta >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                GROUP BY p.id
+                ORDER BY ultima_consulta DESC
+                LIMIT ?`;
+            params = [req.usuario.id_licencia_clinica, days, limit];
+        } else {
+            return res.status(403).json({
+                success: false,
+                msg: 'Rol no autorizado para esta operación'
+            });
+        }
+
+        const [pacientes] = await connection.execute(query, params);
+
+        // Formatear fechas para mejor presentación
+        const pacientesFormateados = pacientes.map(p => ({
+            ...p,
+            edad: p.edad ? `${p.edad} años` : 'No especificada',
+            ultima_consulta: p.ultima_consulta || null
+        }));
+
+        res.json({
+            success: true,
+            data: pacientesFormateados,
+            total: pacientesFormateados.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error en obtenerPacientesRecientes:', error);
+        res.status(500).json({
+            success: false,
+            msg: 'Error al obtener pacientes recientes',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    } finally {
+        if (connection) {
+            try {
+                await connection.end();
+            } catch (error) {
+                console.error('❌ Error al cerrar conexión:', error);
+            }
+        }
+    }
+};
+
 export {
     agregarPaciente,
     obtenerPacientes,
@@ -1084,7 +1230,8 @@ export {
     obtenerRazas,
     buscarPropietarios,
     actualizarPropietario,
-    transferirMascota
+    transferirMascota,
+    obtenerPacientesRecientes
 };// backend/controllers/pacienteController.js - VERSIÓN CORREGIDA
 import conectarDB from '../config/db.js';
 

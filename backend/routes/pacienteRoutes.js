@@ -9,10 +9,12 @@ import {agregarPaciente
     , buscarPropietarios
     , actualizarPropietario
     , transferirMascota
+    , obtenerPacientesRecientes
 } from '../controllers/pacienteController.js';
 import checkAuth from '../middleware/authMiddleware.js';
 
 // Rutas específicas (deben ir antes de '/:id' para evitar conflictos)
+router.get('/recientes', checkAuth, obtenerPacientesRecientes);
 router.get('/razas', checkAuth, obtenerRazas);
 router.get('/propietarios/buscar', checkAuth, buscarPropietarios);
 

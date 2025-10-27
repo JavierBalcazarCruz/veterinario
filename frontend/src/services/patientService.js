@@ -192,12 +192,14 @@ export const patientService = {
     }
   },
 
-  // ✅ Obtener pacientes recientes
-  getRecent: async (limit = 5) => {
+  // ✅ Obtener pacientes recientes (con consulta más reciente)
+  getRecent: async (limit = 5, days = 90) => {
     try {
-      const response = await api.get(`/pacientes/recientes?limit=${limit}`);
+      const response = await api.get(`/pacientes/recientes?limit=${limit}&days=${days}`);
+      console.log('✅ Pacientes recientes obtenidos:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ Error al obtener pacientes recientes:', error);
       throw error;
     }
   },

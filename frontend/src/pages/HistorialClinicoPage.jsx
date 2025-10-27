@@ -56,7 +56,7 @@ import NotificacionesPaciente from '../components/patients/NotificacionesPacient
 import DashboardAnalytics from '../components/patients/DashboardAnalytics';
 import TimelineZoomable from '../components/patients/TimelineZoomable';
 import CompartirHistorial from '../components/patients/CompartirHistorial';
-import ThemeToggle from '../components/ui/ThemeToggle';
+// import ThemeToggle from '../components/ui/ThemeToggle'; // 🔒 Desactivado temporalmente
 import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 
@@ -476,10 +476,10 @@ const HistorialClinicoPage = () => {
                 <span className="hidden sm:inline">Compartir</span>
               </button>
 
-              {/* Theme Toggle */}
-              <div className="ml-auto">
+              {/* Theme Toggle - 🔒 Desactivado temporalmente */}
+              {/* <div className="ml-auto">
                 <ThemeToggle />
-              </div>
+              </div> */}
             </div>
           </div>
 
