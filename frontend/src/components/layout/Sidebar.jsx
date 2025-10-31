@@ -2,13 +2,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  PawPrint, 
-  Calendar, 
-  Users, 
-  FileText, 
-  Settings, 
+import {
+  Home,
+  PawPrint,
+  Calendar,
+  Users,
+  FileText,
+  Settings,
   BarChart3,
   Pill,
   CreditCard,
@@ -16,7 +16,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  User
+  User,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import GlassCard from '../ui/GlassCard';
@@ -66,6 +67,14 @@ const Sidebar = ({ forceCollapse = false }) => {
           color: 'from-purple-500 to-purple-600',
           description: 'Programación y seguimiento de citas',
           badge: '8' // Citas pendientes hoy
+        },
+        {
+          id: 'estetica',
+          label: 'Estética & Grooming',
+          icon: Sparkles,
+          path: '/estetica',
+          color: 'from-pink-500 to-pink-600',
+          description: 'Servicios de estética y cuidado'
         }
       ]
     },

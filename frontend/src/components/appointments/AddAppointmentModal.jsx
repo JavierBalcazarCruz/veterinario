@@ -1,6 +1,6 @@
 // src/components/appointments/AddAppointmentModal.jsx
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, User, PawPrint, Save, Search } from 'lucide-react';
 import * as yup from 'yup';
 
@@ -9,6 +9,8 @@ import GlassButton from '../ui/GlassButton';
 import GlassInput from '../ui/GlassInput';
 import { useForm } from '../../hooks/useForm';
 import toast from 'react-hot-toast';
+import { patientService } from '../../services/patientService';
+import { appointmentService } from '../../services/appointmentService';
 
 // Esquema de validación
 const validationSchema = yup.object({
@@ -31,37 +33,41 @@ const validationSchema = yup.object({
 const AddAppointmentModal = ({ isOpen, onClose, onSuccess, selectedDate = new Date() }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showPatientSearch, setShowPatientSearch] = useState(false);
+  const [patients, setPatients] = useState([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
 
-  // Datos de ejemplo de pacientes
-  const mockPatients = [
-    {
-      id: 1,
-      nombre_mascota: 'Max',
-      especie: 'Perro',
-      raza: 'Golden Retriever',
-      propietario: 'Ana García López',
-      telefono: '5551234567',
-      foto_url: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=60'
-    },
-    {
-      id: 2,
-      nombre_mascota: 'Luna',
-      especie: 'Gato',
-      raza: 'Persa',
-      propietario: 'Carlos Mendoza',
-      telefono: '5559876543',
-      foto_url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=60'
-    },
-    {
-      id: 3,
-      nombre_mascota: 'Rocky',
-      especie: 'Perro',
-      raza: 'Bulldog',
-      propietario: 'María Rodríguez',
-      telefono: '5555555555',
-      foto_url: null
-    }
-  ];
+  // Cargar pacientes desde la API
+  useEffect(() => {
+    const loadPatients = async () => {
+      if (isOpen) {
+        try {
+          setLoadingPatients(true);
+          const response = await patientService.getAll();
+
+          // Formatear datos para que coincidan con la estructura esperada
+          const formattedPatients = response.data.map(patient => ({
+            id: patient.id,
+            nombre_mascota: patient.nombre_mascota,
+            especie: patient.especie,
+            raza: patient.nombre_raza,
+            propietario: `${patient.nombre_propietario} ${patient.apellidos_propietario || ''}`.trim(),
+            telefono: patient.telefono_principal || '',
+            foto_url: patient.foto_url
+          }));
+
+          setPatients(formattedPatients);
+        } catch (error) {
+          console.error('Error al cargar pacientes:', error);
+          toast.error('Error al cargar la lista de pacientes');
+          setPatients([]);
+        } finally {
+          setLoadingPatients(false);
+        }
+      }
+    };
+
+    loadPatients();
+  }, [isOpen]);
 
   const {
     values,
@@ -81,12 +87,12 @@ const AddAppointmentModal = ({ isOpen, onClose, onSuccess, selectedDate = new Da
     validationSchema
   );
 
-  const filteredPatients = mockPatients.filter(patient =>
+  const filteredPatients = patients.filter(patient =>
     patient.nombre_mascota.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.propietario.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedPatient = mockPatients.find(p => p.id === parseInt(values.id_paciente));
+  const selectedPatient = patients.find(p => p.id === parseInt(values.id_paciente));
 
   const tiposConsulta = [
     {
@@ -140,22 +146,32 @@ const AddAppointmentModal = ({ isOpen, onClose, onSuccess, selectedDate = new Da
 
   const onSubmit = async (formData) => {
     try {
-      const newAppointment = {
-        id: Date.now(),
-        ...formData,
-        estado: formData.tipo_consulta === 'urgencia' ? 'confirmada' : 'programada',
-        paciente: selectedPatient,
-        propietario: {
-          nombre: selectedPatient.propietario,
-          telefono: selectedPatient.telefono
-        }
-      };
+      // Crear cita usando el servicio real
+      const response = await appointmentService.create({
+        id_paciente: formData.id_paciente,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        tipo_consulta: formData.tipo_consulta,
+        notas: formData.notas || null
+      });
 
-      onSuccess(newAppointment);
-      toast.success('Cita programada exitosamente');
-      handleClose();
+      // Notificar éxito
+      if (response.success) {
+        toast.success('✅ Cita programada exitosamente');
+
+        // Llamar al callback con los datos de la cita creada
+        if (onSuccess) {
+          onSuccess(response.data);
+        }
+
+        handleClose();
+      } else {
+        toast.error(response.msg || 'Error al programar la cita');
+      }
     } catch (error) {
-      toast.error('Error al programar la cita');
+      console.error('Error al programar cita:', error);
+      const errorMessage = error.response?.data?.msg || error.message || 'Error al programar la cita';
+      toast.error(errorMessage);
     }
   };
 
@@ -245,7 +261,11 @@ const AddAppointmentModal = ({ isOpen, onClose, onSuccess, selectedDate = new Da
                           animate={{ opacity: 1, y: 0 }}
                           className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl max-h-40 overflow-y-auto"
                         >
-                          {filteredPatients.map((patient) => (
+                          {loadingPatients ? (
+                            <div className="p-4 text-center text-white/60">
+                              Cargando pacientes...
+                            </div>
+                          ) : filteredPatients.map((patient) => (
                             <motion.button
                               key={patient.id}
                               type="button"
@@ -274,8 +294,8 @@ const AddAppointmentModal = ({ isOpen, onClose, onSuccess, selectedDate = new Da
                               </div>
                             </motion.button>
                           ))}
-                          
-                          {filteredPatients.length === 0 && (
+
+                          {!loadingPatients && filteredPatients.length === 0 && (
                             <div className="p-4 text-center text-white/60">
                               No se encontraron pacientes
                             </div>

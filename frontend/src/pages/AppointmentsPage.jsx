@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, User, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import AppLayout from '../components/layout/AppLayout';
 import Header from '../components/layout/Header';
@@ -12,6 +13,7 @@ import MobileNavigation from '../components/layout/MobileNavigation';
 import AppointmentCard from '../components/appointments/AppointmentCard';
 import CalendarView from '../components/appointments/CalendarView';
 import AddAppointmentModal from '../components/appointments/AddAppointmentModal';
+import { appointmentService } from '../services/appointmentService';
 
 const AppointmentsPage = () => {
   const [appointments, setAppointments] = useState([]);
@@ -100,26 +102,68 @@ const AppointmentsPage = () => {
 
   useEffect(() => {
     const loadAppointments = async () => {
-      setLoading(true);
-      setTimeout(() => {
-        setAppointments(mockAppointments);
+      try {
+        setLoading(true);
+
+        // Cargar todas las citas (no solo del día seleccionado)
+        // Esto permite ver citas en el calendario y cambiar entre días
+        const response = await appointmentService.getAll();
+
+        if (response.success) {
+          // Formatear datos para coincidir con estructura esperada
+          const formattedAppointments = response.data.map(apt => ({
+            ...apt,
+            fecha: apt.fecha instanceof Date
+              ? apt.fecha.toISOString().split('T')[0]
+              : apt.fecha.split('T')[0], // Normalizar formato de fecha
+            paciente: {
+              nombre: apt.nombre_mascota,
+              especie: apt.especie,
+              raza: apt.raza,
+              foto_url: apt.foto_url
+            },
+            propietario: {
+              nombre: apt.nombre_propietario + (apt.apellidos_propietario ? ` ${apt.apellidos_propietario}` : ''),
+              telefono: apt.telefono_propietario
+            }
+          }));
+
+          setAppointments(formattedAppointments);
+          console.log(`✅ Citas cargadas en frontend: ${formattedAppointments.length}`);
+        } else {
+          setAppointments([]);
+        }
+      } catch (error) {
+        console.error('Error al cargar citas:', error);
+        toast.error('Error al cargar las citas');
+        setAppointments([]);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     loadAppointments();
-  }, []);
+
+    // Recargar cada 30 segundos
+    const interval = setInterval(loadAppointments, 30000);
+    return () => clearInterval(interval);
+  }, []); // Cargar solo una vez al montar
 
   // Filtrar citas
   const filteredAppointments = appointments.filter(appointment => {
-    const selectedDateString = selectedDate.toISOString().split('T')[0];
+    // Usar fecha local para evitar problemas de timezone
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const selectedDateString = `${year}-${month}-${day}`;
+
     const matchesDate = viewMode === 'calendar' || appointment.fecha === selectedDateString;
-    
-    const matchesSearch = 
+
+    const matchesSearch =
       appointment.paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.propietario.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = 
+
+    const matchesStatus =
       statusFilter === 'todas' || appointment.estado === statusFilter;
 
     return matchesDate && matchesSearch && matchesStatus;
@@ -127,7 +171,10 @@ const AppointmentsPage = () => {
 
   // Obtener citas del día seleccionado
   const todayAppointments = appointments.filter(apt => {
-    const selectedDateString = selectedDate.toISOString().split('T')[0];
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const selectedDateString = `${year}-${month}-${day}`;
     return apt.fecha === selectedDateString;
   });
 
@@ -152,9 +199,38 @@ const AppointmentsPage = () => {
     setSelectedDate(newDate);
   };
 
-  const handleAddAppointment = (newAppointment) => {
-    setAppointments(prev => [newAppointment, ...prev]);
+  const handleAddAppointment = async (newAppointment) => {
     setShowAddModal(false);
+
+    // Recargar TODAS las citas para obtener datos actualizados del servidor
+    try {
+      const response = await appointmentService.getAll();
+
+      if (response.success) {
+        const formattedAppointments = response.data.map(apt => ({
+          ...apt,
+          fecha: apt.fecha instanceof Date
+            ? apt.fecha.toISOString().split('T')[0]
+            : apt.fecha.split('T')[0], // Normalizar formato de fecha
+          paciente: {
+            nombre: apt.nombre_mascota,
+            especie: apt.especie,
+            raza: apt.raza,
+            foto_url: apt.foto_url
+          },
+          propietario: {
+            nombre: apt.nombre_propietario + (apt.apellidos_propietario ? ` ${apt.apellidos_propietario}` : ''),
+            telefono: apt.telefono_propietario
+          }
+        }));
+
+        setAppointments(formattedAppointments);
+        console.log(`✅ Citas recargadas después de agregar: ${formattedAppointments.length}`);
+      }
+    } catch (error) {
+      console.error('Error al recargar citas:', error);
+      toast.error('Error al recargar las citas');
+    }
   };
 
   return (

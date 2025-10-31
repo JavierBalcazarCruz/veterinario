@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import EsteticaPage from './pages/EsteticaPage';
 import HistorialClinicoPage from './pages/HistorialClinicoPage';
 import HistorialCompartidoPage from './pages/HistorialCompartidoPage';
 import ConfirmAccountPage from './pages/ConfirmAccountPage';
@@ -73,6 +74,12 @@ const AppRoutes = () => {
       <Route path="/citas" element={
         <ProtectedRoute>
           <AppointmentsPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/estetica" element={
+        <ProtectedRoute>
+          <EsteticaPage />
         </ProtectedRoute>
       } />
 

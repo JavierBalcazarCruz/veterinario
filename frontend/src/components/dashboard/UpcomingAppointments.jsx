@@ -2,14 +2,69 @@
 import { motion } from 'framer-motion';
 import { Clock, Calendar, Phone, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import GlassCard from '../ui/GlassCard';
 import GlassButton from '../ui/GlassButton';
+import { appointmentService } from '../../services/appointmentService';
 
 const UpcomingAppointments = () => {
   const navigate = useNavigate();
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Datos de ejemplo
-  const upcomingAppointments = [
+  // Cargar citas próximas desde la API
+  useEffect(() => {
+    const loadUpcomingAppointments = async () => {
+      try {
+        setLoading(true);
+        const response = await appointmentService.getUpcoming(3);
+
+        if (response.success) {
+          // Formatear datos
+          const formatted = response.data.map(apt => ({
+            id: apt.id,
+            hora: apt.hora,
+            fecha: apt.fecha,
+            paciente: {
+              nombre: apt.nombre_mascota,
+              especie: apt.especie,
+              foto_url: apt.foto_url
+            },
+            propietario: {
+              nombre: `${apt.nombre_propietario} ${apt.apellidos_propietario || ''}`.trim(),
+              telefono: apt.telefono_propietario
+            },
+            tipo_consulta: apt.tipo_consulta,
+            estado: apt.estado,
+            tiempo_restante: calculateTimeRemaining(apt.fecha, apt.hora)
+          }));
+
+          setUpcomingAppointments(formatted);
+        }
+      } catch (error) {
+        console.error('Error al cargar citas próximas:', error);
+        setUpcomingAppointments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUpcomingAppointments();
+
+    // Recargar cada 30 segundos
+    const interval = setInterval(loadUpcomingAppointments, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const calculateTimeRemaining = (fecha, hora) => {
+    const appointmentDate = new Date(`${fecha}T${hora}`);
+    const now = new Date();
+    const diffMs = appointmentDate - now;
+    return Math.floor(diffMs / (1000 * 60)); // minutos
+  };
+
+  // Datos de respaldo si no hay citas (para mantener UI)
+  const mockAppointments = [
     {
       id: 1,
       hora: '10:30',
