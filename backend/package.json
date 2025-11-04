@@ -23,8 +23,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "ics": "^3.8.1",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.12.0",
+    "node-cron": "^4.2.1",
     "nodemailer": "^6.10.1"
   },
   "devDependencies": {

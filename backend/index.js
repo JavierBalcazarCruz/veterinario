@@ -4,6 +4,9 @@ import conectarDB from './config/db.js';
 import veterinarioRoutes from './routes/veterinarioRoutes.js';
 import pacienteRoutes from './routes/pacienteRoutes.js';
 import historialRoutes from './routes/historialRoutes.js';
+import citasRoutes from './routes/citasRoutes.js';
+import esteticaRoutes from './routes/esteticaRoutes.js';
+import { startAllJobs, stopAllJobs } from './jobs/reminderJobs.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
@@ -66,6 +69,8 @@ const iniciarServidor = async () => {
 app.use("/api/veterinarios", veterinarioRoutes);
 app.use("/api/pacientes", pacienteRoutes);
 app.use("/api/historial", historialRoutes);
+app.use("/api/citas", citasRoutes);
+app.use("/api/estetica", esteticaRoutes);
 
 // ✅ AGREGADO: Ruta de health check
 app.get('/api/health', (req, res) => {
@@ -109,14 +114,18 @@ const servidor = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`🚀 Servidor backend corriendo en el puerto ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    
+
     // Inicializar base de datos después de que el servidor esté listo
     await iniciarServidor();
+
+    // Iniciar jobs automáticos de recordatorios
+    startAllJobs();
 });
 
 // ✅ AGREGADO: Manejo graceful de cierre del servidor
 process.on('SIGTERM', () => {
     console.log('🛑 SIGTERM recibido, cerrando servidor...');
+    stopAllJobs();
     servidor.close(() => {
         console.log('✅ Servidor cerrado correctamente');
         process.exit(0);
@@ -125,6 +134,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('🛑 SIGINT recibido, cerrando servidor...');
+    stopAllJobs();
     servidor.close(() => {
         console.log('✅ Servidor cerrado correctamente');
         process.exit(0);
