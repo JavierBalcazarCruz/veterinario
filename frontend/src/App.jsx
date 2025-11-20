@@ -17,6 +17,7 @@ import HistorialCompartidoPage from './pages/HistorialCompartidoPage';
 import ConfirmAccountPage from './pages/ConfirmAccountPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Estilos globales
 import './styles/globals.css';
@@ -80,6 +81,12 @@ const AppRoutes = () => {
       <Route path="/estetica" element={
         <ProtectedRoute>
           <EsteticaPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/perfil" element={
+        <ProtectedRoute>
+          <ProfilePage />
         </ProtectedRoute>
       } />
 

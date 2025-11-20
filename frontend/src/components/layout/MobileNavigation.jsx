@@ -185,7 +185,7 @@ const MobileNavigation = () => {
                 <img
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user?.nombre, user?.apellidos)}&backgroundColor=f97316,ea580c&textColor=ffffff`}
                   alt="Perfil"
-                  className="w-6 h-6 rounded-md"
+                  className="w-6 h-6 rounded-full"
                 />
                 {notifications > 0 && (
                   <motion.div
@@ -259,7 +259,7 @@ const MobileNavigation = () => {
                   <img
                     src={`https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user?.nombre, user?.apellidos)}&backgroundColor=f97316,ea580c&textColor=ffffff`}
                     alt="Avatar"
-                    className="w-16 h-16 rounded-xl"
+                    className="w-16 h-16 rounded-full ring-2 ring-primary-500/30"
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-semibold truncate">

@@ -17,10 +17,12 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Sparkles
+  Sparkles,
+  MoreVertical
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import GlassCard from '../ui/GlassCard';
+import LogoutConfirmModal from '../ui/LogoutConfirmModal';
 
 const Sidebar = ({ forceCollapse = false }) => {
   const { logout, user } = useAuth();
@@ -29,6 +31,8 @@ const Sidebar = ({ forceCollapse = false }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [showAllItems, setShowAllItems] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Efecto para colapsar cuando forceCollapse cambia
   useEffect(() => {
@@ -36,6 +40,20 @@ const Sidebar = ({ forceCollapse = false }) => {
       setIsCollapsed(true);
     }
   }, [forceCollapse]);
+
+  // Efecto para cerrar el dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileDropdown && !event.target.closest('.profile-dropdown-container')) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileDropdown]);
 
   // Módulos principales - organizados por categorías
   const navigationModules = [
@@ -176,7 +194,12 @@ const Sidebar = ({ forceCollapse = false }) => {
   };
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     logout();
+    navigate('/login');
   };
 
   const getInitials = (nombre, apellidos) => {
@@ -228,16 +251,13 @@ const Sidebar = ({ forceCollapse = false }) => {
             </motion.button>
           </div>
 
-          {/* Profile Quick Access */}
-          <motion.div
-            className={`mb-6 bg-white/5 rounded-2xl ${isCollapsed ? 'p-2' : 'p-4'}`}
-            whileHover={{ scale: 1.02 }}
-          >
+          {/* Profile Quick Access - más discreto */}
+          <div className={`mb-6 bg-white/5 rounded-2xl ${isCollapsed ? 'p-2' : 'p-4'} relative profile-dropdown-container`}>
             <div className="flex items-center space-x-3">
               <img
                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user?.nombre, user?.apellidos)}&backgroundColor=f97316,ea580c&textColor=ffffff`}
                 alt="Avatar"
-                className="w-10 h-10 rounded-xl"
+                className="w-10 h-10 rounded-full"
               />
               <AnimatePresence mode="wait">
                 {!isCollapsed && (
@@ -245,6 +265,7 @@ const Sidebar = ({ forceCollapse = false }) => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
+                    className="flex-1 text-left"
                   >
                     <p className="text-white font-medium text-sm">
                       Dr. {user?.nombre}
@@ -253,8 +274,50 @@ const Sidebar = ({ forceCollapse = false }) => {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Botón de 3 puntos - discreto */}
+              {!isCollapsed && (
+                <motion.button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-1.5 rounded-lg text-white/60 hover:text-white transition-colors"
+                >
+                  <MoreVertical size={16} />
+                </motion.button>
+              )}
             </div>
-          </motion.div>
+
+            {/* Dropdown Menu - pequeño y discreto */}
+            <AnimatePresence>
+              {showProfileDropdown && !isCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full right-4 mt-2 z-50 w-40"
+                >
+                  <GlassCard className="p-1 shadow-lg">
+                    <motion.button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
+                        navigate('/perfil');
+                      }}
+                      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-150 text-left"
+                    >
+                      <User size={14} className="text-primary-400" />
+                      <span className="text-white text-xs font-medium">
+                        Ver Perfil
+                      </span>
+                    </motion.button>
+                  </GlassCard>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Navigation Sections */}
           <div className={`flex-1 ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto scrollbar-thin scrollbar-thumb-white/10'}`}>
@@ -568,6 +631,14 @@ const Sidebar = ({ forceCollapse = false }) => {
           </div>
         </div>
       </GlassCard>
+
+      {/* Modal de Logout con efecto Liquid Glass */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onLogout={confirmLogout}
+        duration={3}
+        title="Cerrando Sesión"
+      />
     </motion.div>
   );
 };

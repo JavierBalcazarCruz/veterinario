@@ -9,7 +9,9 @@ import{
     olvidePassword,
     comprobarToken,
     nuevoPassword,
-    reenviarVerificacion
+    reenviarVerificacion,
+    actualizarPerfil,
+    cambiarPassword
 }from '../controllers/veterinarioController.js';
 
 import checkAuth from '../middleware/authMiddleware.js';
@@ -32,6 +34,12 @@ router.post("/reenviar-verificacion", reenviarVerificacion);
 /**************************Inicio de Area privada******************************/
 /*Perfil del doctor*/
 router.get('/perfil',checkAuth, perfil);
+
+/*Actualizar perfil del doctor*/
+router.put('/perfil',checkAuth, actualizarPerfil);
+
+/*Cambiar contraseña del usuario autenticado*/
+router.put('/cambiar-password', checkAuth, cambiarPassword);
 
 /*Olvide mi password se valida el email que sea valido*/
 router.post('/olvide-password',olvidePassword);

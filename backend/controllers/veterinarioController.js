@@ -751,13 +751,187 @@ const reenviarVerificacion = async (req, res) => {
     }
 };
 
-export { 
-    registrar, 
-    perfil, 
-    confirmar, 
-    autenticar, 
-    olvidePassword, 
-    comprobarToken, 
+/**
+ * Actualiza el perfil del usuario autenticado
+ */
+const actualizarPerfil = async (req, res) => {
+    let connection;
+    try {
+        // 1. Obtener ID del usuario autenticado desde el middleware
+        const idUsuario = req.usuario.id;
+
+        // 2. Extraer datos del cuerpo de la petición
+        const { nombre, apellidos, email } = req.body;
+
+        // 3. Validaciones básicas
+        if (!nombre || !apellidos || !email) {
+            return res.status(400).json({
+                msg: 'Todos los campos son obligatorios'
+            });
+        }
+
+        // 4. Limpiar y normalizar datos
+        const nombreLimpio = nombre.trim();
+        const apellidosLimpio = apellidos.trim();
+        const emailLimpio = email.trim().toLowerCase();
+
+        // 5. Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailLimpio)) {
+            return res.status(400).json({ msg: 'Email no válido' });
+        }
+
+        // 6. Conectar a la base de datos
+        connection = await conectarDB();
+
+        // 7. Verificar si el email ya está en uso por otro usuario
+        const [emailExistente] = await connection.execute(
+            'SELECT id FROM usuarios WHERE email = ? AND id != ?',
+            [emailLimpio, idUsuario]
+        );
+
+        if (emailExistente.length > 0) {
+            return res.status(400).json({
+                msg: 'El email ya está registrado por otro usuario'
+            });
+        }
+
+        // 8. Actualizar el perfil del usuario
+        await connection.execute(
+            `UPDATE usuarios
+             SET nombre = ?,
+                 apellidos = ?,
+                 email = ?,
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [nombreLimpio, apellidosLimpio, emailLimpio, idUsuario]
+        );
+
+        // 9. Obtener los datos actualizados del usuario
+        const [usuarioActualizado] = await connection.execute(
+            'SELECT id, nombre, apellidos, email, rol FROM usuarios WHERE id = ?',
+            [idUsuario]
+        );
+
+        // 10. Respuesta exitosa con los datos actualizados
+        res.json({
+            msg: 'Perfil actualizado correctamente',
+            usuario: usuarioActualizado[0]
+        });
+
+    } catch (error) {
+        console.log('Error al actualizar perfil:', error);
+        res.status(500).json({ msg: 'Error del servidor' });
+    } finally {
+        if (connection) {
+            try {
+                await connection.end();
+            } catch (error) {
+                console.log('Error al cerrar conexión:', error);
+            }
+        }
+    }
+};
+
+/**
+ * Cambiar contraseña del usuario autenticado
+ */
+const cambiarPassword = async (req, res) => {
+    let connection;
+    try {
+        // 1. Obtener ID del usuario autenticado
+        const idUsuario = req.usuario.id;
+
+        // 2. Extraer datos del cuerpo
+        const { passwordActual, passwordNuevo } = req.body;
+
+        // 3. Validaciones básicas
+        if (!passwordActual || !passwordNuevo) {
+            return res.status(400).json({
+                msg: 'La contraseña actual y la nueva son obligatorias'
+            });
+        }
+
+        // 4. Validar longitud mínima
+        if (passwordNuevo.length < 6) {
+            return res.status(400).json({
+                msg: 'La contraseña nueva debe tener al menos 6 caracteres'
+            });
+        }
+
+        // 5. Validar que no sean iguales
+        if (passwordActual === passwordNuevo) {
+            return res.status(400).json({
+                msg: 'La contraseña nueva debe ser diferente a la actual'
+            });
+        }
+
+        // 6. Conectar a la base de datos
+        connection = await conectarDB();
+
+        // 7. Obtener usuario con password_hash
+        const [usuarios] = await connection.execute(
+            'SELECT id, password_hash FROM usuarios WHERE id = ?',
+            [idUsuario]
+        );
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        const usuario = usuarios[0];
+
+        // 8. Verificar contraseña actual
+        const passwordCorrecto = await bcrypt.compare(passwordActual, usuario.password_hash);
+
+        if (!passwordCorrecto) {
+            return res.status(400).json({
+                msg: 'La contraseña actual es incorrecta'
+            });
+        }
+
+        // 9. Hashear nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const nuevoPasswordHash = await bcrypt.hash(passwordNuevo, salt);
+
+        // 10. Actualizar contraseña
+        await connection.execute(
+            `UPDATE usuarios
+             SET password_hash = ?,
+                 password_reset_required = FALSE,
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [nuevoPasswordHash, idUsuario]
+        );
+
+        // 11. Respuesta exitosa
+        res.json({
+            msg: 'Contraseña actualizada correctamente'
+        });
+
+    } catch (error) {
+        console.log('Error al cambiar contraseña:', error);
+        res.status(500).json({ msg: 'Error del servidor' });
+    } finally {
+        if (connection) {
+            try {
+                await connection.end();
+            } catch (error) {
+                console.log('Error al cerrar conexión:', error);
+            }
+        }
+    }
+};
+
+export {
+    registrar,
+    perfil,
+    confirmar,
+    autenticar,
+    olvidePassword,
+    comprobarToken,
     nuevoPassword,
-    reenviarVerificacion 
+    reenviarVerificacion,
+    actualizarPerfil,
+    cambiarPassword
 };
