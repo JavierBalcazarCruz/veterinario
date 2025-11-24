@@ -30,6 +30,7 @@ const DashboardPage = () => {
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
   const [isPatientSpotlightOpen, setIsPatientSpotlightOpen] = useState(false);
+  const [spotlightRedirectTo, setSpotlightRedirectTo] = useState('historial'); // 'historial' o 'expediente'
   const [collapseSidebar, setCollapseSidebar] = useState(false);
 
   // Simular carga de datos (reemplazar con API real)
@@ -149,7 +150,14 @@ const DashboardPage = () => {
                 setIsNewAppointmentModalOpen(true);
                 // params puede contener { tipo: 'urgencia' } para futuras mejoras
               }}
-              onOpenPatientSearch={() => setIsPatientSpotlightOpen(true)}
+              onOpenPatientSearch={() => {
+                setSpotlightRedirectTo('historial');
+                setIsPatientSpotlightOpen(true);
+              }}
+              onOpenExpedienteSearch={() => {
+                setSpotlightRedirectTo('expediente');
+                setIsPatientSpotlightOpen(true);
+              }}
             />
           </section>
 
@@ -206,6 +214,7 @@ const DashboardPage = () => {
       <PatientSpotlight
         isOpen={isPatientSpotlightOpen}
         onClose={() => setIsPatientSpotlightOpen(false)}
+        redirectTo={spotlightRedirectTo}
       />
     </AppLayout>
   );

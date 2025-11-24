@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { patientService } from '../../services/patientService';
 import toast from 'react-hot-toast';
 
-const PatientSpotlight = ({ isOpen, onClose }) => {
+const PatientSpotlight = ({ isOpen, onClose, redirectTo = 'historial' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
@@ -90,8 +90,14 @@ const PatientSpotlight = ({ isOpen, onClose }) => {
   };
 
   const handleSelectPatient = (patient) => {
-    // Navegar al historial clínico del paciente
-    navigate(`/historial/${patient.id}`);
+    // Navegar según el tipo de redirección, pasando los datos del paciente
+    if (redirectTo === 'expediente') {
+      navigate(`/expediente/${patient.id}`, {
+        state: { paciente: patient }
+      });
+    } else {
+      navigate(`/historial/${patient.id}`);
+    }
     onClose();
   };
 

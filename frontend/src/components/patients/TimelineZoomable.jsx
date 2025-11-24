@@ -8,8 +8,10 @@
 import { motion } from 'framer-motion';
 import {
   Activity,
-  Calendar
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import GlassCard from '../ui/GlassCard';
 import GlassButton from '../ui/GlassButton';
 
@@ -17,6 +19,8 @@ import GlassButton from '../ui/GlassButton';
  * Componente principal de Timeline
  */
 const TimelineZoomable = ({ items, total, paginaActual, totalPaginas, onCambiarPagina }) => {
+  const navigate = useNavigate();
+  const { pacienteId } = useParams();
 
   if (items.length === 0) {
     return (
@@ -120,6 +124,17 @@ const TimelineZoomable = ({ items, total, paginaActual, totalPaginas, onCambiarP
                           )}
                           {item.tipo === 'alergia' && item.data.sintomas && (
                             <p className="break-words"><span className="text-white/80 font-medium">Síntomas:</span> {item.data.sintomas}</p>
+                          )}
+
+                          {/* Botón Ver más para consultas */}
+                          {item.tipo === 'consulta' && item.data.id && (
+                            <button
+                              onClick={() => navigate(`/expediente/${pacienteId}/detalle/${item.data.id}`)}
+                              className="mt-2 flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors group"
+                            >
+                              <span>Ver más</span>
+                              <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                            </button>
                           )}
                         </div>
                       )}

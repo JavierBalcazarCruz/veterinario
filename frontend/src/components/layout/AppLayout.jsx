@@ -93,18 +93,19 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
       <AnimatePresence mode="wait">
         <motion.div
           key={currentTheme.wallpaper}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.7, ease: "easeInOut" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
           className="fixed inset-0 z-0"
         >
           <div
-            className="w-full h-full bg-cover bg-no-repeat"
+            className="w-full h-full bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${wallpapers[currentTheme.wallpaper]})`,
-              backgroundPosition: '50% 50%',
-              backgroundAttachment: 'fixed'
+              backgroundAttachment: 'scroll',
+              backgroundSize: 'contain',
+              backgroundPosition: 'center center'
             }}
           />
           {/* Overlay base para mejor legibilidad */}

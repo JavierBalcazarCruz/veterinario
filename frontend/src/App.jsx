@@ -18,6 +18,8 @@ import ConfirmAccountPage from './pages/ConfirmAccountPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
+import ExpedienteClinicoPage from './pages/ExpedienteClinicoPage';
+import ExpedienteDetallePage from './pages/ExpedienteDetallePage';
 
 // Estilos globales
 import './styles/globals.css';
@@ -69,6 +71,18 @@ const AppRoutes = () => {
       <Route path="/historial/:pacienteId" element={
         <ProtectedRoute>
           <HistorialClinicoPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/expediente/:pacienteId?" element={
+        <ProtectedRoute>
+          <ExpedienteClinicoPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/expediente/:pacienteId/detalle/:expedienteId" element={
+        <ProtectedRoute>
+          <ExpedienteDetallePage />
         </ProtectedRoute>
       } />
 
