@@ -6,6 +6,7 @@ import pacienteRoutes from './routes/pacienteRoutes.js';
 import historialRoutes from './routes/historialRoutes.js';
 import citasRoutes from './routes/citasRoutes.js';
 import esteticaRoutes from './routes/esteticaRoutes.js';
+import expedienteRoutes from './routes/expedienteRoutes.js';
 import { startAllJobs, stopAllJobs } from './jobs/reminderJobs.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -71,6 +72,7 @@ app.use("/api/pacientes", pacienteRoutes);
 app.use("/api/historial", historialRoutes);
 app.use("/api/citas", citasRoutes);
 app.use("/api/estetica", esteticaRoutes);
+app.use("/api/expediente", expedienteRoutes);
 
 // ✅ AGREGADO: Ruta de health check
 app.get('/api/health', (req, res) => {
