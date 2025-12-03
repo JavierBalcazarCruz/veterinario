@@ -6,9 +6,14 @@
  * clínico veterinario con examen físico, diagnósticos
  * y tratamientos
  *
- * NOTA: Actualmente implementado con estructura dummy.
- * TODO: Integrar con tablas reales de la base de datos
- * una vez diseñado el frontend completo.
+ * TABLAS UTILIZADAS:
+ * - expedientes_clinicos
+ * - expediente_signos_vitales
+ * - expediente_evaluacion_sistemas
+ * - expediente_lista_problemas
+ * - expediente_lista_maestra
+ * - expediente_diagnosticos_laboratorio
+ * - expediente_tratamientos
  */
 
 import conectarDB from '../config/db.js';
@@ -18,7 +23,7 @@ import conectarDB from '../config/db.js';
 // =====================================================
 
 /**
- * 📋 Obtener expediente completo de un paciente
+ * 📋 Obtener expediente completo de un paciente (último o vacío)
  */
 const obtenerExpediente = async (req, res) => {
     let connection;
@@ -62,45 +67,82 @@ const obtenerExpediente = async (req, res) => {
             }
         }
 
-        // TODO: Consultar tabla de expedientes cuando se cree
-        // const [expedientes] = await connection.execute(
-        //     `SELECT * FROM expedientes_clinicos WHERE id_paciente = ?
-        //      ORDER BY fecha_creacion DESC LIMIT 1`,
-        //     [pacienteId]
-        // );
+        // Buscar el último expediente del paciente
+        const [expedientes] = await connection.execute(
+            `SELECT * FROM expedientes_clinicos
+             WHERE id_paciente = ?
+             ORDER BY fecha_consulta DESC
+             LIMIT 1`,
+            [pacienteId]
+        );
 
-        // DUMMY DATA: Retornar estructura vacía por ahora
-        const expedienteDummy = {
-            id: null,
-            id_paciente: pacienteId,
-            fecha_creacion: new Date().toISOString(),
-            examen_fisico: {
-                temperatura: {},
-                alimentacion: {},
-                piel: {},
-                mucosas: {},
-                linfonodos: {},
-                cardiovascular: {},
-                respiratorio: {},
-                digestivo: {},
-                urinario: {},
-                reproductor: {},
-                locomotor: {},
-                nervioso: {},
-                ojosOido: {}
+        // Si no hay expediente, retornar estructura vacía
+        if (expedientes.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: null,
+                msg: 'No hay expedientes previos para este paciente'
+            });
+        }
+
+        const expediente = expedientes[0];
+
+        // Obtener datos relacionados
+        const [signosVitales] = await connection.execute(
+            `SELECT * FROM expediente_signos_vitales WHERE id_expediente = ?`,
+            [expediente.id]
+        );
+
+        const [evaluacionSistemas] = await connection.execute(
+            `SELECT * FROM expediente_evaluacion_sistemas WHERE id_expediente = ?`,
+            [expediente.id]
+        );
+
+        const [listaProblemas] = await connection.execute(
+            `SELECT descripcion FROM expediente_lista_problemas
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expediente.id]
+        );
+
+        const [listaMaestra] = await connection.execute(
+            `SELECT diagnostico_presuntivo FROM expediente_lista_maestra
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expediente.id]
+        );
+
+        const [diagnosticosLab] = await connection.execute(
+            `SELECT diagnostico FROM expediente_diagnosticos_laboratorio
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expediente.id]
+        );
+
+        const [tratamientos] = await connection.execute(
+            `SELECT tratamiento FROM expediente_tratamientos
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expediente.id]
+        );
+
+        // Construir respuesta completa
+        const expedienteCompleto = {
+            id: expediente.id,
+            id_paciente: expediente.id_paciente,
+            fecha_consulta: expediente.fecha_consulta,
+            examenFisico: {
+                temperatura: signosVitales[0] || {},
+                segundaCard: evaluacionSistemas[0] || {}
             },
-            lista_problemas: [],
-            estudios_laboratorio: '',
-            lista_maestra: [],
-            diagnostico_final: '',
-            diagnostico_laboratorio: [],
-            tratamiento: []
+            listaProblemas: listaProblemas.map(p => p.descripcion),
+            estudiosLaboratorio: expediente.estudios_laboratorio || '',
+            listaMaestra: listaMaestra.map(d => d.diagnostico_presuntivo),
+            diagnosticoFinal: expediente.diagnostico_final || '',
+            diagnosticoLaboratorio: diagnosticosLab.map(d => d.diagnostico),
+            tratamiento: tratamientos.map(t => t.tratamiento)
         };
 
         return res.status(200).json({
             success: true,
-            data: expedienteDummy,
-            msg: 'Expediente cargado (dummy data)'
+            data: expedienteCompleto,
+            msg: 'Expediente cargado exitosamente'
         });
 
     } catch (error) {
@@ -120,14 +162,22 @@ const obtenerExpediente = async (req, res) => {
 // =====================================================
 
 /**
- * 💾 Guardar o actualizar expediente completo
+ * 💾 Guardar expediente completo en tablas relacionadas
  */
 const guardarExpediente = async (req, res) => {
     let connection;
     try {
         const { id } = req.params; // ID del paciente
         const pacienteId = parseInt(id);
-        const expedienteData = req.body;
+        const {
+            examenFisico,
+            listaProblemas,
+            estudiosLaboratorio,
+            listaMaestra,
+            diagnosticoFinal,
+            diagnosticoLaboratorio,
+            tratamiento
+        } = req.body;
 
         if (isNaN(pacienteId) || pacienteId <= 0) {
             return res.status(400).json({
@@ -136,15 +186,8 @@ const guardarExpediente = async (req, res) => {
             });
         }
 
-        // Validar que los datos requeridos existen
-        if (!expedienteData) {
-            return res.status(400).json({
-                success: false,
-                msg: 'Datos del expediente son requeridos'
-            });
-        }
-
         connection = await conectarDB();
+        await connection.beginTransaction();
 
         // ✅ Verificar permisos del doctor
         const [doctores] = await connection.execute(
@@ -153,6 +196,7 @@ const guardarExpediente = async (req, res) => {
         );
 
         if (doctores.length === 0) {
+            await connection.rollback();
             return res.status(403).json({
                 success: false,
                 msg: 'Doctor no encontrado'
@@ -167,78 +211,147 @@ const guardarExpediente = async (req, res) => {
         );
 
         if (pacientes.length === 0) {
+            await connection.rollback();
             return res.status(403).json({
                 success: false,
                 msg: 'No tienes permiso para modificar este paciente'
             });
         }
 
-        // TODO: Implementar INSERT/UPDATE en tabla de expedientes
-        // Por ahora, se registrará como una consulta en historias_clinicas
-        // hasta que se cree la tabla específica de expedientes
-
-        /* ESTRUCTURA FUTURA DE TABLA:
-
-        CREATE TABLE expedientes_clinicos (
-            id INT PRIMARY KEY AUTO_INCREMENT,
-            id_paciente INT NOT NULL,
-            id_doctor INT NOT NULL,
-            fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-            examen_fisico JSON,
-            lista_problemas JSON,
-            estudios_laboratorio TEXT,
-            lista_maestra JSON,
-            diagnostico_final TEXT,
-            diagnostico_laboratorio JSON,
-            tratamiento JSON,
-            FOREIGN KEY (id_paciente) REFERENCES pacientes(id),
-            FOREIGN KEY (id_doctor) REFERENCES doctores(id)
+        // 1️⃣ INSERTAR EXPEDIENTE PRINCIPAL
+        const [resultExpediente] = await connection.execute(
+            `INSERT INTO expedientes_clinicos
+             (id_paciente, id_doctor, fecha_consulta, estudios_laboratorio, diagnostico_final, estado)
+             VALUES (?, ?, NOW(), ?, ?, 'completado')`,
+            [pacienteId, doctorId, estudiosLaboratorio || null, diagnosticoFinal || null]
         );
 
-        */
+        const expedienteId = resultExpediente.insertId;
 
-        // IMPLEMENTACIÓN TEMPORAL: Guardar como consulta
-        const motivoConsulta = 'Expediente Clínico Completo';
-        const diagnostico = expedienteData.diagnosticoFinal || 'Pendiente';
-        const tratamiento = expedienteData.tratamiento?.filter(t => t).join('; ') || 'Sin tratamiento especificado';
-        const observaciones = `EXPEDIENTE CLÍNICO
+        // 2️⃣ INSERTAR SIGNOS VITALES
+        if (examenFisico?.temperatura) {
+            const temp = examenFisico.temperatura;
+            await connection.execute(
+                `INSERT INTO expediente_signos_vitales
+                 (id_expediente, dh, fc, cc, fr, tllc, rt, rd, ps_pd, pam)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    expedienteId,
+                    temp.dh || null,
+                    temp.fc || null,
+                    temp.cc || null,
+                    temp.fr || null,
+                    temp.tllc || null,
+                    temp.rt || null,
+                    temp.rd || null,
+                    temp.ps_pd || null,
+                    temp.pam || null
+                ]
+            );
+        }
 
-LISTA DE PROBLEMAS:
-${expedienteData.listaProblemas?.filter(p => p).map((p, i) => `${i + 1}. ${p}`).join('\n') || 'Sin problemas registrados'}
+        // 3️⃣ INSERTAR EVALUACIÓN DE SISTEMAS
+        if (examenFisico?.segundaCard) {
+            const sistemas = examenFisico.segundaCard;
+            await connection.execute(
+                `INSERT INTO expediente_evaluacion_sistemas
+                 (id_expediente,
+                  come, come_normal, bebe, bebe_normal, orina, orina_normal, defeca, defeca_normal,
+                  piel, piel_normal, mucosas, mucosas_normal, linfonodos, linfonodos_normal,
+                  circulatorio, circulatorio_normal, respiratorio, respiratorio_normal,
+                  digestivo, digestivo_normal, urinario, urinario_normal, reproductor, reproductor_normal,
+                  locomotor, locomotor_normal, nervioso, nervioso_normal, ojos_oido, ojos_oido_normal)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    expedienteId,
+                    sistemas.come || null, sistemas.come_normal || 'N',
+                    sistemas.bebe || null, sistemas.bebe_normal || 'N',
+                    sistemas.orina || null, sistemas.orina_normal || 'N',
+                    sistemas.defeca || null, sistemas.defeca_normal || 'N',
+                    sistemas.piel || null, sistemas.piel_normal || 'N',
+                    sistemas.mucosas || null, sistemas.mucosas_normal || 'N',
+                    sistemas.linfonodos || null, sistemas.linfonodos_normal || 'N',
+                    sistemas.circulatorio || null, sistemas.circulatorio_normal || 'N',
+                    sistemas.respiratorio || null, sistemas.respiratorio_normal || 'N',
+                    sistemas.digestivo || null, sistemas.digestivo_normal || 'N',
+                    sistemas.urinario || null, sistemas.urinario_normal || 'N',
+                    sistemas.reproductor || null, sistemas.reproductor_normal || 'N',
+                    sistemas.locomotor || null, sistemas.locomotor_normal || 'N',
+                    sistemas.nervioso || null, sistemas.nervioso_normal || 'N',
+                    sistemas.ojosOido || null, sistemas.ojosOido_normal || 'N'
+                ]
+            );
+        }
 
-ESTUDIOS DE LABORATORIO:
-${expedienteData.estudiosLaboratorio || 'No solicitados'}
+        // 4️⃣ INSERTAR LISTA DE PROBLEMAS
+        if (Array.isArray(listaProblemas)) {
+            for (let i = 0; i < listaProblemas.length; i++) {
+                if (listaProblemas[i]?.trim()) {
+                    await connection.execute(
+                        `INSERT INTO expediente_lista_problemas (id_expediente, orden, descripcion)
+                         VALUES (?, ?, ?)`,
+                        [expedienteId, i + 1, listaProblemas[i]]
+                    );
+                }
+            }
+        }
 
-LISTA MAESTRA (Dx Presuntivos):
-${expedienteData.listaMaestra?.filter(d => d).map((d, i) => `${i + 1}. ${d}`).join('\n') || 'Sin diagnósticos presuntivos'}
+        // 5️⃣ INSERTAR LISTA MAESTRA (Diagnósticos Presuntivos)
+        if (Array.isArray(listaMaestra)) {
+            for (let i = 0; i < listaMaestra.length; i++) {
+                if (listaMaestra[i]?.trim()) {
+                    await connection.execute(
+                        `INSERT INTO expediente_lista_maestra (id_expediente, orden, diagnostico_presuntivo)
+                         VALUES (?, ?, ?)`,
+                        [expedienteId, i + 1, listaMaestra[i]]
+                    );
+                }
+            }
+        }
 
-DIAGNÓSTICO DE LABORATORIO:
-${expedienteData.diagnosticoLaboratorio?.filter(d => d).map((d, i) => `${i + 1}. ${d}`).join('\n') || 'Sin diagnósticos de laboratorio'}`;
+        // 6️⃣ INSERTAR DIAGNÓSTICOS DE LABORATORIO
+        if (Array.isArray(diagnosticoLaboratorio)) {
+            for (let i = 0; i < diagnosticoLaboratorio.length; i++) {
+                if (diagnosticoLaboratorio[i]?.trim()) {
+                    await connection.execute(
+                        `INSERT INTO expediente_diagnosticos_laboratorio (id_expediente, orden, diagnostico)
+                         VALUES (?, ?, ?)`,
+                        [expedienteId, i + 1, diagnosticoLaboratorio[i]]
+                    );
+                }
+            }
+        }
 
-        await connection.execute(
-            `INSERT INTO historias_clinicas
-             (id_paciente, id_doctor, fecha_consulta, motivo_consulta, diagnostico, tratamiento, observaciones)
-             VALUES (?, ?, NOW(), ?, ?, ?, ?)`,
-            [
-                pacienteId,
-                doctorId,
-                motivoConsulta,
-                diagnostico,
-                tratamiento,
-                observaciones
-            ]
-        );
+        // 7️⃣ INSERTAR TRATAMIENTOS
+        if (Array.isArray(tratamiento)) {
+            for (let i = 0; i < tratamiento.length; i++) {
+                if (tratamiento[i]?.trim()) {
+                    await connection.execute(
+                        `INSERT INTO expediente_tratamientos (id_expediente, orden, tratamiento)
+                         VALUES (?, ?, ?)`,
+                        [expedienteId, i + 1, tratamiento[i]]
+                    );
+                }
+            }
+        }
+
+        // ✅ CONFIRMAR TRANSACCIÓN
+        await connection.commit();
 
         return res.status(201).json({
             success: true,
-            msg: 'Expediente guardado exitosamente (guardado temporal como consulta)',
+            msg: 'Expediente guardado exitosamente',
             data: {
+                id_expediente: expedienteId,
                 id_paciente: pacienteId,
                 fecha: new Date().toISOString()
             }
         });
 
     } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
         console.error('❌ Error al guardar expediente:', error);
         return res.status(500).json({
             success: false,
@@ -299,17 +412,16 @@ const obtenerHistorialExpedientes = async (req, res) => {
             }
         }
 
-        // TODO: Cuando exista la tabla de expedientes, consultar de ahí
-        // Por ahora, buscar consultas que sean expedientes completos
+        // Obtener historial de expedientes
         const [expedientes] = await connection.execute(
-            `SELECT hc.*,
-                    CONCAT(u.nombre, ' ', u.apellidos) AS veterinario
-             FROM historias_clinicas hc
-             INNER JOIN doctores d ON hc.id_doctor = d.id
+            `SELECT ec.*,
+                    CONCAT(u.nombre, ' ', u.apellidos) AS veterinario,
+                    u.cedula AS cedula_veterinario
+             FROM expedientes_clinicos ec
+             INNER JOIN doctores d ON ec.id_doctor = d.id
              INNER JOIN usuarios u ON d.id_usuario = u.id
-             WHERE hc.id_paciente = ?
-             AND hc.motivo_consulta = 'Expediente Clínico Completo'
-             ORDER BY hc.fecha_consulta DESC`,
+             WHERE ec.id_paciente = ?
+             ORDER BY ec.fecha_consulta DESC`,
             [pacienteId]
         );
 
@@ -337,7 +449,7 @@ const obtenerHistorialExpedientes = async (req, res) => {
 // =====================================================
 
 /**
- * 🔍 Obtener un expediente específico por ID
+ * 🔍 Obtener un expediente específico por ID con todos sus detalles
  */
 const obtenerExpedientePorId = async (req, res) => {
     let connection;
@@ -382,16 +494,15 @@ const obtenerExpedientePorId = async (req, res) => {
             }
         }
 
-        // TODO: Consultar tabla de expedientes cuando exista
-        // Por ahora, buscar en historias_clinicas
+        // Obtener expediente principal
         const [expedientes] = await connection.execute(
-            `SELECT hc.*,
+            `SELECT ec.*,
                     CONCAT(u.nombre, ' ', u.apellidos) AS veterinario,
                     u.cedula AS cedula_veterinario
-             FROM historias_clinicas hc
-             INNER JOIN doctores d ON hc.id_doctor = d.id
+             FROM expedientes_clinicos ec
+             INNER JOIN doctores d ON ec.id_doctor = d.id
              INNER JOIN usuarios u ON d.id_usuario = u.id
-             WHERE hc.id = ? AND hc.id_paciente = ?`,
+             WHERE ec.id = ? AND ec.id_paciente = ?`,
             [expId, pacienteId]
         );
 
@@ -402,10 +513,58 @@ const obtenerExpedientePorId = async (req, res) => {
             });
         }
 
+        const expediente = expedientes[0];
+
+        // Obtener datos relacionados
+        const [signosVitales] = await connection.execute(
+            `SELECT * FROM expediente_signos_vitales WHERE id_expediente = ?`,
+            [expId]
+        );
+
+        const [evaluacionSistemas] = await connection.execute(
+            `SELECT * FROM expediente_evaluacion_sistemas WHERE id_expediente = ?`,
+            [expId]
+        );
+
+        const [listaProblemas] = await connection.execute(
+            `SELECT descripcion FROM expediente_lista_problemas
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expId]
+        );
+
+        const [listaMaestra] = await connection.execute(
+            `SELECT diagnostico_presuntivo FROM expediente_lista_maestra
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expId]
+        );
+
+        const [diagnosticosLab] = await connection.execute(
+            `SELECT diagnostico FROM expediente_diagnosticos_laboratorio
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expId]
+        );
+
+        const [tratamientos] = await connection.execute(
+            `SELECT tratamiento FROM expediente_tratamientos
+             WHERE id_expediente = ? ORDER BY orden`,
+            [expId]
+        );
+
+        // Construir respuesta completa
+        const expedienteCompleto = {
+            ...expediente,
+            signosVitales: signosVitales[0] || null,
+            evaluacionSistemas: evaluacionSistemas[0] || null,
+            listaProblemas: listaProblemas.map(p => p.descripcion),
+            listaMaestra: listaMaestra.map(d => d.diagnostico_presuntivo),
+            diagnosticoLaboratorio: diagnosticosLab.map(d => d.diagnostico),
+            tratamientos: tratamientos.map(t => t.tratamiento)
+        };
+
         return res.status(200).json({
             success: true,
-            data: expedientes[0],
-            msg: 'Expediente obtenido'
+            data: expedienteCompleto,
+            msg: 'Expediente obtenido exitosamente'
         });
 
     } catch (error) {

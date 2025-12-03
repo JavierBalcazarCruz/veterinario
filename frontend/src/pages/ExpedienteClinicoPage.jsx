@@ -66,32 +66,29 @@ const ExpedienteClinicoPage = () => {
   const [modalNuevoPacienteOpen, setModalNuevoPacienteOpen] = useState(false);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
 
-  // Estados de las secciones colapsables
-  const [seccionesAbiertas, setSeccionesAbiertas] = useState({
-    estudiosLab: false,
-    listaMaestra: false,
-    diagnosticoFinal: false,
-    diagnosticoLab: false,
-    tratamiento: false
-  });
 
   // Estado del formulario
   const [formulario, setFormulario] = useState({
     // Examen Físico General
     examenFisico: {
-      temperatura: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      alimentacion: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      piel: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      mucosas: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      linfonodos: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      cardiovascular: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      respiratorio: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      digestivo: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      urinario: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      reproductor: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      locomotor: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      nervioso: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' },
-      ojosOido: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '', normal: 'N' }
+      temperatura: { dh: '', fc: '', cc: '', fr: '', tllc: '', rt: '', rd: '', ps_pd: '', pam: '' },
+      segundaCard: {
+        come: '', come_normal: 'N',
+        bebe: '', bebe_normal: 'N',
+        orina: '', orina_normal: 'N',
+        defeca: '', defeca_normal: 'N',
+        piel: '', piel_normal: 'N',
+        mucosas: '', mucosas_normal: 'N',
+        linfonodos: '', linfonodos_normal: 'N',
+        circulatorio: '', circulatorio_normal: 'N',
+        respiratorio: '', respiratorio_normal: 'N',
+        digestivo: '', digestivo_normal: 'N',
+        urinario: '', urinario_normal: 'N',
+        reproductor: '', reproductor_normal: 'N',
+        locomotor: '', locomotor_normal: 'N',
+        nervioso: '', nervioso_normal: 'N',
+        ojosOido: '', ojosOido_normal: 'N'
+      }
     },
     listaProblemas: ['', '', '', '', ''],
     estudiosLaboratorio: '',
@@ -183,15 +180,6 @@ const ExpedienteClinicoPage = () => {
     setModalNuevoPacienteOpen(false);
   };
 
-  /**
-   * 🔄 Alternar visibilidad de sección
-   */
-  const toggleSeccion = (seccion) => {
-    setSeccionesAbiertas(prev => ({
-      ...prev,
-      [seccion]: !prev[seccion]
-    }));
-  };
 
   /**
    * ✏️ Actualizar campo del examen físico
@@ -245,29 +233,56 @@ const ExpedienteClinicoPage = () => {
     }
   };
 
+  // Campos para la segunda card con botones individuales
+  const camposSegundaCard = [
+    { key: 'come', label: 'Come', placeholder: 'Estado' },
+    { key: 'bebe', label: 'Bebe', placeholder: 'Estado' },
+    { key: 'orina', label: 'Orina', placeholder: 'Estado' },
+    { key: 'defeca', label: 'Defeca', placeholder: 'Estado' },
+    { key: 'piel', label: 'Piel', placeholder: 'Estado' },
+    { key: 'mucosas', label: 'Mucosas', placeholder: 'Estado' },
+    { key: 'linfonodos', label: 'Linfonodos', placeholder: 'Estado' },
+    { key: 'circulatorio', label: 'Circulatorio', placeholder: 'Estado' },
+    { key: 'respiratorio', label: 'Respiratorio', placeholder: 'Estado' },
+    { key: 'digestivo', label: 'Digestivo', placeholder: 'Estado' },
+    { key: 'urinario', label: 'Urinario', placeholder: 'Estado' },
+    { key: 'reproductor', label: 'Reproductor', placeholder: 'Estado' },
+    { key: 'locomotor', label: 'Locomotor', placeholder: 'Estado' },
+    { key: 'nervioso', label: 'Nervioso', placeholder: 'Estado' },
+    { key: 'ojosOido', label: 'Ojos y Oído', placeholder: 'Estado' }
+  ];
+
   // Definir sistemas del examen físico con iconos
   const sistemasExamen = [
-    { key: 'temperatura', label: 'I. Temperatura', icon: Thermometer, color: 'red' },
-    { key: 'alimentacion', label: 'Come/Bebe/Orina/Defeca', icon: Utensils, color: 'orange' },
-    { key: 'piel', label: 'II - Piel', icon: Activity, color: 'pink' },
-    { key: 'mucosas', label: 'III - Mucosas', icon: AlertCircle, color: 'purple' },
-    { key: 'linfonodos', label: 'IV - Linfonodos', icon: Activity, color: 'blue' },
-    { key: 'cardiovascular', label: 'V - Cardiovascular', icon: Heart, color: 'red' },
-    { key: 'respiratorio', label: 'VI - Respiratorio', icon: Wind, color: 'cyan' },
-    { key: 'digestivo', label: 'VII - Digestivo', icon: Pizza, color: 'orange' },
-    { key: 'urinario', label: 'VIII - Urinario', icon: Droplet, color: 'blue' },
-    { key: 'reproductor', label: 'IX - Reproductor', icon: Baby, color: 'pink' },
-    { key: 'locomotor', label: 'X - Locomotor', icon: Footprints, color: 'green' },
-    { key: 'nervioso', label: 'XI - Nervioso', icon: Brain, color: 'purple' },
-    { key: 'ojosOido', label: 'XII - Ojos y Oído', icon: Eye, color: 'cyan' }
+    {
+      key: 'temperatura',
+      label: '', // Sin título
+      icon: null, // Sin icono
+      color: 'red',
+      hideNormalToggle: true, // Sin botones para Temperatura
+      leyendaSuperior: 'Complete los signos vitales y parámetros físicos del paciente. DH: Deshidratación, FC: Frecuencia Cardiaca, CC: Condición Corporal, FR: Frecuencia Respiratoria, TLLC: Tiempo de Llenado Capilar, RT: Reflejo Tusígeno, RD: Respuesta al Dolor, PS/PD: Presión Sistólica/Diastólica, PAM: Presión Arterial Media.'
+    },
+    {
+      key: 'segundaCard',
+      label: '', // Sin título
+      icon: null,
+      color: 'blue',
+      customCampos: camposSegundaCard,
+      conBotonesIndividuales: true, // Cada campo con su botón
+      leyendaSuperior: 'Evalúe cada sistema y marque si presenta condiciones normales (N) o anormales (A). Normal indica funcionamiento saludable sin alteraciones. Anormal indica presencia de síntomas, irregularidades o condiciones que requieren atención.'
+    }
   ];
 
   if (loading) {
     return (
       <AppLayout>
-        <Header />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="h-screen flex flex-col overflow-hidden">
+          <div className="flex-shrink-0">
+            <Header />
+          </div>
+          <div className="flex-1 overflow-y-auto flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
         </div>
         <MobileNavigation />
       </AppLayout>
@@ -276,41 +291,47 @@ const ExpedienteClinicoPage = () => {
 
   return (
     <AppLayout>
-      <Header
-        title={`📋 Expediente Clínico${paciente ? ` - ${paciente.nombre_mascota}` : ''}`}
-        subtitle={paciente ? `${paciente.especie} • ${paciente.raza} • ${paciente.edad} • Propietario: ${paciente.nombre_propietario}` : 'Selecciona un paciente para comenzar'}
-        actions={[
-          {
-            icon: ArrowLeft,
-            label: 'Volver',
-            action: () => navigate(-1),
-            color: 'from-gray-500 to-gray-600'
-          },
-          {
-            icon: PawPrint,
-            label: 'Seleccionar Paciente',
-            action: () => {
-              console.log('🐾 Click en botón Seleccionar Paciente del header');
-              setModalSeleccionOpen(true);
-            },
-            color: 'from-orange-500 to-orange-600'
-          },
-          {
-            icon: Save,
-            label: 'Guardar',
-            action: guardarExpediente,
-            color: 'from-green-500 to-green-600'
-          }
-        ]}
-      />
+      <div className="h-screen flex flex-col overflow-hidden">
+        {/* Header - Fijo */}
+        <div className="flex-shrink-0">
+          <Header
+            title={`📋 Expediente Clínico${paciente ? ` - ${paciente.nombre_mascota}` : ''}`}
+            subtitle={paciente ? `${paciente.especie} • ${paciente.raza} • ${paciente.edad} • Propietario: ${paciente.nombre_propietario}` : 'Selecciona un paciente para comenzar'}
+            actions={[
+              {
+                icon: ArrowLeft,
+                label: 'Volver',
+                action: () => navigate(-1),
+                color: 'from-gray-500 to-gray-600'
+              },
+              {
+                icon: PawPrint,
+                label: 'Seleccionar Paciente',
+                action: () => {
+                  console.log('🐾 Click en botón Seleccionar Paciente del header');
+                  setModalSeleccionOpen(true);
+                },
+                color: 'from-orange-500 to-orange-600'
+              },
+              {
+                icon: Save,
+                label: 'Guardar',
+                action: guardarExpediente,
+                color: 'from-green-500 to-green-600'
+              }
+            ]}
+          />
+        </div>
 
-      {/* Animación de entrada smooth */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="container mx-auto px-3 md:px-4 py-4 md:py-6 max-w-7xl pb-24 md:pb-8"
-      >
+        {/* Contenido principal - Scrolleable */}
+        <div className="flex-1 overflow-y-auto px-3 md:px-4 py-4 md:py-6 pb-24 lg:pb-8">
+          {/* Animación de entrada smooth */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            className="container mx-auto max-w-7xl"
+          >
         {/* Mensaje si no hay paciente seleccionado */}
         {!pacienteId && (
           <GlassCard className="p-8 md:p-12 text-center mb-6">
@@ -347,158 +368,306 @@ const ExpedienteClinicoPage = () => {
               </div>
             </GlassCard>
 
-            {/* SECCIÓN 1: EXAMEN FÍSICO GENERAL - CARDS COLAPSABLES */}
+            {/* SECCIÓN 1: EXAMEN DIAGNÓSTICO - CARDS COLAPSABLES */}
             <GlassCard className="p-4 md:p-6 mb-4 md:mb-6">
               <div className="flex items-center gap-3 mb-6">
                 <Activity className="w-6 h-6 text-blue-400" />
                 <h2 className="text-xl md:text-2xl font-bold text-white">EXAMEN FÍSICO GENERAL</h2>
               </div>
 
-              <div className="space-y-3">
-                {sistemasExamen.map((sistema, index) => (
-                  <ExamenFisicoCard
-                    key={sistema.key}
-                    titulo={sistema.label}
-                    icono={sistema.icon}
-                    color={sistema.color}
-                    datos={formulario.examenFisico[sistema.key]}
-                    onChange={(campo, valor) => actualizarExamenFisico(sistema.key, campo, valor)}
-                    defaultOpen={index === 0} // Solo el primero abierto por defecto
-                  />
-                ))}
+              {/* SECCIÓN: SIGNOS VITALES */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Thermometer className="w-6 h-6 text-red-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">SIGNOS VITALES</h3>
+                </div>
+                <p className="text-white/60 text-sm mb-6 leading-relaxed text-center md:text-left">
+                  Complete los signos vitales y parámetros físicos del paciente. DH: Deshidratación, FC: Frecuencia Cardiaca, CC: Condición Corporal, FR: Frecuencia Respiratoria, TLLC: Tiempo de Llenado Capilar, RT: Reflejo Tusígeno, RD: Respuesta al Dolor, PS/PD: Presión Sistólica/Diastólica, PAM: Presión Arterial Media.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">DH</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.dh}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'dh', e.target.value)}
+                      placeholder="Deshidratación"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">FC</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.fc}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'fc', e.target.value)}
+                      placeholder="Frecuencia Cardiaca"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">CC</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.cc}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'cc', e.target.value)}
+                      placeholder="Condición Corporal"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">FR</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.fr}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'fr', e.target.value)}
+                      placeholder="Frecuencia Respiratoria"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">TLLC</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.tllc}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'tllc', e.target.value)}
+                      placeholder="Tiempo de Llenado Capilar"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">RT</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.rt}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'rt', e.target.value)}
+                      placeholder="Reflejo Tusígeno"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">RD</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.rd}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'rd', e.target.value)}
+                      placeholder="Respuesta al Dolor"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">PS/PD</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.ps_pd}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'ps_pd', e.target.value)}
+                      placeholder="Presión Sistólica/Diastólica"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm font-medium mb-2">PAM</label>
+                    <input
+                      type="text"
+                      value={formulario.examenFisico.temperatura.pam}
+                      onChange={(e) => actualizarExamenFisico('temperatura', 'pam', e.target.value)}
+                      placeholder="Presión Arterial Media"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-red-400/50 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: EVALUACIÓN POR SISTEMAS */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Activity className="w-6 h-6 text-blue-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">EVALUACIÓN POR SISTEMAS</h3>
+                </div>
+                <p className="text-white/60 text-sm mb-6 leading-relaxed text-center md:text-left">
+                  Evalúe cada sistema y marque si presenta condiciones normales (N) o anormales (A). Normal indica funcionamiento saludable sin alteraciones. Anormal indica presencia de síntomas, irregularidades o condiciones que requieren atención.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {camposSegundaCard.map((campo) => (
+                    <div key={campo.key} className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <label className="block text-white/70 text-sm font-medium mb-2">{campo.label}</label>
+                        <input
+                          type="text"
+                          value={formulario.examenFisico.segundaCard[campo.key]}
+                          onChange={(e) => actualizarExamenFisico('segundaCard', campo.key, e.target.value)}
+                          placeholder={campo.placeholder}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-blue-400/50 transition-colors"
+                        />
+                      </div>
+                      <div className="flex gap-2 mt-7">
+                        <button
+                          type="button"
+                          onClick={() => actualizarExamenFisico('segundaCard', `${campo.key}_normal`, 'N')}
+                          className={`px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 ${
+                            formulario.examenFisico.segundaCard[`${campo.key}_normal`] === 'N'
+                              ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                              : 'bg-white/5 text-white/70 hover:bg-white/10'
+                          }`}
+                        >
+                          N
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => actualizarExamenFisico('segundaCard', `${campo.key}_normal`, 'A')}
+                          className={`px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 ${
+                            formulario.examenFisico.segundaCard[`${campo.key}_normal`] === 'A'
+                              ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                              : 'bg-white/5 text-white/70 hover:bg-white/10'
+                          }`}
+                        >
+                          A
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: LISTA DE PROBLEMAS */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <AlertCircle className="w-6 h-6 text-red-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">LISTA DE PROBLEMAS</h3>
+                </div>
+                <div className="space-y-3">
+                  {formulario.listaProblemas.map((problema, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={problema}
+                        onChange={(e) => actualizarListaItem('listaProblemas', index, e.target.value)}
+                        placeholder={`Problema ${index + 1}`}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-orange-400/50 transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: ESTUDIOS DE LABORATORIO */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <FlaskConical className="w-6 h-6 text-purple-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">ESTUDIOS DE LABORATORIO</h3>
+                </div>
+                <textarea
+                  value={formulario.estudiosLaboratorio}
+                  onChange={(e) => setFormulario(prev => ({ ...prev, estudiosLaboratorio: e.target.value }))}
+                  placeholder="Ingrese los estudios de laboratorio solicitados o resultados..."
+                  rows={6}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-purple-400/50 transition-colors resize-none"
+                />
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: LISTA MAESTRA */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <Stethoscope className="w-6 h-6 text-cyan-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">LISTA MAESTRA (Dx Presuntivos)</h3>
+                </div>
+                <div className="space-y-3">
+                  {formulario.listaMaestra.map((dx, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={dx}
+                        onChange={(e) => actualizarListaItem('listaMaestra', index, e.target.value)}
+                        placeholder={`Diagnóstico presuntivo ${index + 1}`}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400/50 transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: DIAGNÓSTICO FINAL */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <CheckCircle2 className="w-6 h-6 text-green-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">DIAGNÓSTICO FINAL</h3>
+                </div>
+                <textarea
+                  value={formulario.diagnosticoFinal}
+                  onChange={(e) => setFormulario(prev => ({ ...prev, diagnosticoFinal: e.target.value }))}
+                  placeholder="Ingrese el diagnóstico final del paciente..."
+                  rows={4}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-green-400/50 transition-colors resize-none"
+                />
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: DIAGNÓSTICO DE LABORATORIO */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <FlaskConical className="w-6 h-6 text-pink-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">DIAGNÓSTICO DE LABORATORIO</h3>
+                </div>
+                <div className="space-y-3">
+                  {formulario.diagnosticoLaboratorio.map((dx, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={dx}
+                        onChange={(e) => actualizarListaItem('diagnosticoLaboratorio', index, e.target.value)}
+                        placeholder={`Diagnóstico de laboratorio ${index + 1}`}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-pink-400/50 transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divisor visual */}
+              <div className="my-8 border-t border-white/10"></div>
+
+              {/* SECCIÓN: TRATAMIENTO */}
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <Pill className="w-6 h-6 text-yellow-400" />
+                  <h3 className="text-xl md:text-2xl font-bold text-white">TRATAMIENTO EN INSTALACIONES Y RECETA (dosis y ml)</h3>
+                </div>
+                <div className="space-y-3">
+                  {formulario.tratamiento.map((tx, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={tx}
+                        onChange={(e) => actualizarListaItem('tratamiento', index, e.target.value)}
+                        placeholder={`Medicamento, dosis y ml - Ej: Amoxicilina 500mg, 5ml cada 12h`}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400/50 transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </GlassCard>
-
-            {/* SECCIÓN 2: LISTA DE PROBLEMAS */}
-            <GlassCard className="p-4 md:p-6 mb-4 md:mb-6">
-              <div className="flex items-center gap-3 mb-6">
-                <AlertCircle className="w-6 h-6 text-red-400" />
-                <h2 className="text-xl md:text-2xl font-bold text-white">LISTA DE PROBLEMAS</h2>
-              </div>
-
-              <div className="space-y-3">
-                {formulario.listaProblemas.map((problema, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
-                    <input
-                      type="text"
-                      value={problema}
-                      onChange={(e) => actualizarListaItem('listaProblemas', index, e.target.value)}
-                      placeholder={`Problema ${index + 1}`}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-orange-400/50 transition-colors"
-                    />
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
-
-            {/* SECCIONES COLAPSABLES */}
-
-            {/* SECCIÓN 3: ESTUDIOS DE LABORATORIO */}
-            <SeccionColapsable
-              titulo="ESTUDIOS DE LABORATORIO"
-              icono={FlaskConical}
-              color="text-purple-400"
-              abierta={seccionesAbiertas.estudiosLab}
-              onToggle={() => toggleSeccion('estudiosLab')}
-            >
-              <textarea
-                value={formulario.estudiosLaboratorio}
-                onChange={(e) => setFormulario(prev => ({ ...prev, estudiosLaboratorio: e.target.value }))}
-                placeholder="Ingrese los estudios de laboratorio solicitados o resultados..."
-                rows={6}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-purple-400/50 transition-colors resize-none"
-              />
-            </SeccionColapsable>
-
-            {/* SECCIÓN 4: LISTA MAESTRA */}
-            <SeccionColapsable
-              titulo="LISTA MAESTRA (Dx Presuntivos)"
-              icono={Stethoscope}
-              color="text-cyan-400"
-              abierta={seccionesAbiertas.listaMaestra}
-              onToggle={() => toggleSeccion('listaMaestra')}
-            >
-              <div className="space-y-3">
-                {formulario.listaMaestra.map((dx, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
-                    <input
-                      type="text"
-                      value={dx}
-                      onChange={(e) => actualizarListaItem('listaMaestra', index, e.target.value)}
-                      placeholder={`Diagnóstico presuntivo ${index + 1}`}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400/50 transition-colors"
-                    />
-                  </div>
-                ))}
-              </div>
-            </SeccionColapsable>
-
-            {/* SECCIÓN 5: DIAGNÓSTICO FINAL */}
-            <SeccionColapsable
-              titulo="DIAGNÓSTICO FINAL"
-              icono={CheckCircle2}
-              color="text-green-400"
-              abierta={seccionesAbiertas.diagnosticoFinal}
-              onToggle={() => toggleSeccion('diagnosticoFinal')}
-            >
-              <textarea
-                value={formulario.diagnosticoFinal}
-                onChange={(e) => setFormulario(prev => ({ ...prev, diagnosticoFinal: e.target.value }))}
-                placeholder="Ingrese el diagnóstico final del paciente..."
-                rows={4}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-green-400/50 transition-colors resize-none"
-              />
-            </SeccionColapsable>
-
-            {/* SECCIÓN 6: DIAGNÓSTICO DE LABORATORIO */}
-            <SeccionColapsable
-              titulo="DIAGNÓSTICO DE LABORATORIO"
-              icono={FlaskConical}
-              color="text-pink-400"
-              abierta={seccionesAbiertas.diagnosticoLab}
-              onToggle={() => toggleSeccion('diagnosticoLab')}
-            >
-              <div className="space-y-3">
-                {formulario.diagnosticoLaboratorio.map((dx, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
-                    <input
-                      type="text"
-                      value={dx}
-                      onChange={(e) => actualizarListaItem('diagnosticoLaboratorio', index, e.target.value)}
-                      placeholder={`Diagnóstico de laboratorio ${index + 1}`}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-pink-400/50 transition-colors"
-                    />
-                  </div>
-                ))}
-              </div>
-            </SeccionColapsable>
-
-            {/* SECCIÓN 7: TRATAMIENTO */}
-            <SeccionColapsable
-              titulo="TRATAMIENTO EN INSTALACIONES Y RECETA (dosis y ml)"
-              icono={Pill}
-              color="text-yellow-400"
-              abierta={seccionesAbiertas.tratamiento}
-              onToggle={() => toggleSeccion('tratamiento')}
-            >
-              <div className="space-y-3">
-                {formulario.tratamiento.map((tx, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span className="text-white/70 font-semibold min-w-[30px]">{index + 1}.</span>
-                    <input
-                      type="text"
-                      value={tx}
-                      onChange={(e) => actualizarListaItem('tratamiento', index, e.target.value)}
-                      placeholder={`Medicamento, dosis y ml - Ej: Amoxicilina 500mg, 5ml cada 12h`}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400/50 transition-colors"
-                    />
-                  </div>
-                ))}
-              </div>
-            </SeccionColapsable>
 
             {/* Botón flotante de guardar (móvil) */}
             <div className="fixed bottom-20 right-4 md:hidden z-50">
@@ -513,7 +682,9 @@ const ExpedienteClinicoPage = () => {
             </div>
           </>
         )}
-      </motion.div>
+          </motion.div>
+        </div>
+      </div>
 
       <MobileNavigation />
 
@@ -537,52 +708,6 @@ const ExpedienteClinicoPage = () => {
         redirectTo="expediente"
       />
     </AppLayout>
-  );
-};
-
-/**
- * 📦 Componente: Sección Colapsable
- */
-const SeccionColapsable = ({ titulo, icono: Icono, color, abierta, onToggle, children }) => {
-  return (
-    <GlassCard className="p-4 md:p-6 mb-4 md:mb-6">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between group"
-      >
-        <div className="flex items-center gap-3">
-          <Icono className={`w-6 h-6 ${color}`} />
-          <h2 className="text-xl md:text-2xl font-bold text-white group-hover:text-orange-400 transition-colors">
-            {titulo}
-          </h2>
-        </div>
-        <motion.div
-          animate={{ rotate: abierta ? 180 : 0 }}
-          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <ChevronDown className="w-6 h-6 text-white/70" />
-        </motion.div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {abierta && (
-          <motion.div
-            initial={{ opacity: 0, maxHeight: 0 }}
-            animate={{ opacity: 1, maxHeight: 2000 }}
-            exit={{ opacity: 0, maxHeight: 0 }}
-            transition={{
-              duration: 0.3,
-              ease: [0.4, 0, 0.2, 1]
-            }}
-            className="overflow-hidden"
-          >
-            <div className="mt-6">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </GlassCard>
   );
 };
 

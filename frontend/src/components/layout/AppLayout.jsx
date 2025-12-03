@@ -7,39 +7,61 @@ import MobileNavigation from './MobileNavigation';
 import { useTheme } from '../../context/ThemeContext';
 // import DarkModeWallpaper from './DarkModeWallpaper'; // 🌙 Descomenta para usar el componente independiente
 
-// Wallpapers temáticos mejorados
+// Wallpapers temáticos mejorados - 10 wallpapers disponibles
 const wallpapers = [
   '/wallpapers/vet-1.jpg',
-  '/wallpapers/vet-2.jpg', 
+  '/wallpapers/vet-2.jpg',
   '/wallpapers/vet-3.jpg',
+  '/wallpapers/vet-4.jpg',
+  '/wallpapers/vet-5.jpg',
+  '/wallpapers/vet-6.jpg',
+  '/wallpapers/vet-7.jpg',
+  '/wallpapers/vet-8.jpg',
+  '/wallpapers/vet-9.jpg',
+  '/wallpapers/vet-10.jpg',
 ];
 
-// Temas de color para cada sección
+// Temas de color para cada sección - Cada ruta tiene su wallpaper único
 const sectionThemes = {
   '/dashboard': {
-    wallpaper: 0,
+    wallpaper: 0, // vet-1.jpg
     gradient: 'from-blue-900/20 via-transparent to-purple-900/20',
     particles: 'from-blue-400/30 to-purple-400/30'
   },
   '/pacientes': {
-    wallpaper: 1,
-    gradient: 'from-green-900/20 via-transparent to-emerald-900/20', 
+    wallpaper: 1, // vet-2.jpg
+    gradient: 'from-green-900/20 via-transparent to-emerald-900/20',
     particles: 'from-green-400/30 to-emerald-400/30'
   },
-  '/citas': {
-    wallpaper: 2,
-    gradient: 'from-purple-900/20 via-transparent to-pink-900/20',
-    particles: 'from-purple-400/30 to-pink-400/30'
-  },
-  '/historiales': {
-    wallpaper: 0,
+  '/historial': {
+    wallpaper: 2, // vet-3.jpg
     gradient: 'from-orange-900/20 via-transparent to-red-900/20',
     particles: 'from-orange-400/30 to-red-400/30'
   },
-  '/inventario': {
-    wallpaper: 1,
+  '/expediente': {
+    wallpaper: 3, // vet-4.jpg
+    gradient: 'from-teal-900/20 via-transparent to-cyan-900/20',
+    particles: 'from-teal-400/30 to-cyan-400/30'
+  },
+  '/citas': {
+    wallpaper: 4, // vet-5.jpg
+    gradient: 'from-purple-900/20 via-transparent to-pink-900/20',
+    particles: 'from-purple-400/30 to-pink-400/30'
+  },
+  '/estetica': {
+    wallpaper: 5, // vet-6.jpg
+    gradient: 'from-pink-900/20 via-transparent to-rose-900/20',
+    particles: 'from-pink-400/30 to-rose-400/30'
+  },
+  '/perfil': {
+    wallpaper: 6, // vet-7.jpg
     gradient: 'from-indigo-900/20 via-transparent to-blue-900/20',
     particles: 'from-indigo-400/30 to-blue-400/30'
+  },
+  '/inventario': {
+    wallpaper: 7, // vet-8.jpg
+    gradient: 'from-amber-900/20 via-transparent to-yellow-900/20',
+    particles: 'from-amber-400/30 to-yellow-400/30'
   }
 };
 
@@ -68,7 +90,7 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="min-h-screen relative overflow-hidden bg-slate-900"
+      className="min-h-screen relative overflow-hidden bg-slate-900 flex"
     >
       {/* Background Wallpaper Dinámico */}
       {/*
@@ -103,8 +125,8 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
             className="w-full h-full bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${wallpapers[currentTheme.wallpaper]})`,
-              backgroundAttachment: 'scroll',
-              backgroundSize: 'contain',
+              backgroundAttachment: 'fixed',
+              backgroundSize: 'cover',
               backgroundPosition: 'center center'
             }}
           />
@@ -136,12 +158,15 @@ const AppLayout = ({ children, showSidebar = true, collapseSidebar = false }) =>
         className={`fixed inset-0 z-10 bg-gradient-to-br ${currentTheme.gradient}`}
       />
 
-      {/* Sidebar - Solo Desktop */}
-      {showSidebar && <Sidebar forceCollapse={collapseSidebar} />}
+      {/* Contenedor flex para sidebar y contenido */}
+      <div className="flex w-full relative z-20">
+        {/* Sidebar - Solo Desktop */}
+        {showSidebar && <Sidebar forceCollapse={collapseSidebar} />}
 
-      {/* Main Content Area */}
-      <div className={`relative z-20 min-h-screen ${showSidebar ? 'lg:ml-80' : ''} transition-all duration-300`}>
-        {children}
+        {/* Main Content Area - Ocupa el espacio restante */}
+        <div className="flex-1 min-h-screen transition-all duration-300">
+          {children}
+        </div>
       </div>
 
       {/* Mobile Navigation - Solo Mobile */}

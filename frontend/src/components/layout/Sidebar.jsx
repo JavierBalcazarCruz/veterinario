@@ -28,7 +28,13 @@ const Sidebar = ({ forceCollapse = false }) => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    // Detectar si es tablet/iPad y colapsar por defecto (hasta 1366px para incluir iPads)
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768 && window.innerWidth <= 1366;
+    }
+    return false;
+  });
   const [hoveredItem, setHoveredItem] = useState(null);
   const [showAllItems, setShowAllItems] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -40,6 +46,21 @@ const Sidebar = ({ forceCollapse = false }) => {
       setIsCollapsed(true);
     }
   }, [forceCollapse]);
+
+  // Efecto para detectar cambios de tamaño de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      // Auto-colapsar en tablets e iPads (768px - 1366px)
+      if (window.innerWidth >= 768 && window.innerWidth <= 1366) {
+        setIsCollapsed(true);
+      } else if (window.innerWidth > 1366) {
+        setIsCollapsed(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Efecto para cerrar el dropdown al hacer clic fuera
   useEffect(() => {
@@ -210,10 +231,11 @@ const Sidebar = ({ forceCollapse = false }) => {
 
   return (
     <motion.div
-      initial={{ x: -320 }}
-      animate={{ x: 0, width: isCollapsed ? 72 : 320 }}
+      initial={{ width: isCollapsed ? 72 : 320 }}
+      animate={{ width: isCollapsed ? 72 : 320 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed left-0 top-0 h-full z-40 hidden lg:block"
+      className="relative h-screen shrink-0 hidden lg:block"
+      style={{ minHeight: '100vh' }}
     >
       <GlassCard className="h-full rounded-none rounded-r-3xl border-l-0 overflow-hidden">
         <div className={`flex flex-col h-full ${isCollapsed ? 'p-3' : 'p-6'}`}>
